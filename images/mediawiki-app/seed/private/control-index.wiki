@@ -1,0 +1,11 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_CONTROL_INDEX -->
+= Control:控制与运行总览 =
+
+== 建议内容 ==
+* 中央控制平台
+* 账号权限
+* 日志与报警
+* 数据流
+
+== 当前入口 ==
+* [[Control:中央控制平台]]

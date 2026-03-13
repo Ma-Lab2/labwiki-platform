@@ -1,0 +1,12 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_SHOT_WEEKLY_LOG -->
+= Shot:周实验日志 =
+
+本页按周汇总所有 shot 链接、值班、总体问题和结论，不替代单 shot 页面。
+
+== 本周条目 ==
+* 在这里按日期追加 shot 页面链接
+
+== 本周总结 ==
+* 主要结果：
+* 共性问题：
+* 下周动作：

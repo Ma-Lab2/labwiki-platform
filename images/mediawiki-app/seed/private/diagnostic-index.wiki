@@ -1,0 +1,12 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_DIAGNOSTIC_INDEX -->
+= Diagnostic:诊断总览 =
+
+== 诊断链入口 ==
+* [[Diagnostic:TPS]]
+
+== 每种诊断页应回答 ==
+* 原理是什么
+* 本实验室如何布置
+* 标定文件在哪里
+* 数据怎么读
+* 误差来源有哪些

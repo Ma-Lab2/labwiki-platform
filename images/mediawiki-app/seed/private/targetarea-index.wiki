@@ -1,0 +1,15 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_TARGETAREA_INDEX -->
+= TargetArea:靶场总览 =
+
+== 入口页职责 ==
+用空间树和功能链双重方式组织靶场内容。
+
+== 优先页 ==
+* [[TargetArea:主靶室]]
+* [[TargetArea:束靶耦合段]]
+
+== 推荐补充方向 ==
+* OAP 区
+* 对比度清洗链
+* 找靶链
+* 诊断接口区

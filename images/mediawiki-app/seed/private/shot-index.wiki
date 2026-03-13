@@ -1,0 +1,15 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_SHOT_INDEX -->
+= Shot:Shot日志入口 =
+
+== 使用规则 ==
+* 每轮实验 / 每个 shot 一页
+* 页面命名：`Shot:YYYY-MM-DD-RunXX-ShotYYY`
+* 打靶后立刻创建或补全页面
+
+== 必填页面 ==
+* [[Shot:Shot模板]]
+* [[Shot:周实验日志]]
+* [[Data:实验日志与数据关联]]
+
+== 当前索引 ==
+* 在这里维护最近 shot 列表

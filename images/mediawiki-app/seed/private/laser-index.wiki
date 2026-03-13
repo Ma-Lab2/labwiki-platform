@@ -1,0 +1,12 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_LASER_INDEX -->
+= Laser:激光系统总览 =
+
+== 主入口 ==
+* [[Laser:激光链路总图]]
+* [[Laser:三阶自相关与对比度]]
+* [[Laser:波前与可变形镜]]
+
+== 建议写法 ==
+* 先写链路位置和系统作用
+* 再写关键参数与常见故障
+* 最后链接对应 SOP、设备页和 shot 案例

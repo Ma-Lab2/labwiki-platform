@@ -1,0 +1,12 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_TARGETAREA_COUPLING -->
+= TargetArea:束靶耦合段 =
+
+== 页面定位 ==
+本页记录终端聚焦、找靶、定位和束靶耦合相关参数与经验。
+
+== 必填内容 ==
+* 当前配置
+* 定位基准
+* 允许公差
+* 常见异常
+* 对应 SOP 与 shot 例子

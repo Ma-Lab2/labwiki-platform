@@ -1,0 +1,9 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_PROJECT_INDEX -->
+= Project:项目总览 =
+
+== 当前入口 ==
+* [[Project:项目模板]]
+* [[Project:激光质子加速]]
+
+== 使用规则 ==
+* 每个项目页都要链接相关设备、理论、SOP 和典型 shot

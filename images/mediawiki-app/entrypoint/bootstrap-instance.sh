@@ -199,6 +199,7 @@ wfLoadExtension( 'VisualEditor' );
 \$wgParserCacheType = CACHE_ACCEL;
 \$wgSessionCacheType = CACHE_ACCEL;
 \$wgLanguageCode = '${MW_LANG:-zh-cn}';
+\$wgFileExtensions = array_values( array_unique( array_merge( \$wgFileExtensions, [ 'csv', 'tsv', 'xlsx', 'ods', 'pdf', 'txt', 'md' ] ) ) );
 EOF
 )"
 

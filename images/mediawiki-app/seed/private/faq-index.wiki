@@ -1,0 +1,11 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_FAQ_INDEX -->
+= FAQ:常见问题入口 =
+
+== 当前建议收录 ==
+* 激光链常见故障
+* 找靶失败
+* TPS 数据读取问题
+* 数据丢失与恢复
+
+== 使用规则 ==
+* 每个 FAQ 条目都要链接到对应 SOP、设备页或 shot 复盘页

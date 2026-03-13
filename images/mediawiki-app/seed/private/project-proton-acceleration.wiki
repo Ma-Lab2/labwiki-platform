@@ -1,0 +1,15 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_PROJECT_PROTON -->
+= Project:激光质子加速 =
+
+== 页面定位 ==
+作为当前项目页样例，用于汇总目标、关键难点、设备、诊断与典型 shot。
+
+== 目标 ==
+* 提升截止能量
+* 提高 shot-to-shot 稳定性
+
+== 关键页面 ==
+* [[Theory:TNSA]]
+* [[Laser:三阶自相关与对比度]]
+* [[Diagnostic:TPS]]
+* [[Shot:Shot日志入口]]

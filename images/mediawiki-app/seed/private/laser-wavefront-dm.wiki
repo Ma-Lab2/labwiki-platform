@@ -1,0 +1,13 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_LASER_WAVEFRONT -->
+= Laser:波前与可变形镜 =
+
+== 页面定位 ==
+记录波前校正、变形镜状态、闭环参数与 spot 优化经验。
+
+== 建议字段 ==
+* 设备编号
+* 校正目标
+* 当前波前误差
+* loop 设置
+* spot 结果
+* 最近故障与修复

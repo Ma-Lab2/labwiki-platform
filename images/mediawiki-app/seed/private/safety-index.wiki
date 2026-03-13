@@ -1,0 +1,11 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_SAFETY_INDEX -->
+= Safety:安全总览 =
+
+== 当前入口 ==
+* [[Safety:激光安全]]
+
+== 后续应扩展 ==
+* 真空安全
+* 辐射安全
+* 高压安全
+* 联锁与异常处置

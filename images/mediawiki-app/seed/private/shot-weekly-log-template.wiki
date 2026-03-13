@@ -1,0 +1,18 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_SHOT_WEEKLY_TEMPLATE -->
+= Shot:周实验日志模板 =
+
+* 周次：
+* 值班：
+* 目标：
+
+== Shot 列表 ==
+* [[Shot:YYYY-MM-DD-RunXX-ShotYYY]]
+
+== 本周结果 ==
+* 
+
+== 共性问题 ==
+* 
+
+== 下周动作 ==
+* 

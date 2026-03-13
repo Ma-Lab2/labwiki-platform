@@ -1,0 +1,16 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_THEORY_TNSA -->
+= Theory:TNSA =
+
+== 物理图像 ==
+激光打到薄靶后产生高温电子，电子穿透到靶后形成 sheath field，并在靶后表面加速质子或轻离子。
+
+== 实验判据 ==
+* 靶后离子能谱是否出现明显 cutoff
+* 激光对比度和预等离子体是否改变靶后场形成
+* 靶厚、激光 spot、入射稳定性是否变化
+
+== 本实验室关联页 ==
+* [[Laser:三阶自相关与对比度]]
+* [[SOP:主靶室打靶流程]]
+* [[Diagnostic:TPS]]
+* [[Shot:Shot模板]]

@@ -1,0 +1,9 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_MEETING_INDEX -->
+= Meeting:会议入口 =
+
+== 当前入口 ==
+* [[Meeting:实验复盘模板]]
+* [[会议纪要]]
+
+== 说明 ==
+组会、实验复盘、设备故障复盘都应从这里进入，并回链到相关项目页与 shot 页。

@@ -1,0 +1,15 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_TARGETAREA_MAIN_CHAMBER -->
+= TargetArea:主靶室 =
+
+== 页面模板 ==
+* 功能定位：
+* 上下游关系：
+* 关键设备：
+* 调整自由度：
+* 风险点：
+* 相关 SOP：
+
+== 常见问题 ==
+* 对光偏移
+* 靶位置漂移
+* 诊断布置冲突
