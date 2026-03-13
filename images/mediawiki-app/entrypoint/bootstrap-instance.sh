@@ -4,6 +4,16 @@ set -euo pipefail
 STATE_DIR="${STATE_DIR:-/state}"
 LOCAL_SETTINGS="${STATE_DIR}/LocalSettings.php"
 SCRIPT_PATH="${MW_SCRIPT_PATH:-}"
+THEME_ROOT="/var/www/html/labwiki/theme"
+SEED_ROOT="/opt/labwiki/seed"
+MAIN_PAGE_TITLE="${MW_MAIN_PAGE_TITLE:-首页}"
+
+SITE_VARIANT="public"
+if [[ "${MW_PRIVATE_MODE:-false}" == "true" ]]; then
+  SITE_VARIANT="private"
+fi
+
+LOGO_PATH="/labwiki/theme/${SITE_VARIANT}-logo.svg"
 
 required_env=(
   MW_DB_TYPE
@@ -71,6 +81,26 @@ wait_for_db() {
 
 wait_for_db
 
+seed_page_if_default() {
+  local title="$1"
+  local seed_file="$2"
+  local existing_text
+
+  if [[ ! -f "${seed_file}" ]]; then
+    return 0
+  fi
+
+  existing_text="$(php maintenance/run.php getText "${title}" 2>/dev/null || true)"
+  if [[ -n "${existing_text}" ]] && ! grep -Fq "已安装MediaWiki" <<<"${existing_text}"; then
+    return 0
+  fi
+
+  php maintenance/run.php edit \
+    --summary="Seed labwiki landing page" \
+    --user="${MW_ADMIN_USER}" \
+    "${title}" < "${seed_file}"
+}
+
 if [[ ! -s "${LOCAL_SETTINGS}" ]]; then
   php maintenance/run.php install \
     --confpath="${STATE_DIR}" \
@@ -91,10 +121,26 @@ RUNTIME_BLOCK="$(cat <<EOF
 \$wgScriptPath = '${SCRIPT_PATH}';
 \$wgResourceBasePath = \$wgScriptPath;
 \$wgLogos = [
-  '1x' => \$wgResourceBasePath . '/resources/assets/change-your-logo.svg',
-  'icon' => \$wgResourceBasePath . '/resources/assets/change-your-logo-icon.svg',
+  '1x' => '${LOGO_PATH}',
+  'icon' => '${LOGO_PATH}',
 ];
 \$wgEnableUploads = true;
+EOF
+)"
+
+THEME_BLOCK="$(cat <<EOF
+\$wgResourceModules['ext.labwiki.theme'] = [
+  'styles' => [
+    'labwiki/theme/base.css',
+    'labwiki/theme/${SITE_VARIANT}.css',
+  ],
+  'localBasePath' => '/var/www/html',
+  'remoteBasePath' => \$wgResourceBasePath ?: '',
+];
+\$wgHooks['BeforePageDisplay'][] = static function ( \$out, \$skin ) {
+  \$out->addModuleStyles( 'ext.labwiki.theme' );
+  return true;
+};
 EOF
 )"
 
@@ -109,7 +155,8 @@ EOF
 )"
 
 append_block_once "LABWIKI_COMMON" "${COMMON_BLOCK}"
-append_block_once "LABWIKI_RUNTIME_OVERRIDES_V2" "${RUNTIME_BLOCK}"
+append_block_once "LABWIKI_THEME_V1" "${THEME_BLOCK}"
+append_block_once "LABWIKI_RUNTIME_OVERRIDES_V3" "${RUNTIME_BLOCK}"
 
 if [[ "${MW_PRIVATE_MODE:-false}" == "true" ]]; then
   PRIVATE_BLOCK="$(cat <<'EOF'
@@ -120,6 +167,8 @@ EOF
 )"
   append_block_once "PRIVATE_WIKI_HARDENING" "${PRIVATE_BLOCK}"
 fi
+
+seed_page_if_default "${MAIN_PAGE_TITLE}" "${SEED_ROOT}/${SITE_VARIANT}-mainpage.wiki"
 
 chmod 600 "${LOCAL_SETTINGS}"
 ln -sf "${LOCAL_SETTINGS}" /var/www/html/LocalSettings.php

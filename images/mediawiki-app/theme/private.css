@@ -1,0 +1,14 @@
+:root {
+  --accent: #0f6c6a;
+  --accent-strong: #0b4f4c;
+  --accent-soft: rgba(15, 108, 106, 0.15);
+  --hero-a: #0d2223;
+  --hero-b: #155158;
+  --hero-c: #8fd5ce;
+}
+
+body.skin-vector-2022 {
+  background:
+    radial-gradient(circle at top left, rgba(143, 213, 206, 0.12), transparent 22%),
+    linear-gradient(180deg, #eef5f4 0%, #dfeceb 100%);
+}

@@ -4,6 +4,8 @@ FROM ${MW_BASE} AS mw-source
 
 USER root
 
+COPY images/mediawiki-app/theme /var/www/html/labwiki/theme
+
 FROM mw-source AS mw-runtime
 
 RUN if php -m | grep -iq '^apcu$'; then \
@@ -14,6 +16,7 @@ RUN if php -m | grep -iq '^apcu$'; then \
 
 COPY images/mediawiki-app/php/zz-mediawiki.ini /usr/local/etc/php/conf.d/zz-mediawiki.ini
 COPY images/mediawiki-app/entrypoint/bootstrap-instance.sh /usr/local/bin/bootstrap-instance.sh
+COPY images/mediawiki-app/seed /opt/labwiki/seed
 
 RUN test -d /var/www/html/extensions/VisualEditor \
     && chmod +x /usr/local/bin/bootstrap-instance.sh
