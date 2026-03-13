@@ -14,9 +14,9 @@ check_http() {
   local label="$2"
   local code
 
-  code="$(curl -k -s -o /dev/null -w '%{http_code}' "${url}")"
+  code="$(curl --noproxy '*' -k -s -o /dev/null -w '%{http_code}' "${url}")"
   case "${label}:${code}" in
-    public:200|public:302|private:200|private:302|private:401|private:403)
+    public:200|public:301|public:302|private:200|private:301|private:302|private:401|private:403)
       printf '[ok] %s returned %s\n' "${label}" "${code}"
       ;;
     *)

@@ -31,7 +31,8 @@ services:
 
   mw_public:
     build:
-      context: ./images/mediawiki-app
+      context: .
+      dockerfile: images/mediawiki-app/Dockerfile
       target: mw-runtime
     restart: unless-stopped
     depends_on:
@@ -44,6 +45,7 @@ services:
       MW_DB_NAME: labwiki_public
       MW_DB_USER: labwiki_public_user
       MW_DB_PASS_FILE: /run/secrets/public_db_password
+      MW_CONFIG_FILE: /state/LocalSettings.php
       MW_ADMIN_USER: ${PUBLIC_ADMIN_USER:-admin}
       MW_ADMIN_PASS_FILE: /run/secrets/public_admin_password
       MW_SERVER: https://${PUBLIC_HOST:-lab.example.com}
@@ -66,7 +68,8 @@ services:
 
   mw_private:
     build:
-      context: ./images/mediawiki-app
+      context: .
+      dockerfile: images/mediawiki-app/Dockerfile
       target: mw-runtime
     restart: unless-stopped
     depends_on:
@@ -79,6 +82,7 @@ services:
       MW_DB_NAME: labwiki_private
       MW_DB_USER: labwiki_private_user
       MW_DB_PASS_FILE: /run/secrets/private_db_password
+      MW_CONFIG_FILE: /state/LocalSettings.php
       MW_ADMIN_USER: ${PRIVATE_ADMIN_USER:-admin}
       MW_ADMIN_PASS_FILE: /run/secrets/private_admin_password
       MW_SERVER: https://${PRIVATE_HOST:-wiki.lab.internal}
@@ -101,7 +105,8 @@ services:
 
   caddy_public:
     build:
-      context: ./images/mediawiki-app
+      context: .
+      dockerfile: images/mediawiki-app/Dockerfile
       target: caddy-runtime
     restart: unless-stopped
     depends_on:
@@ -122,7 +127,8 @@ services:
 
   caddy_private:
     build:
-      context: ./images/mediawiki-app
+      context: .
+      dockerfile: images/mediawiki-app/Dockerfile
       target: caddy-runtime
     restart: unless-stopped
     depends_on:

@@ -15,3 +15,4 @@ uploads/private/*
 !uploads/private/.gitkeep
 
 docker-data/
+.playwright-cli/

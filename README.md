@@ -114,14 +114,6 @@ Upgrade after updating the pinned base image tag or digest in `images/mediawiki-
 bash ops/scripts/upgrade.sh --yes
 ```
 
-For more reproducible builds, prefetch the pinned VisualEditor source into the repository before `docker compose build`:
-
-```bash
-bash ops/scripts/fetch-visualeditor.sh
-```
-
-If `vendor/VisualEditor/` is populated, the Docker build uses that local copy instead of cloning from Gerrit.
-
 ## Troubleshooting
 
 - `mariadb` unhealthy: verify `secrets/db_root_password.txt` exists and is readable.

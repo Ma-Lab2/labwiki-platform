@@ -3,6 +3,7 @@ set -euo pipefail
 
 STATE_DIR="${STATE_DIR:-/state}"
 LOCAL_SETTINGS="${STATE_DIR}/LocalSettings.php"
+SCRIPT_PATH="${MW_SCRIPT_PATH:-}"
 
 required_env=(
   MW_DB_TYPE
@@ -79,11 +80,23 @@ if [[ ! -s "${LOCAL_SETTINGS}" ]]; then
     --dbuser="${MW_DB_USER}" \
     --dbpassfile="${MW_DB_PASS_FILE}" \
     --server="${MW_SERVER}" \
-    --scriptpath=/ \
+    --scriptpath="${SCRIPT_PATH}" \
     --lang="${MW_LANG:-zh-cn}" \
     --passfile="${MW_ADMIN_PASS_FILE}" \
     "${MW_SITE_NAME}" "${MW_ADMIN_USER}"
 fi
+
+RUNTIME_BLOCK="$(cat <<EOF
+\$wgServer = '${MW_SERVER}';
+\$wgScriptPath = '${SCRIPT_PATH}';
+\$wgResourceBasePath = \$wgScriptPath;
+\$wgLogos = [
+  '1x' => \$wgResourceBasePath . '/resources/assets/change-your-logo.svg',
+  'icon' => \$wgResourceBasePath . '/resources/assets/change-your-logo-icon.svg',
+];
+\$wgEnableUploads = true;
+EOF
+)"
 
 COMMON_BLOCK="$(cat <<EOF
 wfLoadExtension( 'VisualEditor' );
@@ -96,6 +109,7 @@ EOF
 )"
 
 append_block_once "LABWIKI_COMMON" "${COMMON_BLOCK}"
+append_block_once "LABWIKI_RUNTIME_OVERRIDES_V2" "${RUNTIME_BLOCK}"
 
 if [[ "${MW_PRIVATE_MODE:-false}" == "true" ]]; then
   PRIVATE_BLOCK="$(cat <<'EOF'
