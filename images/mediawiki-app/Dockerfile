@@ -9,9 +9,16 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates git \
     && rm -rf /var/lib/apt/lists/*
 
-RUN git clone --filter=blob:none --no-checkout https://gerrit.wikimedia.org/r/mediawiki/extensions/VisualEditor.git /var/www/html/extensions/VisualEditor \
-    && git -C /var/www/html/extensions/VisualEditor checkout "${VISUALEDITOR_REF}" \
-    && git -C /var/www/html/extensions/VisualEditor submodule update --init --recursive --depth 1
+COPY vendor/VisualEditor /opt/vendor/VisualEditor
+
+RUN mkdir -p /var/www/html/extensions/VisualEditor \
+    && if find /opt/vendor/VisualEditor -mindepth 1 ! -name '.gitkeep' -print -quit | grep -q .; then \
+        cp -a /opt/vendor/VisualEditor/. /var/www/html/extensions/VisualEditor/; \
+      else \
+        git clone --filter=blob:none --no-checkout https://gerrit.wikimedia.org/r/mediawiki/extensions/VisualEditor.git /var/www/html/extensions/VisualEditor \
+        && git -C /var/www/html/extensions/VisualEditor checkout "${VISUALEDITOR_REF}" \
+        && git -C /var/www/html/extensions/VisualEditor submodule update --init --recursive --depth 1; \
+      fi
 
 FROM mw-source AS mw-runtime
 

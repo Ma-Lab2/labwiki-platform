@@ -4,6 +4,11 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${ROOT_DIR}"
 
+compose_cmd=(docker compose -f compose.yaml)
+if [[ "${LABWIKI_LOCAL_OVERRIDE:-false}" == "true" ]]; then
+  compose_cmd+=(-f compose.override.yaml)
+fi
+
 YES="false"
 
 if [[ "${1:-}" == "--yes" ]]; then
@@ -18,10 +23,10 @@ if [[ "${YES}" != "true" ]]; then
   fi
 fi
 
-docker compose build --pull
-docker compose up -d
-docker compose exec -T mw_public php maintenance/run.php update
-docker compose exec -T mw_private php maintenance/run.php update
+"${compose_cmd[@]}" build --pull
+"${compose_cmd[@]}" up -d
+"${compose_cmd[@]}" exec -T mw_public php maintenance/run.php update
+"${compose_cmd[@]}" exec -T mw_private php maintenance/run.php update
 bash ops/scripts/smoke-test.sh
 
 echo "Upgrade finished. Review service logs if anything looks unexpected."

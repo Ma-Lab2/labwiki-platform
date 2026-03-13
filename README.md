@@ -73,18 +73,25 @@ secrets/private_admin_password.txt
 4. Build and start:
 
 ```bash
-docker compose build --pull
-docker compose up -d
+docker compose -f compose.yaml build --pull
+docker compose -f compose.yaml up -d
 ```
 
 5. Validate:
 
 ```bash
-docker compose ps
+docker compose -f compose.yaml ps
 bash ops/scripts/smoke-test.sh
 ```
 
-For local dry runs, `compose.override.yaml` points the public host to `localhost` and the private host to `127.0.0.1:8443`.
+For local dry runs, opt in to the override file explicitly:
+
+```bash
+LABWIKI_LOCAL_OVERRIDE=true docker compose -f compose.yaml -f compose.override.yaml up -d
+LABWIKI_LOCAL_OVERRIDE=true bash ops/scripts/smoke-test.sh
+```
+
+`compose.override.yaml` is intentionally not used by production scripts unless `LABWIKI_LOCAL_OVERRIDE=true` is set.
 
 ## Backup, Restore, Upgrade
 
@@ -106,10 +113,18 @@ Upgrade after updating the pinned base image tag or digest in `images/mediawiki-
 bash ops/scripts/upgrade.sh --yes
 ```
 
+For more reproducible builds, prefetch the pinned VisualEditor source into the repository before `docker compose build`:
+
+```bash
+bash ops/scripts/fetch-visualeditor.sh
+```
+
+If `vendor/VisualEditor/` is populated, the Docker build uses that local copy instead of cloning from Gerrit.
+
 ## Troubleshooting
 
 - `mariadb` unhealthy: verify `secrets/db_root_password.txt` exists and is readable.
-- `mw_*` loops during startup: check `docker compose logs mw_public` or `docker compose logs mw_private`.
+- `mw_*` loops during startup: check `docker compose -f compose.yaml logs mw_public` or `docker compose -f compose.yaml logs mw_private`.
 - `LocalSettings.php` missing: verify `state/public` or `state/private` is writable by Docker.
 - HTTPS issues on local hosts: trust Caddy’s local CA if needed, or use the production hostnames defined in `.env`.
 

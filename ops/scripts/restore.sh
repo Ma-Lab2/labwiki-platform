@@ -4,6 +4,11 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${ROOT_DIR}"
 
+compose_cmd=(docker compose -f compose.yaml)
+if [[ "${LABWIKI_LOCAL_OVERRIDE:-false}" == "true" ]]; then
+  compose_cmd+=(-f compose.override.yaml)
+fi
+
 SQL_FILE=""
 ARCHIVE_FILE=""
 FORCE="false"
@@ -52,10 +57,10 @@ fi
 
 mkdir -p state/public state/private uploads/public uploads/private
 
-docker compose stop caddy_public caddy_private mw_public mw_private >/dev/null 2>&1 || true
-docker compose up -d mariadb
+"${compose_cmd[@]}" stop caddy_public caddy_private mw_public mw_private >/dev/null 2>&1 || true
+"${compose_cmd[@]}" up -d mariadb
 
-until docker compose exec -T mariadb sh -lc 'mariadb-admin ping -uroot -p"$(cat /run/secrets/db_root_password)" --silent'; do
+until "${compose_cmd[@]}" exec -T mariadb sh -lc 'mariadb-admin ping -uroot -p"$(cat /run/secrets/db_root_password)" --silent'; do
   sleep 2
 done
 
@@ -63,10 +68,19 @@ rm -rf state uploads
 mkdir -p state/public state/private uploads/public uploads/private
 tar xzf "${ARCHIVE_FILE}" -C "${ROOT_DIR}"
 
-docker compose exec -T mariadb sh -lc \
+"${compose_cmd[@]}" exec -T mariadb sh -lc \
+  'mariadb -uroot -p"$(cat /run/secrets/db_root_password)" <<SQL
+DROP DATABASE IF EXISTS \`labwiki_public\`;
+DROP DATABASE IF EXISTS \`labwiki_private\`;
+CREATE DATABASE \`labwiki_public\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE \`labwiki_private\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+SQL' >/dev/null
+
+"${compose_cmd[@]}" exec -T mariadb sh -lc \
   'mariadb -uroot -p"$(cat /run/secrets/db_root_password)"' \
   < "${SQL_FILE}"
 
-docker compose up -d
+"${compose_cmd[@]}" up -d
 
-printf 'Restore complete. Verify with:\n- docker compose ps\n- bash ops/scripts/smoke-test.sh\n'
+printf 'Restore complete. Verify with:\n- %s ps\n- LABWIKI_LOCAL_OVERRIDE=%s bash ops/scripts/smoke-test.sh\n' \
+  "${compose_cmd[*]}" "${LABWIKI_LOCAL_OVERRIDE:-false}"
