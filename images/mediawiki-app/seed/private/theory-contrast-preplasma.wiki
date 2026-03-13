@@ -2,15 +2,33 @@
 = Theory:对比度与预等离子体 =
 
 == 为什么重要 ==
-预脉冲和 ASE 会在主脉冲到达前改变靶前密度分布，进而影响吸收、鞘场形成和最终粒子能谱。
+对固体靶和超薄靶实验，主脉冲之前的 ns-ps 级背景、prepulse 和 ASE 往往足以先把靶前表面电离、膨胀或击穿。主脉冲到达时面对的已经不是“冷固体表面”，而是具有密度梯度的预等离子体，这会直接改变吸收、热电子产生、鞘场形成以及最终粒子能谱。
+
+== 核心判断 ==
+* 同样的主峰能量，不同时间对比度会把相互作用从“近固体表面”推向“有明显密度坡度的表面”。
+* 对超薄靶，预等离子体经常不是次要误差，而是机制选择器。
+* 对比度治理不能只看一张曲线，还要同时记录压缩状态、Pockels 时序、清洗链启停和等离子体镜反射率。
 
 == 实验上要记录什么 ==
-* 对比度测量方式
-* 压缩残差与时序设置
-* 等离子体镜 / 清洗链状态
-* 这一轮 shot 对结果的具体影响判断
+* 对比度测量方式与仪器编号
+* 主峰前 `ps` 与 `ns` 两个时间窗口的特征
+* 压缩残差、时序设置、Pockels 盒配置
+* 等离子体镜 / XPW / 其它清洗链是否启用
+* 本轮 shot 对结果的具体影响判断
+
+== 最常见的实验现象 ==
+* 截止能量降低，但低能粒子数量上升
+* spot 没变，束流发散却明显变坏
+* 同一靶厚下，谱形在不同日之间发生系统漂移
+* 超薄靶 shot 出现“打不穿”或结果非常不稳定
 
 == 关联页 ==
 * [[Laser:三阶自相关与对比度]]
+* [[Laser:激光链路总图]]
 * [[Shot:Shot模板]]
 * [[FAQ:常见问题入口]]
+
+== 信息来源 ==
+* [https://www.nature.com/articles/nphys595 Thaury C et al. Plasma mirrors for ultrahigh-intensity optics. Nature Physics (2007).]
+* [https://pubmed.ncbi.nlm.nih.gov/17215955/ Levy A et al. Double plasma mirror for ultrahigh temporal contrast ultraintense laser pulses. Optics Letters / PubMed entry (2007).]
+* [https://pubmed.ncbi.nlm.nih.gov/41504584/ Comprehensive investigation on the plasma mirror temporal contrast enhancement instrument at SG-II 5PW laser facility. Rev Sci Instrum / PubMed entry (2026).]

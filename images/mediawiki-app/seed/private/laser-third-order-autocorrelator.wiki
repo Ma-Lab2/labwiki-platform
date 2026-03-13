@@ -4,13 +4,34 @@
 == 页面定位 ==
 本页用于记录三阶自相关、对比度清洗链和预脉冲判断，不把它当成纯光学知识，而是直接服务打靶结果解释。
 
+== 为什么常看三阶相关或交叉相关 ==
+对高强度固体靶实验，真正需要知道的是主峰前后的弱结构，而不是只有主脉冲宽度。三阶相关或高动态范围交叉相关能够把 prepulse、post-pulse 和 ASE pedestal 从主峰里拉出来，因此它们直接影响对预等离子体的判断。
+
+== 读图时至少要看三件事 ==
+* 主峰前 `ps` 窗口内是否有明确副峰
+* 更长时间窗口内背景是否抬升，是否存在 ASE pedestal
+* 本轮测量动态范围和时间窗口是否足以支撑结论
+
 == 记录项 ==
-* 仪器名称 / 版本
-* 测量日期
+* 仪器名称 / 版本 / 校准日期
+* 测量模式：单发还是扫描
 * 主脉冲附近窗口
 * 远离主峰的 prepulse / ASE 特征
+* 与压缩器、Pockels、等离子体镜状态的对应关系
 * 对本轮 shot 的影响判断
+
+== 使用边界 ==
+* 三阶相关并不能替代完整电场表征，脉宽、谱相位问题仍需 FROG / SPIDER / d-scan 等工具。
+* 多 shot 扫描曲线很适合调机，但对低重频装置要警惕 shot-to-shot 漂移。
+* 单次测到的“干净曲线”不等于靶面真的干净，还要和上游链路状态、等离子体镜工况、shot 结果联判。
 
 == 关联页 ==
 * [[Theory:对比度与预等离子体]]
+* [[Laser:激光链路总图]]
 * [[Shot:Shot模板]]
+
+== 信息来源 ==
+* [https://www.nature.com/articles/srep03818 Single-shot measurement of >10^10 pulse contrast for ultra-high peak-power lasers. Scientific Reports (2014).]
+* [https://pubmed.ncbi.nlm.nih.gov/41358861/ Measuring the temporal contrast on the petawatt PETAL laser facility using a third-order cross-correlator diagnostic. Optics Express / PubMed entry (2024).]
+* [https://jglobal.jst.go.jp/en/public/200902171969978416 Trebino R et al. Frequency-resolved optical gating reference.]
+* [https://ieeexplore.ieee.org/document/676573/ Iaconis C, Walmsley IA. Spectral phase interferometry for direct electric-field reconstruction of ultrashort optical pulses.]

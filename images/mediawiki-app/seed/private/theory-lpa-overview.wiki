@@ -2,16 +2,36 @@
 = Theory:激光等离子体加速总览 =
 
 == 物理图像 ==
-高强度超短脉冲激光与等离子体相互作用后，可通过靶后鞘场、辐射压、激波或尾场等机制把能量转移给离子或电子。
+激光等离子体加速的共同特征，是利用激光在等离子体中激发的超强电场，把粒子在极短距离内加速到常规射频装置难以达到的能量梯度。
 
-== 实验上最关心的量 ==
-* 截止能量
-* 能谱形状
-* 发散角
-* 束流电荷量
-* shot-to-shot 稳定性
+* 欠密度等离子体中，主问题通常是尾场与电子注入，对应 LWFA 一类机制。
+* 近临界或固体靶中，主问题通常是热电子、鞘场、辐射压与靶面演化，对应 TNSA、RPA、CSA 等离子加速机制。
+
+== 关键量 ==
+* 激光侧：脉宽、峰值功率、聚焦强度、对比度、偏振、spot、pointing
+* 靶侧：材料、厚度、表面污染层、密度梯度、重复性
+* 束流侧：截止能量、能谱形状、发散角、电荷量、源尺寸、shot-to-shot 稳定性
+
+== 为什么实验上优先记录这些量 ==
+* `a0` 决定相对论强场区间，是区分不同相互作用区间的最常用无量纲参数。
+* 对固体靶实验，时间对比度直接决定主脉冲到来前靶面是否已经形成预等离子体。
+* 对电子加速或长距离传输实验，密度、匹配和注入条件与最终束质强相关。
 
 == 在本实验室中的对应关系 ==
-* 激光链与对比度：[[Laser:激光链路总图]]、[[Laser:三阶自相关与对比度]]
-* 打靶与束靶耦合：[[TargetArea:主靶室]]、[[TargetArea:束靶耦合段]]
-* 结果判读：[[Diagnostic:TPS]]、[[Data:实验日志与数据关联]]
+* 激光链与 CPA 主线：[[Laser:激光链路总图]]
+* 对比度与主脉冲前结构：[[Laser:三阶自相关与对比度]]、[[Theory:对比度与预等离子体]]
+* 波前、聚焦与束靶耦合：[[Laser:波前与可变形镜]]、[[TargetArea:束靶耦合段]]
+* 打靶与结果判读：[[SOP:主靶室打靶流程]]、[[Diagnostic:TPS]]、[[Data:实验日志与数据关联]]
+
+== 建议阅读顺序 ==
+# [[Laser:激光链路总图]]
+# [[Theory:对比度与预等离子体]]
+# [[Theory:TNSA]]
+# [[Diagnostic:TPS]]
+# [[Shot:Shot模板]]
+
+== 信息来源 ==
+* [https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.43.267 Tajima T, Dawson JM. Laser Electron Accelerator. Phys Rev Lett (1979).]
+* [https://journals.aps.org/rmp/abstract/10.1103/RevModPhys.81.1229 Esarey E, Schroeder CB, Leemans WP. Physics of laser-driven plasma-based electron accelerators. Rev Mod Phys (2009).]
+* [https://pubmed.ncbi.nlm.nih.gov/22790586/ Daido H, Nishiuchi M, Pirozhkov AS. Review of laser-driven ion sources and their applications. Rep Prog Phys (2012).]
+* [https://clapa.pku.edu.cn/sysgk/gk.htm 北京大学激光加速器实验室概况。]

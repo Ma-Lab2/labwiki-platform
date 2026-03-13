@@ -4,12 +4,34 @@
 == 链路骨架 ==
 振荡器 → 展宽 → 前端 → 放大链 → 压缩器 → 传输链 → 终端聚焦 → 主靶室
 
+== 每一段在解决什么问题 ==
+* 振荡器：提供稳定种子脉冲
+* 展宽：降低峰值功率，为后续放大创造条件
+* 前端与放大链：在尽量维持谱宽、相位和空间质量的前提下提升能量
+* 压缩器：把已放大的啁啾脉冲重新压回飞秒尺度
+* 传输链：把能量、波前、pointing 和时序可靠送到终端
+* 终端聚焦：把链路的全部误差最终压缩成靶面上的 spot、Strehl 和 pointing
+
 == 每轮实验前必须确认 ==
 * 当前链路配置版本
 * 关键能量与脉宽读数
 * pointing / spot / contrast 是否在允许窗口内
+* 本轮是否更改了压缩器、波前回路、等离子体镜或找靶配置
+
+== 为什么 CPA 是主线 ==
+现代超强超短激光系统的核心工程路线是 CPA。先展宽、再放大、再压缩，才能在避免放大级损伤的同时得到拍瓦级飞秒脉冲。因此，任何链路页都不应只写“设备顺序”，还要写清楚每一级对谱宽、相位、波前、能量稳定性和对比度的影响。
+
+== 本实验室应如何组织这个页面 ==
+* 每一级都记录设备名称、负责人、最后校准日期和上游下游接口
+* 参数页与 SOP 分开：参数写这里，操作步骤写到 `SOP:` 页
+* 任何影响最终 spot 或 contrast 的改动，都要回链到对应 shot
 
 == 关联页 ==
 * [[Laser:三阶自相关与对比度]]
 * [[Laser:波前与可变形镜]]
 * [[SOP:主靶室打靶流程]]
+
+== 信息来源 ==
+* [https://www.nobelprize.org/prizes/physics/2018/popular-information/ Nobel Prize 2018: chirped pulse amplification background.]
+* [https://www.eli-np.ro/lsd.php ELI-NP Lasers System Department official page.]
+* [https://clapa.pku.edu.cn/jgjscxzx/jgjscxzx.htm 北京激光加速创新中心官方介绍。]

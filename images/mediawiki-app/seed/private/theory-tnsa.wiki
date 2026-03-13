@@ -2,15 +2,33 @@
 = Theory:TNSA =
 
 == 物理图像 ==
-激光打到薄靶后产生高温电子，电子穿透到靶后形成 sheath field，并在靶后表面加速质子或轻离子。
+TNSA 是固体薄靶实验里最经典、最稳健的离子加速机制之一。主脉冲与靶前表面相互作用后产生高温电子，电子穿透薄靶到达靶后表面，形成瞬态鞘场并把表面污染层中的质子或轻离子沿靶法线方向加速出去。
+
+== 机制要点 ==
+* 电子温度、电子数和横向扩展共同决定鞘场强度与持续时间。
+* 薄靶、较好聚焦和较高激光吸收通常有利于得到更高截止能量。
+* 靶后表面污染层往往先提供质子，因此很多实验默认观测到的高能质子并不来自主体靶材料本身。
 
 == 实验判据 ==
-* 靶后离子能谱是否出现明显 cutoff
-* 激光对比度和预等离子体是否改变靶后场形成
-* 靶厚、激光 spot、入射稳定性是否变化
+* TPS 或其他能谱诊断中是否出现清晰的 proton cutoff
+* 束流主发射方向是否接近靶法线
+* 对比度变化后，截止能量、低能端和发散角是否同步变化
+* 更换靶厚、靶材或表面处理后，谱形是否系统漂移
+
+== 适用范围与常见误区 ==
+* 当靶较厚、对比度有限、机制过渡不明显时，先按 TNSA 作为默认工作假设是合理的。
+* 超薄靶、极高对比度和超高强度下可能进入 RPA 或混合机制，不能仅凭“有质子就叫 TNSA”。
+* 单次高能点不能直接说明机制变化，必须结合对比度、靶前状态和多 shot 统计。
 
 == 本实验室关联页 ==
+* [[Theory:激光等离子体加速总览]]
 * [[Laser:三阶自相关与对比度]]
 * [[SOP:主靶室打靶流程]]
 * [[Diagnostic:TPS]]
 * [[Shot:Shot模板]]
+
+== 信息来源 ==
+* [https://pubmed.ncbi.nlm.nih.gov/11005974/ Snavely RA et al. Intense high-energy proton beams from Petawatt-laser irradiation of solids. Phys Rev Lett / PubMed entry (2000).]
+* [https://pubmed.ncbi.nlm.nih.gov/12786012/ Mora P. Plasma expansion into a vacuum. Phys Rev Lett / PubMed entry (2003).]
+* [https://pubmed.ncbi.nlm.nih.gov/22790586/ Daido H, Nishiuchi M, Pirozhkov AS. Review of laser-driven ion sources and their applications. Rep Prog Phys (2012).]
+* [https://clapa.pku.edu.cn/sysgk/gk.htm 北京大学激光加速器实验室概况。]
