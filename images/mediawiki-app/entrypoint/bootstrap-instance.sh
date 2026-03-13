@@ -85,13 +85,26 @@ seed_page_if_default() {
   local title="$1"
   local seed_file="$2"
   local existing_text
+  local legacy_hint=""
 
   if [[ ! -f "${seed_file}" ]]; then
     return 0
   fi
 
+  case "${SITE_VARIANT}" in
+    public)
+      legacy_hint="公开研究档案"
+      ;;
+    private)
+      legacy_hint="内部协作中枢"
+      ;;
+  esac
+
   existing_text="$(php maintenance/run.php getText "${title}" 2>/dev/null || true)"
-  if [[ -n "${existing_text}" ]] && ! grep -Fq "已安装MediaWiki" <<<"${existing_text}"; then
+  if [[ -n "${existing_text}" ]] \
+    && ! grep -Fq "已安装MediaWiki" <<<"${existing_text}" \
+    && ! grep -Fq "LABWIKI_MANAGED_PAGE" <<<"${existing_text}" \
+    && [[ -z "${legacy_hint}" || "${existing_text}" != *"${legacy_hint}"* ]]; then
     return 0
   fi
 

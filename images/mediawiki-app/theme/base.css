@@ -346,6 +346,23 @@ body.ns--1 .vector-body {
   justify-content: center;
 }
 
+body.mw-special-Userlogin .vector-main-menu-container,
+body.mw-special-Userlogin .vector-search-box,
+body.mw-special-Userlogin .vector-search-box-vue,
+body.mw-special-Userlogin .vector-user-links,
+body.mw-special-Userlogin .mw-header .vector-main-menu-landmark,
+body.mw-special-Userlogin .mw-header .vector-user-links {
+  display: none !important;
+}
+
+body.mw-special-Userlogin .mw-header {
+  justify-content: center;
+}
+
+body.mw-special-Userlogin .mw-header-start {
+  flex: 0 0 auto;
+}
+
 body.mw-special-Userlogin .mw-body,
 body.ns--1 .mw-body {
   width: min(100%, 760px);
@@ -369,6 +386,16 @@ body.mw-special-Userlogin #mw-content-text,
 body.ns--1 #mw-content-text {
   max-width: 540px;
   margin: 0 auto;
+}
+
+body.mw-special-Userlogin #mw-content-text::before {
+  content: "仅限实验室成员与授权协作方访问。本入口用于 SOP、项目记录、会议纪要与受控资料。";
+  display: block;
+  margin: 0 auto 18px;
+  max-width: 32rem;
+  text-align: center;
+  color: var(--muted);
+  line-height: 1.8;
 }
 
 body.mw-special-Userlogin .mw-body-content form,
