@@ -2,15 +2,58 @@
 = Diagnostic:TPS =
 
 == 原理 ==
-通过磁场和电场联合色散不同荷质比与能量的粒子，在探测面上形成可反演的轨迹。
+汤姆逊抛物谱仪通过磁场和电场联合色散不同荷质比与能量的带电粒子，在探测面上形成可分离的抛物线轨迹。对激光驱动离子束实验，它最重要的价值不是“看见一条谱”，而是把离子种类、能量范围和截止能量在单发 shot 上区分出来。
+
+== 读谱前必须确认 ==
+* 狭缝、漂移段、磁场区和电场区的几何参数版本
+* 磁场 / 电场设定值与最近一次标定日期
+* 探测面类型：MCP、荧光屏、CR-39 或组合探测
+* 当前反演脚本版本与能量刻度文件
 
 == 实验上要固定的内容 ==
 * 几何参数
 * 磁场 / 电场参数
 * 探测面与标定版本
 * 数据读取脚本
+* 背景扣除与阈值设置
 * 不确定度说明
 
+== 最常见的误判 ==
+* 把探测器响应变化误当成束流变化
+* 只看一条亮轨迹，忽略不同离子种类重叠
+* 不同步记录狭缝和几何改动，导致不同批次谱线不能直接比较
+* 用未经更新的反演脚本处理新几何参数
+
+== 本实验室建议字段 ==
+{| class="wikitable"
+! 字段
+! 说明
+|-
+| 诊断编号
+| 固定填写设备编号或靶场位置
+|-
+| 视场几何
+| 狭缝、漂移段、探测面距离
+|-
+| 场参数
+| 磁场、电场、极性、标定版本
+|-
+| 探测器
+| MCP / CR-39 / 闪烁体及门宽
+|-
+| 反演
+| 使用脚本、版本号、刻度文件
+|-
+| 输出
+| 离子种类、截止能量、谱形摘要
+|}
+
 == 关联页 ==
+* [[Theory:TNSA]]
 * [[Data:实验日志与数据关联]]
 * [[Shot:Shot模板]]
+
+== 信息来源 ==
+* [https://www.mdpi.com/1424-8220/22/9/3239 Angular-Resolved Thomson Parabola Spectrometer for Laser-Driven Ion Accelerators. Sensors (2022).]
+* [https://pubmed.ncbi.nlm.nih.gov/33138598/ Thomson parabola and time-of-flight detector cross-calibration methodology on the ALLS 100 TW laser-driven ion acceleration beamline. Rev Sci Instrum / PubMed entry (2020).]
+* [https://www.osti.gov/biblio/22531502 Thomson Parabola Spectrometer: a powerful tool for on-line plasma analysis. OSTI conference record.]
