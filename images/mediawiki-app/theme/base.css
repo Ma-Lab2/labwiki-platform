@@ -190,6 +190,12 @@ input[type="submit"]:hover {
   max-width: var(--content-width);
 }
 
+.mw-body-header {
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 18px;
+}
+
 #firstHeading {
   font-size: clamp(2rem, 3vw, 3.2rem);
   font-weight: 700;
@@ -349,12 +355,118 @@ pre,
   background: var(--surface-muted);
 }
 
+.wikitable tr:nth-child(even) td {
+  background: rgba(246, 243, 237, 0.56);
+}
+
+.wikitable ul,
+.wikitable ol {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.wikitable li + li {
+  margin-top: 0.35em;
+}
+
 .mw-changeslist,
 .mw-contributions-list,
 .mw-history-legend,
 .mw-recentchanges-table,
 .special {
   color: var(--muted);
+}
+
+body.ns-special .mw-body-content,
+body.ns-special .mw-parser-output {
+  max-width: calc(var(--content-width) + 2rem);
+}
+
+body.ns-special #firstHeading {
+  font-size: clamp(1.8rem, 2.6vw, 2.7rem);
+}
+
+body.ns-special .mw-body-header + #mw-content-text,
+body.ns-special .mw-body-content > form,
+body.ns-special .mw-parser-output > form,
+body.ns-special .oo-ui-panelLayout-framed,
+body.ns-special .mw-specialpage-summary,
+body.ns-special .mw-pager-navigation-bar {
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+}
+
+body.ns-special .mw-search-form-wrapper,
+body.ns-special .mw-rcfilters-ui-filterWrapper,
+body.ns-special .mw-rcfilters-head,
+body.ns-special .mw-contributions-form,
+body.ns-special .mw-import-form,
+body.ns-special .mw-htmlform,
+body.ns-special #mw-content-text > form {
+  padding: 16px 18px;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-card);
+}
+
+body.ns-special .mw-rcfilters-head,
+body.ns-special .mw-search-form-wrapper,
+body.ns-special .mw-contributions-form,
+body.ns-special .mw-htmlform {
+  margin-bottom: 16px;
+}
+
+body.ns-special .mw-changeslist,
+body.ns-special .mw-search-results,
+body.ns-special .special {
+  padding: 0;
+}
+
+body.ns-special .mw-changeslist ul,
+body.ns-special .mw-search-results-results,
+body.ns-special .mw-contributions-list {
+  margin: 0;
+  padding: 0;
+}
+
+body.ns-special .mw-changeslist li,
+body.ns-special .mw-search-result,
+body.ns-special .mw-contributions-list > li {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 14px 16px;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+body.ns-special .mw-search-result-heading,
+body.ns-special .mw-changeslist-date,
+body.ns-special .mw-rcfilters-head h3 {
+  color: var(--muted-strong);
+}
+
+body.ns-special .mw-changeslist-legend,
+body.ns-special .mw-rcfilters-ui-filterTagMultiselectWidget-wrapper,
+body.ns-special .mw-rcfilters-ui-cell {
+  border-radius: 10px;
+}
+
+body.ns-special .mw-diff,
+body.ns-special table.diff,
+body.ns-special .diff {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+
+body.ns-special .diff td,
+body.ns-special .diff th {
+  border-color: var(--line);
 }
 
 .mw-footer-container {
@@ -561,6 +673,35 @@ table.labwiki-runbook td {
   padding: 16px 18px;
   background: var(--surface-strong);
   border: 1px solid var(--line);
+}
+
+table.labwiki-console {
+  border-spacing: 12px;
+}
+
+table.labwiki-console th,
+table.labwiki-console td {
+  vertical-align: top;
+  border-radius: 12px;
+}
+
+table.labwiki-console th {
+  padding: 12px 14px;
+  background: var(--surface-ink);
+  border: 1px solid var(--line);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.73rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-strong);
+}
+
+table.labwiki-console td {
+  padding: 16px 18px;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-card);
 }
 
 body.mw-special-Userlogin .vector-main-menu-container,

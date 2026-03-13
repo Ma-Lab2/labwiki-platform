@@ -22,6 +22,76 @@ body.skin-vector-2022 {
   content: "实验运行台账";
 }
 
+body.page-首页 .mw-body,
+body.page-Main_Page .mw-body {
+  padding-top: 18px;
+}
+
+body.page-首页 .mw-body-header,
+body.page-Main_Page .mw-body-header {
+  border-bottom: 0;
+  margin-bottom: 10px;
+}
+
+body.page-首页 table.labwiki-masthead,
+body.page-Main_Page table.labwiki-masthead {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0)),
+    linear-gradient(180deg, #eef5f3 0%, #deebe8 100%);
+  border-top-color: var(--accent);
+}
+
+body.page-首页 .labwiki-masthead-meta,
+body.page-Main_Page .labwiki-masthead-meta {
+  background:
+    linear-gradient(180deg, rgba(11, 38, 47, 0.06), rgba(11, 38, 47, 0.02)),
+    rgba(255, 255, 255, 0.5);
+}
+
+body.page-首页 table.labwiki-strip td,
+body.page-Main_Page table.labwiki-strip td {
+  background:
+    linear-gradient(90deg, rgba(32, 85, 102, 0.12), rgba(32, 85, 102, 0.03)),
+    var(--surface-strong);
+}
+
+body.page-首页 table.labwiki-console th,
+body.page-Main_Page table.labwiki-console th,
+body.page-首页 table.labwiki-runbook th,
+body.page-Main_Page table.labwiki-runbook th {
+  background: #dfe9e7;
+  color: var(--accent-strong);
+}
+
+body.page-首页 table.labwiki-console td,
+body.page-Main_Page table.labwiki-console td {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(255, 255, 255, 0)),
+    var(--surface-strong);
+  box-shadow: none;
+}
+
+body.page-首页 table.labwiki-grid td,
+body.page-Main_Page table.labwiki-grid td {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0)),
+    var(--surface-strong);
+}
+
+body.page-首页 table.labwiki-grid td a,
+body.page-首页 table.labwiki-runbook td a,
+body.page-首页 table.labwiki-console td a,
+body.page-Main_Page table.labwiki-grid td a,
+body.page-Main_Page table.labwiki-runbook td a,
+body.page-Main_Page table.labwiki-console td a {
+  font-weight: 600;
+}
+
+body.page-首页 .mw-parser-output h2,
+body.page-Main_Page .mw-parser-output h2 {
+  margin-top: 1.4em;
+}
+
 table.labwiki-runbook td {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.48), rgba(255, 255, 255, 0)),
