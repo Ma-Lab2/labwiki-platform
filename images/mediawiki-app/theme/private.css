@@ -1,16 +1,29 @@
 :root {
-  --accent: #275b67;
-  --accent-strong: #153843;
-  --accent-soft: rgba(39, 91, 103, 0.08);
-  --hero-a: #f6f9f8;
-  --hero-b: #edf2f1;
-  --hero-c: #e4ecea;
+  --page-bg: #e5ebe9;
+  --surface: rgba(246, 250, 249, 0.97);
+  --surface-strong: #fbfdfc;
+  --surface-muted: #eaf1ef;
+  --surface-ink: #edf5f3;
+  --accent: #205566;
+  --accent-strong: #133844;
+  --accent-soft: rgba(32, 85, 102, 0.08);
+  --hero-bg: linear-gradient(180deg, #f4f8f7 0%, #e4ecea 100%);
 }
 
 body.skin-vector-2022 {
   background:
-    linear-gradient(rgba(17, 45, 50, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(17, 45, 50, 0.02) 1px, transparent 1px),
-    linear-gradient(180deg, #f3f6f5 0%, #e5ecea 100%);
+    linear-gradient(rgba(14, 37, 42, 0.024) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(14, 37, 42, 0.024) 1px, transparent 1px),
+    linear-gradient(180deg, #f2f6f5 0%, #dfe8e6 100%);
   background-size: 24px 24px, 24px 24px, auto;
+}
+
+.mw-logo-wordmark::before {
+  content: "实验运行台账";
+}
+
+table.labwiki-runbook td {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.48), rgba(255, 255, 255, 0)),
+    var(--surface-strong);
 }

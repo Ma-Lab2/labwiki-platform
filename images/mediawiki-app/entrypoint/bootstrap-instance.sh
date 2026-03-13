@@ -168,6 +168,7 @@ RUNTIME_BLOCK="$(cat <<EOF
 \$wgServer = '${MW_SERVER}';
 \$wgScriptPath = '${SCRIPT_PATH}';
 \$wgResourceBasePath = \$wgScriptPath;
+\$wgSitename = '${MW_SITE_NAME}';
 \$wgLogos = [
   '1x' => '${LOGO_PATH}',
   'icon' => '${LOGO_PATH}',
@@ -205,7 +206,7 @@ EOF
 
 append_block_once "LABWIKI_COMMON" "${COMMON_BLOCK}"
 append_block_once "LABWIKI_THEME_V1" "${THEME_BLOCK}"
-append_block_once "LABWIKI_RUNTIME_OVERRIDES_V3" "${RUNTIME_BLOCK}"
+append_block_once "LABWIKI_RUNTIME_OVERRIDES_V5" "${RUNTIME_BLOCK}"
 
 if [[ "${MW_PRIVATE_MODE:-false}" == "true" ]]; then
   PRIVATE_BLOCK="$(cat <<'EOF'

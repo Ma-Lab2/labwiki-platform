@@ -1,70 +1,84 @@
 <!-- LABWIKI_MANAGED_PAGE:PRIVATE_HOME -->
-{| class="labwiki-hero"
+{| class="labwiki-masthead"
 |-
-| 实验记录与运行台账
-|-
-| 这里是内部工作面。理论页用于统一概念，设备页记录链路和参数，SOP 页约束操作，`Shot:` 页面保存每次打靶的事实记录、附件和数据路径。
-|-
-| [[Shot:Shot日志入口|Shot 入口]] · [[Shot:周实验日志|周实验日志]] · [[SOP:主靶室打靶流程|打靶 SOP]] · [[Data:实验日志与数据关联|数据关联规则]]
+| class="labwiki-masthead-main" |
+<small>Internal Runbook</small>
+<strong>实验运行台账</strong>
+<p>这里是内部工作面。理论页统一概念，设备页记录链路与参数，SOP 页约束操作，`Shot:` 页面保存每次打靶的事实记录、附件、原始数据路径和复盘结论。</p>
+| class="labwiki-masthead-meta" |
+<small>Run Notes</small>
+<dl>
+<dt>记录单位</dt>
+<dd>每轮实验 / 每个 shot</dd>
+<dt>资料策略</dt>
+<dd>小文件上传，大文件保留路径与外链</dd>
+<dt>使用边界</dt>
+<dd>仅限实验室成员与授权协作方</dd>
+</dl>
 |}
 
-{| class="labwiki-grid"
+{| class="labwiki-strip"
 |-
-! 今天最常用
-! 主目录
-! 常用模板
-|-
-| * [[SOP:主靶室打靶流程]]
-* [[Shot:Shot模板]]
-* [[Shot:周实验日志]]
-* [[Meeting:实验复盘模板]]
-| * [[Theory:基础理论总览]]
-* [[Laser:激光系统总览]]
-* [[TargetArea:靶场总览]]
-* [[Diagnostic:诊断总览]]
-* [[Data:数据管理总览]]
-| * [[Project:项目模板]]
-* [[Shot:Shot模板]]
-* [[Meeting:实验复盘模板]]
-* [[SOP:SOP模板]]
+| 当日常用： [[Shot:Shot日志入口|Shot 入口]] · [[Shot:周实验日志|周实验日志]] · [[SOP:主靶室打靶流程|打靶 SOP]] · [[Data:实验日志与数据关联|数据关联规则]]
 |}
 
-{| class="labwiki-note"
-|-
-| '''记录要求'''：每轮打靶都必须写 `Shot:` 页面。小型表格、截图和记录单直接上传到 wiki；大文件只放外部链接，并写清楚路径、权限和版本。
-|}
-
-== 进入路径 ==
-{| class="labwiki-grid"
-|-
-! 新人学习
-! 实验运行
-! 复盘与沉淀
-|-
-| * [[Theory:激光等离子体加速总览]]
-* [[Safety:激光安全]]
-* [[TargetArea:靶场总览]]
-| * [[Laser:激光链路总图]]
-* [[SOP:主靶室打靶流程]]
-* [[Diagnostic:TPS]]
-| * [[Shot:Shot日志入口]]
-* [[Meeting:会议入口]]
-* [[FAQ:常见问题入口]]
-|}
-
-== 今天建议先做什么 ==
-{| class="labwiki-grid"
+== 运行入口 ==
+{| class="labwiki-runbook"
 |-
 ! 准备打靶
 ! 刚完成 shot
-! 回看历史
+! 数据与日志
+! 复盘入口
 |-
-| * 先读 [[SOP:主靶室打靶流程]]
-* 再核对 [[TargetArea:束靶耦合段]]
-* 确认 [[Diagnostic:TPS]]
+| * [[SOP:主靶室打靶流程]]
+* [[TargetArea:束靶耦合段]]
+* [[Diagnostic:TPS]]
+| * [[Shot:Shot模板]]
+* [[Shot:周实验日志]]
+* [[风险与问题]]
+| * [[Data:实验日志与数据关联]]
+* [[Control:中央控制平台]]
+* [[数据归档]]
+| * [[Meeting:实验复盘模板]]
+* [[Meeting:会议入口]]
+* [[Project:项目总览]]
+|}
+
+== 知识目录 ==
+{| class="labwiki-grid"
+|-
+! 理论与安全
+! 激光与靶场
+! 诊断与数据
+! 模板与项目
+|-
+| * [[Theory:基础理论总览]]
+* [[Safety:安全总览]]
+* [[Safety:激光安全]]
+| * [[Laser:激光系统总览]]
+* [[TargetArea:靶场总览]]
+* [[SOP:流程总览]]
+| * [[Diagnostic:诊断总览]]
+* [[Data:数据管理总览]]
+* [[Control:控制与运行总览]]
+| * [[Project:项目模板]]
+* [[Shot:Shot模板]]
+* [[Meeting:实验复盘模板]]
+|}
+
+== 值班顺序 ==
+{| class="labwiki-runbook"
+|-
+! 打靶前
+! shot 后 5 分钟内
+! 本周回看
+|-
+| * 核对 [[SOP:主靶室打靶流程]]
+* 确认找靶、诊断和运行窗口
+* 明确谁发令、谁记录、谁收数
 | * 立刻填写 [[Shot:Shot模板]]
-* 补上 [[Data:实验日志与数据关联]] 中要求的数据路径
-* 如有异常，标记到 [[风险与问题]]
+* 记录数据路径、附件和异常
+* 不能确认的结论先写“待核查”
 | * 从 [[Shot:周实验日志]] 看本周节奏
 * 从 [[Meeting:会议入口]] 看复盘
 * 从 [[Project:项目总览]] 回到项目线

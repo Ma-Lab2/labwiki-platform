@@ -49,7 +49,7 @@ services:
       MW_ADMIN_USER: ${PUBLIC_ADMIN_USER:-admin}
       MW_ADMIN_PASS_FILE: /run/secrets/public_admin_password
       MW_SERVER: https://${PUBLIC_HOST:-lab.example.com}
-      MW_SITE_NAME: ${PUBLIC_SITE_NAME:-Lab Public Wiki}
+      MW_SITE_NAME: ${PUBLIC_SITE_NAME:-课题组公开档案}
       MW_LANG: ${MW_LANG:-zh-cn}
       MW_PRIVATE_MODE: "false"
     secrets:
@@ -86,7 +86,7 @@ services:
       MW_ADMIN_USER: ${PRIVATE_ADMIN_USER:-admin}
       MW_ADMIN_PASS_FILE: /run/secrets/private_admin_password
       MW_SERVER: https://${PRIVATE_HOST:-wiki.lab.internal}
-      MW_SITE_NAME: ${PRIVATE_SITE_NAME:-Lab Internal Wiki}
+      MW_SITE_NAME: ${PRIVATE_SITE_NAME:-实验运行台账}
       MW_LANG: ${MW_LANG:-zh-cn}
       MW_PRIVATE_MODE: "true"
     secrets:

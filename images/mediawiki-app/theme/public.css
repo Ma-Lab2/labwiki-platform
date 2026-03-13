@@ -1,13 +1,28 @@
 :root {
-  --accent: #8a3f29;
-  --accent-strong: #5e2415;
-  --accent-soft: rgba(138, 63, 41, 0.08);
-  --hero-a: #fbf7f1;
-  --hero-b: #f2ebe2;
-  --hero-c: #ebe2d6;
+  --page-bg: #ece8e1;
+  --surface: rgba(250, 248, 243, 0.97);
+  --surface-strong: #fffdf8;
+  --surface-muted: #f0ece3;
+  --surface-ink: #f6f1e8;
+  --accent: #7f3b24;
+  --accent-strong: #562012;
+  --accent-soft: rgba(127, 59, 36, 0.08);
+  --hero-bg: linear-gradient(180deg, #fbf7ef 0%, #f1e9dc 100%);
+}
+
+body.skin-vector-2022 {
+  background:
+    linear-gradient(rgba(30, 24, 20, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 24, 20, 0.02) 1px, transparent 1px),
+    linear-gradient(180deg, #f7f4ee 0%, #e9e3d9 100%);
+  background-size: 24px 24px, 24px 24px, auto;
+}
+
+.mw-logo-wordmark::before {
+  content: "课题组公开档案";
 }
 
 body.page-首页 .mw-page-container,
 body.page-Main_Page .mw-page-container {
-  box-shadow: 0 22px 56px rgba(88, 36, 20, 0.08);
+  box-shadow: 0 20px 52px rgba(78, 42, 28, 0.08);
 }
