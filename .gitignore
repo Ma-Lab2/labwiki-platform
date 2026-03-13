@@ -6,8 +6,12 @@ backups/*
 !backups/.gitkeep
 
 state/**/LocalSettings.php
-uploads/**/*
+uploads/*
+!uploads/public/
+!uploads/private/
+uploads/public/*
 !uploads/public/.gitkeep
+uploads/private/*
 !uploads/private/.gitkeep
 
 docker-data/
