@@ -1,0 +1,16 @@
+services:
+  mw_public:
+    environment:
+      MW_SERVER: https://localhost
+
+  mw_private:
+    environment:
+      MW_SERVER: https://127.0.0.1:8443
+
+  caddy_public:
+    environment:
+      PUBLIC_HOST: localhost
+
+  caddy_private:
+    environment:
+      PRIVATE_HOST: 127.0.0.1

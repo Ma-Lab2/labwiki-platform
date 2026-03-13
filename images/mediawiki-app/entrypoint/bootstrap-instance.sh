@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+STATE_DIR="${STATE_DIR:-/state}"
+LOCAL_SETTINGS="${STATE_DIR}/LocalSettings.php"
+
+required_env=(
+  MW_DB_TYPE
+  MW_DB_SERVER
+  MW_DB_NAME
+  MW_DB_USER
+  MW_DB_PASS_FILE
+  MW_ADMIN_USER
+  MW_ADMIN_PASS_FILE
+  MW_SERVER
+  MW_SITE_NAME
+)
+
+for name in "${required_env[@]}"; do
+  if [[ -z "${!name:-}" ]]; then
+    echo "Missing required environment variable: ${name}" >&2
+    exit 1
+  fi
+done
+
+if [[ ! -f "${MW_DB_PASS_FILE}" ]]; then
+  echo "Database password file not found: ${MW_DB_PASS_FILE}" >&2
+  exit 1
+fi
+
+if [[ ! -f "${MW_ADMIN_PASS_FILE}" ]]; then
+  echo "Admin password file not found: ${MW_ADMIN_PASS_FILE}" >&2
+  exit 1
+fi
+
+mkdir -p "${STATE_DIR}" /var/www/html/images
+cd /var/www/html
+
+append_block_once() {
+  local marker="$1"
+  local content="$2"
+
+  if [[ ! -f "${LOCAL_SETTINGS}" ]] || grep -Fq "${marker}" "${LOCAL_SETTINGS}"; then
+    return 0
+  fi
+
+  {
+    printf "\n# %s\n" "${marker}"
+    printf "%s\n" "${content}"
+  } >> "${LOCAL_SETTINGS}"
+}
+
+wait_for_db() {
+  local attempts=30
+
+  until php -r '
+    mysqli_report(MYSQLI_REPORT_OFF);
+    $pass = trim(file_get_contents(getenv("MW_DB_PASS_FILE")));
+    $conn = @new mysqli(getenv("MW_DB_SERVER"), getenv("MW_DB_USER"), $pass, getenv("MW_DB_NAME"));
+    exit($conn->connect_errno ? 1 : 0);
+  '; do
+    attempts=$((attempts - 1))
+    if [[ "${attempts}" -le 0 ]]; then
+      echo "Database did not become ready in time" >&2
+      exit 1
+    fi
+    sleep 2
+  done
+}
+
+wait_for_db
+
+if [[ ! -s "${LOCAL_SETTINGS}" ]]; then
+  php maintenance/run.php install \
+    --confpath="${STATE_DIR}" \
+    --dbtype="${MW_DB_TYPE}" \
+    --dbserver="${MW_DB_SERVER}" \
+    --dbname="${MW_DB_NAME}" \
+    --dbuser="${MW_DB_USER}" \
+    --dbpassfile="${MW_DB_PASS_FILE}" \
+    --server="${MW_SERVER}" \
+    --scriptpath=/ \
+    --lang="${MW_LANG:-zh-cn}" \
+    --passfile="${MW_ADMIN_PASS_FILE}" \
+    "${MW_SITE_NAME}" "${MW_ADMIN_USER}"
+fi
+
+COMMON_BLOCK="$(cat <<EOF
+wfLoadExtension( 'VisualEditor' );
+\$wgGroupPermissions['user']['writeapi'] = true;
+\$wgMainCacheType = CACHE_ACCEL;
+\$wgParserCacheType = CACHE_ACCEL;
+\$wgSessionCacheType = CACHE_ACCEL;
+\$wgLanguageCode = '${MW_LANG:-zh-cn}';
+EOF
+)"
+
+append_block_once "LABWIKI_COMMON" "${COMMON_BLOCK}"
+
+if [[ "${MW_PRIVATE_MODE:-false}" == "true" ]]; then
+  PRIVATE_BLOCK="$(cat <<'EOF'
+$wgGroupPermissions['*']['read'] = false;
+$wgGroupPermissions['*']['edit'] = false;
+$wgGroupPermissions['*']['createaccount'] = false;
+EOF
+)"
+  append_block_once "PRIVATE_WIKI_HARDENING" "${PRIVATE_BLOCK}"
+fi
+
+chmod 600 "${LOCAL_SETTINGS}"
+ln -sf "${LOCAL_SETTINGS}" /var/www/html/LocalSettings.php
+
+exec "$@"

@@ -1,0 +1,13 @@
+.env
+.DS_Store
+
+secrets/*.txt
+backups/*
+!backups/.gitkeep
+
+state/**/LocalSettings.php
+uploads/**/*
+!uploads/public/.gitkeep
+!uploads/private/.gitkeep
+
+docker-data/
