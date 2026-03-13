@@ -10,6 +10,8 @@ services:
   caddy_public:
     environment:
       PUBLIC_HOST: localhost
+    volumes:
+      - ./ops/caddy/Caddyfile.public.local:/etc/caddy/Caddyfile:ro
 
   caddy_private:
     environment:

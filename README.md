@@ -92,6 +92,7 @@ LABWIKI_LOCAL_OVERRIDE=true bash ops/scripts/smoke-test.sh
 ```
 
 `compose.override.yaml` is intentionally not used by production scripts unless `LABWIKI_LOCAL_OVERRIDE=true` is set.
+In local mode, the public site uses [`ops/caddy/Caddyfile.public.local`](/mnt/c/Songtan/课题组wiki/ops/caddy/Caddyfile.public.local) with `tls internal`, so `https://localhost` does not depend on ACME.
 
 ## Backup, Restore, Upgrade
 
