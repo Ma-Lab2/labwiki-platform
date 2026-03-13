@@ -1,14 +1,16 @@
 :root {
-  --accent: #0f6c6a;
-  --accent-strong: #0b4f4c;
-  --accent-soft: rgba(15, 108, 106, 0.15);
-  --hero-a: #0d2223;
-  --hero-b: #155158;
-  --hero-c: #8fd5ce;
+  --accent: #275b67;
+  --accent-strong: #153843;
+  --accent-soft: rgba(39, 91, 103, 0.08);
+  --hero-a: #f6f9f8;
+  --hero-b: #edf2f1;
+  --hero-c: #e4ecea;
 }
 
 body.skin-vector-2022 {
   background:
-    radial-gradient(circle at top left, rgba(143, 213, 206, 0.12), transparent 22%),
-    linear-gradient(180deg, #eef5f4 0%, #dfeceb 100%);
+    linear-gradient(rgba(17, 45, 50, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17, 45, 50, 0.02) 1px, transparent 1px),
+    linear-gradient(180deg, #f3f6f5 0%, #e5ecea 100%);
+  background-size: 24px 24px, 24px 24px, auto;
 }

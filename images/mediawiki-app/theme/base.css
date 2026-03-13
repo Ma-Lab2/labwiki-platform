@@ -1,25 +1,25 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@500;700;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Source+Serif+4:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@500;700;900&display=swap");
 
 :root {
-  --page-bg: #efe6d8;
-  --surface: rgba(255, 252, 245, 0.88);
-  --surface-strong: #fffaf1;
-  --surface-muted: rgba(244, 237, 225, 0.82);
-  --ink: #1f1a18;
-  --muted: #625851;
-  --line: rgba(31, 26, 24, 0.14);
-  --line-strong: rgba(31, 26, 24, 0.22);
-  --accent: #ab4f31;
-  --accent-strong: #78301d;
-  --accent-soft: rgba(171, 79, 49, 0.14);
-  --hero-ink: #fff7ef;
-  --hero-a: #381412;
-  --hero-b: #944326;
-  --hero-c: #dfbf86;
-  --shadow-lg: 0 28px 80px rgba(44, 31, 24, 0.18);
-  --shadow-md: 0 18px 40px rgba(44, 31, 24, 0.1);
-  --radius-xl: 30px;
-  --radius-lg: 22px;
+  --page-bg: #eeece7;
+  --surface: rgba(251, 250, 246, 0.96);
+  --surface-strong: #fffdfa;
+  --surface-muted: #f3f0e9;
+  --ink: #191919;
+  --muted: #55504a;
+  --line: rgba(25, 25, 25, 0.12);
+  --line-strong: rgba(25, 25, 25, 0.22);
+  --accent: #8b4027;
+  --accent-strong: #5d2413;
+  --accent-soft: rgba(139, 64, 39, 0.08);
+  --hero-ink: #1a1a1a;
+  --hero-a: #faf7f0;
+  --hero-b: #f4efe6;
+  --hero-c: #ece5da;
+  --shadow-lg: 0 20px 50px rgba(22, 22, 22, 0.08);
+  --shadow-md: 0 12px 28px rgba(22, 22, 22, 0.05);
+  --radius-xl: 18px;
+  --radius-lg: 14px;
   --color-progressive: var(--accent);
   --color-progressive--hover: var(--accent-strong);
   --color-progressive--active: var(--accent-strong);
@@ -28,9 +28,10 @@
 
 html {
   background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.8), transparent 22%),
-    radial-gradient(circle at 85% 12%, rgba(255, 255, 255, 0.42), transparent 18%),
-    linear-gradient(180deg, #f7f1e8 0%, var(--page-bg) 100%);
+    linear-gradient(rgba(20, 20, 20, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20, 20, 20, 0.02) 1px, transparent 1px),
+    linear-gradient(180deg, #f7f5ef 0%, var(--page-bg) 100%);
+  background-size: 24px 24px, 24px 24px, auto;
 }
 
 body.skin-vector-2022 {
@@ -45,10 +46,9 @@ body.skin-vector-2022::before {
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(rgba(31, 26, 24, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(31, 26, 24, 0.03) 1px, transparent 1px);
-  background-size: 36px 36px;
-  opacity: 0.45;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.55), transparent 180px),
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.38), transparent 28%);
+  opacity: 0.8;
 }
 
 a {
@@ -63,12 +63,11 @@ a:hover {
 
 .mw-page-container {
   max-width: min(1440px, calc(100vw - 40px));
-  margin: 26px auto 44px;
+  margin: 18px auto 36px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
-  backdrop-filter: blur(18px);
   overflow: hidden;
 }
 
@@ -80,8 +79,7 @@ a:hover {
 
 .mw-header,
 .vector-page-toolbar {
-  background: rgba(255, 250, 241, 0.72);
-  backdrop-filter: blur(12px);
+  background: rgba(255, 253, 250, 0.9);
   border-bottom: 1px solid var(--line);
 }
 
@@ -92,26 +90,32 @@ a:hover {
 
 .mw-logo,
 .mw-logo-container {
-  gap: 12px;
+  gap: 10px;
 }
 
 .mw-logo img,
 .mw-logo-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
-  box-shadow: 0 10px 24px rgba(31, 26, 24, 0.16);
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  box-shadow: none;
 }
 
 .mw-logo-wordmark,
 .mw-logo-tagline,
 #firstHeading,
 .vector-toc-heading {
-  font-family: "Noto Serif SC", serif;
+  font-family: "Source Serif 4", "Noto Serif SC", serif;
 }
 
 .mw-logo-wordmark {
-  letter-spacing: 0.02em;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.mw-logo-tagline {
+  display: none;
 }
 
 .cdx-text-input__input,
@@ -158,9 +162,9 @@ input[type="submit"]:hover {
 }
 
 #firstHeading {
-  font-size: clamp(2.1rem, 3.6vw, 3.8rem);
-  font-weight: 900;
-  letter-spacing: -0.03em;
+  font-size: clamp(1.9rem, 3vw, 3.1rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
   margin-bottom: 0.45em;
 }
 
@@ -175,11 +179,11 @@ input[type="submit"]:hover {
 .mw-parser-output h2,
 .mw-parser-output h3,
 .mw-parser-output h4 {
-  font-family: "Noto Serif SC", serif;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-family: "Source Serif 4", "Noto Serif SC", serif;
+  font-weight: 700;
+  letter-spacing: -0.015em;
   border-bottom: 1px solid var(--line);
-  padding-bottom: 0.24em;
+  padding-bottom: 0.18em;
   margin-top: 1.7em;
 }
 
@@ -190,7 +194,7 @@ input[type="submit"]:hover {
 }
 
 .vector-toc {
-  background: rgba(255, 250, 241, 0.8);
+  background: rgba(255, 253, 249, 0.96);
   border: 1px solid var(--line);
   padding: 10px 12px;
 }
@@ -233,7 +237,7 @@ body.page-Main_Page #firstHeading {
   font-family: "IBM Plex Mono", monospace;
   font-size: 0.78rem;
   font-weight: 600;
-  letter-spacing: 0.26em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--accent-strong);
   margin-bottom: 18px;
@@ -249,11 +253,16 @@ table.labwiki-note {
 }
 
 table.labwiki-hero {
-  background: linear-gradient(135deg, var(--hero-a) 0%, var(--hero-b) 58%, var(--hero-c) 100%);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0)),
+    repeating-linear-gradient(180deg, transparent 0, transparent 31px, rgba(25, 25, 25, 0.04) 31px, rgba(25, 25, 25, 0.04) 32px),
+    linear-gradient(180deg, var(--hero-a) 0%, var(--hero-b) 100%);
   color: var(--hero-ink);
-  border-radius: 28px;
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--accent);
+  border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 24px 48px rgba(49, 24, 18, 0.24);
+  box-shadow: var(--shadow-md);
 }
 
 table.labwiki-hero td,
@@ -264,38 +273,38 @@ table.labwiki-grid td {
 }
 
 table.labwiki-hero tr:first-child td {
-  font-family: "Noto Serif SC", serif;
-  font-size: clamp(2.6rem, 5vw, 4.9rem);
-  font-weight: 900;
-  line-height: 1.02;
-  letter-spacing: -0.05em;
-  padding: 32px 34px 10px;
+  font-family: "Source Serif 4", "Noto Serif SC", serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  padding: 24px 28px 8px;
 }
 
 table.labwiki-hero tr:nth-child(2) td {
-  max-width: 52rem;
-  padding: 0 34px 14px;
-  font-size: 1.12rem;
-  line-height: 1.8;
-  color: rgba(255, 247, 239, 0.9);
+  max-width: 48rem;
+  padding: 0 28px 12px;
+  font-size: 1rem;
+  line-height: 1.75;
+  color: var(--muted);
 }
 
 table.labwiki-hero tr:last-child td {
-  padding: 0 34px 32px;
+  padding: 0 28px 24px;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 0.9rem;
-  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 table.labwiki-hero a {
-  color: #fff8ee;
+  color: var(--accent-strong);
   text-decoration: none;
-  border-bottom: 1px solid rgba(255, 248, 238, 0.4);
+  border-bottom: 1px solid rgba(93, 36, 19, 0.28);
 }
 
 table.labwiki-grid {
-  border-spacing: 16px;
+  border-spacing: 12px;
 }
 
 table.labwiki-grid th,
@@ -303,19 +312,19 @@ table.labwiki-grid td {
   vertical-align: top;
   background: var(--surface-strong);
   border: 1px solid var(--line);
-  border-radius: 22px;
-  padding: 20px 22px;
-  box-shadow: var(--shadow-md);
+  border-radius: 12px;
+  padding: 18px 18px;
+  box-shadow: none;
 }
 
 table.labwiki-grid th {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 0.83rem;
+  font-size: 0.76rem;
   font-weight: 600;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--accent-strong);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 240, 230, 0.92));
+  background: var(--surface-muted);
 }
 
 table.labwiki-grid ul {
@@ -330,9 +339,9 @@ table.labwiki-grid li + li {
 table.labwiki-note td {
   background: var(--accent-soft);
   border: 1px solid rgba(31, 26, 24, 0.08);
-  border-left: 6px solid var(--accent);
-  border-radius: 18px;
-  padding: 18px 20px;
+  border-left: 4px solid var(--accent);
+  border-radius: 10px;
+  padding: 16px 18px;
 }
 
 body.mw-special-Userlogin .mw-body-content,
@@ -403,9 +412,9 @@ body.mw-special-Userlogin #userloginForm,
 body.ns--1 #mw-content-text > form {
   background: var(--surface-strong);
   border: 1px solid var(--line);
-  border-radius: 26px;
+  border-radius: 16px;
   padding: 26px 28px;
-  box-shadow: var(--shadow-md);
+  box-shadow: none;
 }
 
 body.mw-special-Userlogin #userloginForm {
@@ -427,12 +436,12 @@ body.ns--1 #firstHeading::after {
 }
 
 body.mw-special-Userlogin #firstHeading::after {
-  content: "Authorized Lab Access";
+  content: "Internal Research Access";
   display: block;
   margin-top: 10px;
   font-family: "IBM Plex Mono", monospace;
   font-size: 0.72rem;
-  letter-spacing: 0.26em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--accent);
 }

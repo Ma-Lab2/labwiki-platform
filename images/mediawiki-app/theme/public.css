@@ -1,13 +1,13 @@
 :root {
-  --accent: #b24a2a;
-  --accent-strong: #7f2a16;
-  --accent-soft: rgba(178, 74, 42, 0.14);
-  --hero-a: #321110;
-  --hero-b: #8d3721;
-  --hero-c: #e0b678;
+  --accent: #8a3f29;
+  --accent-strong: #5e2415;
+  --accent-soft: rgba(138, 63, 41, 0.08);
+  --hero-a: #fbf7f1;
+  --hero-b: #f2ebe2;
+  --hero-c: #ebe2d6;
 }
 
 body.page-首页 .mw-page-container,
 body.page-Main_Page .mw-page-container {
-  box-shadow: 0 34px 92px rgba(88, 36, 20, 0.2);
+  box-shadow: 0 22px 56px rgba(88, 36, 20, 0.08);
 }
