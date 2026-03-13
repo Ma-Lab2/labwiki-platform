@@ -114,6 +114,41 @@ seed_page_if_default() {
     "${title}" < "${seed_file}"
 }
 
+seed_page_if_missing_or_managed() {
+  local title="$1"
+  local seed_file="$2"
+  local existing_text
+
+  if [[ ! -f "${seed_file}" ]]; then
+    return 0
+  fi
+
+  existing_text="$(php maintenance/run.php getText "${title}" 2>/dev/null || true)"
+  if [[ -n "${existing_text}" ]] && ! grep -Fq "LABWIKI_MANAGED_PAGE" <<<"${existing_text}"; then
+    return 0
+  fi
+
+  php maintenance/run.php edit \
+    --summary="Seed labwiki content skeleton" \
+    --user="${MW_ADMIN_USER}" \
+    "${title}" < "${seed_file}"
+}
+
+seed_manifest_pages() {
+  local manifest_file="$1"
+  local title=""
+  local relative_path=""
+
+  if [[ ! -f "${manifest_file}" ]]; then
+    return 0
+  fi
+
+  while IFS=$'\t' read -r title relative_path; do
+    [[ -z "${title}" || -z "${relative_path}" ]] && continue
+    seed_page_if_missing_or_managed "${title}" "${SEED_ROOT}/${relative_path}"
+  done < "${manifest_file}"
+}
+
 if [[ ! -s "${LOCAL_SETTINGS}" ]]; then
   php maintenance/run.php install \
     --confpath="${STATE_DIR}" \
@@ -182,6 +217,7 @@ EOF
 fi
 
 seed_page_if_default "${MAIN_PAGE_TITLE}" "${SEED_ROOT}/${SITE_VARIANT}-mainpage.wiki"
+seed_manifest_pages "${SEED_ROOT}/${SITE_VARIANT}-manifest.tsv"
 
 chmod 600 "${LOCAL_SETTINGS}"
 ln -sf "${LOCAL_SETTINGS}" /var/www/html/LocalSettings.php

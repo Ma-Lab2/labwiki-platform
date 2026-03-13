@@ -1,0 +1,20 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_INSTRUMENT_REGISTRY -->
+= 仪器台账 =
+
+== 仪器列表 ==
+{| class="wikitable"
+! 仪器
+! 位置
+! 负责人
+! 状态
+! 最近维护
+|-
+| 
+| 
+| 
+| 
+| 
+|}
+
+== 维护记录 ==
+* 在这里追加维护、报修和校准记录入口

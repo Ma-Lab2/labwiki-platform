@@ -1,0 +1,21 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_REAGENTS_AND_SUPPLIES -->
+= 试剂与耗材 =
+
+== 常用清单 ==
+{| class="wikitable"
+! 名称
+! 当前状态
+! 负责人
+! 采购链接 / 编号
+! 备注
+|-
+| 
+| 
+| 
+| 
+| 
+|}
+
+== 补货规则 ==
+* 低于阈值时谁负责补货
+* 是否需要统一采购

@@ -1,0 +1,30 @@
+<!-- LABWIKI_MANAGED_PAGE:PUBLIC_DATA_DICTIONARY -->
+= 数据字典 =
+
+本页用于统一公开数据中的字段含义、命名规范和单位。
+
+== 字段表 ==
+{| class="wikitable"
+! 字段名
+! 类型
+! 单位 / 枚举
+! 含义
+! 备注
+|-
+| example_id
+| string
+| -
+| 示例记录编号
+| 唯一键
+|-
+| measured_value
+| number
+| a.u.
+| 示例测量值
+| 说明计算方式
+|}
+
+== 命名约定 ==
+* 时间使用 ISO 8601
+* 单位写入字段说明，不写在字段名里
+* 缺失值处理规则单独注明
