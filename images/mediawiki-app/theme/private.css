@@ -18,8 +18,262 @@ body.skin-vector-2022 {
   background-size: 24px 24px, 24px 24px, auto;
 }
 
+body.skin-vector-legacy {
+  background:
+    linear-gradient(rgba(14, 37, 42, 0.024) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(14, 37, 42, 0.024) 1px, transparent 1px),
+    linear-gradient(180deg, #f2f6f5 0%, #dfe8e6 100%);
+  background-size: 24px 24px, 24px 24px, auto;
+}
+
 .mw-logo-wordmark::before {
   content: "实验运行台账";
+}
+
+body.skin-vector-legacy #mw-page-base,
+body.skin-vector-legacy #mw-head-base {
+  background: transparent;
+}
+
+body.skin-vector-legacy #mw-panel {
+  width: 18rem;
+  padding: 18px 16px 28px;
+  box-sizing: border-box;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(255, 255, 255, 0)),
+    rgba(251, 253, 252, 0.92);
+  border-right: 1px solid var(--line);
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.5);
+}
+
+body.skin-vector-legacy #left-navigation,
+body.skin-vector-legacy #right-navigation,
+body.skin-vector-legacy #content,
+body.skin-vector-legacy #footer {
+  margin-left: 18rem;
+}
+
+body.skin-vector-legacy #content {
+  margin-top: 18px;
+  margin-right: 18px;
+  padding: 0 22px 26px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: rgba(251, 253, 252, 0.9);
+  box-shadow: var(--shadow-page);
+}
+
+body.skin-vector-legacy #footer {
+  padding-left: 22px;
+  padding-right: 22px;
+}
+
+body.skin-vector-legacy #p-logo {
+  width: auto;
+  height: auto;
+  margin: 0 0 18px;
+  padding: 0 0 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+body.skin-vector-legacy #p-logo a {
+  display: block;
+  width: 64px;
+  height: 64px;
+  margin: 0 0 14px;
+  border-radius: 18px;
+  background-color: #f7fcfb;
+  background-size: 64px 64px;
+  box-shadow: var(--shadow-card);
+}
+
+body.skin-vector-legacy #p-logo::after {
+  content: "课题组知识树\A Theory / Laser / Target / Data";
+  display: block;
+  white-space: pre-wrap;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.68rem;
+  line-height: 1.8;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+}
+
+body.skin-vector-legacy #mw-panel .portal {
+  margin: 0 0 14px;
+  padding: 0;
+}
+
+body.skin-vector-legacy #mw-panel .portal:first-of-type {
+  margin-top: 0;
+}
+
+body.skin-vector-legacy #mw-panel .vector-menu-heading {
+  display: block;
+  margin: 0 0 7px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-strong);
+}
+
+body.skin-vector-legacy #mw-panel .portal:first-of-type .vector-menu-heading {
+  border-top: 0;
+  padding-top: 0;
+}
+
+body.skin-vector-legacy #mw-panel .vector-menu-heading-label {
+  font-size: inherit;
+}
+
+body.skin-vector-legacy #mw-panel .vector-menu-content {
+  margin-left: 0;
+}
+
+body.skin-vector-legacy #mw-panel .vector-menu-content-list {
+  margin: 0;
+  padding: 0;
+}
+
+body.skin-vector-legacy #mw-panel .mw-list-item {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+body.skin-vector-legacy #mw-panel .mw-list-item a {
+  display: block;
+  padding: 7px 10px;
+  border-radius: 10px;
+  color: var(--muted);
+  text-decoration: none;
+  transition: background-color 120ms ease, color 120ms ease, transform 120ms ease;
+}
+
+body.skin-vector-legacy #mw-panel .mw-list-item a:hover,
+body.skin-vector-legacy #mw-panel .mw-list-item a:focus {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  transform: translateX(2px);
+}
+
+body.skin-vector-legacy #mw-panel .mw-list-item a span {
+  font-size: 0.95rem;
+}
+
+body.skin-vector-legacy #mw-panel .mw-list-item.selected > a,
+body.skin-vector-legacy #mw-panel .mw-list-item.active > a {
+  background: rgba(32, 85, 102, 0.14);
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+
+.vector-sticky-pinned-container .vector-toc-landmark,
+#vector-page-titlebar-toc {
+  display: none !important;
+}
+
+.vector-main-menu-container {
+  display: block;
+}
+
+#vector-main-menu-pinned-container {
+  min-height: 100%;
+}
+
+.labwiki-sidebar-shell {
+  position: sticky;
+  top: 16px;
+  padding: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0)),
+    var(--surface-strong);
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--accent);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+}
+
+.labwiki-sidebar-header {
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.labwiki-sidebar-header small {
+  display: block;
+  margin-bottom: 8px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+}
+
+.labwiki-sidebar-header strong {
+  display: block;
+  font-family: "Source Serif 4", "Noto Serif SC", serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.labwiki-sidebar-shell .vector-menu + .vector-menu {
+  margin-top: 12px;
+}
+
+.labwiki-sidebar-shell .vector-menu-heading {
+  margin: 0 0 8px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-strong);
+}
+
+.labwiki-sidebar-shell .vector-menu-content-list {
+  margin: 0;
+  padding: 0;
+}
+
+.labwiki-sidebar-shell .mw-list-item {
+  list-style: none;
+}
+
+.labwiki-sidebar-shell .mw-list-item + .mw-list-item {
+  margin-top: 2px;
+}
+
+.labwiki-sidebar-shell .mw-list-item a {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.labwiki-sidebar-shell .mw-list-item a:hover {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.labwiki-sidebar-shell .mw-list-item a .vector-icon {
+  display: none;
+}
+
+body.page-首页 .vector-column-start,
+body.page-Main_Page .vector-column-start {
+  display: none;
+}
+
+body.page-首页 .vector-column-container,
+body.page-Main_Page .vector-column-container {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 body.page-首页 .mw-body,
@@ -96,4 +350,31 @@ table.labwiki-runbook td {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.48), rgba(255, 255, 255, 0)),
     var(--surface-strong);
+}
+
+@media (max-width: 960px) {
+  .vector-main-menu-container {
+    display: none;
+  }
+
+  body.skin-vector-legacy #mw-panel,
+  body.skin-vector-legacy #left-navigation,
+  body.skin-vector-legacy #right-navigation,
+  body.skin-vector-legacy #content,
+  body.skin-vector-legacy #footer {
+    margin-left: 0;
+    width: auto;
+  }
+
+  body.skin-vector-legacy #mw-panel {
+    position: relative;
+    padding-bottom: 12px;
+    border-right: 0;
+    box-shadow: none;
+  }
+
+  body.skin-vector-legacy #content {
+    margin-right: 0;
+    border-radius: 0;
+  }
 }

@@ -183,11 +183,15 @@ THEME_BLOCK="$(cat <<EOF
     'labwiki/theme/base.css',
     'labwiki/theme/${SITE_VARIANT}.css',
   ],
+  'scripts' => [
+    'labwiki/theme/${SITE_VARIANT}.js',
+  ],
   'localBasePath' => '/var/www/html',
   'remoteBasePath' => \$wgResourceBasePath ?: '',
 ];
 \$wgHooks['BeforePageDisplay'][] = static function ( \$out, \$skin ) {
   \$out->addModuleStyles( 'ext.labwiki.theme' );
+  \$out->addModules( 'ext.labwiki.theme' );
   return true;
 };
 EOF
