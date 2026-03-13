@@ -340,6 +340,19 @@ body.ns--1 .mw-body-content {
   max-width: 760px;
 }
 
+body.mw-special-Userlogin .vector-body,
+body.ns--1 .vector-body {
+  display: flex;
+  justify-content: center;
+}
+
+body.mw-special-Userlogin .mw-body,
+body.ns--1 .mw-body {
+  width: min(100%, 760px);
+  margin: 0 auto;
+  padding-top: 36px;
+}
+
 body.mw-special-Userlogin .vector-column-end,
 body.ns--1 .vector-column-end,
 body.mw-special-Userlogin .vector-page-toolbar-container,
@@ -355,6 +368,7 @@ body.ns--1 .vector-column-container {
 body.mw-special-Userlogin #mw-content-text,
 body.ns--1 #mw-content-text {
   max-width: 540px;
+  margin: 0 auto;
 }
 
 body.mw-special-Userlogin .mw-body-content form,
@@ -369,13 +383,20 @@ body.ns--1 #mw-content-text > form {
 
 body.mw-special-Userlogin #userloginForm {
   max-width: 460px;
-  margin-top: 24px;
+  margin: 24px auto 0;
 }
 
 body.mw-special-Userlogin #userloginForm .mw-ui-input,
 body.mw-special-Userlogin #userloginForm input[type="text"],
 body.mw-special-Userlogin #userloginForm input[type="password"] {
   width: 100%;
+}
+
+body.mw-special-Userlogin #firstHeading,
+body.ns--1 #firstHeading,
+body.mw-special-Userlogin #firstHeading::after,
+body.ns--1 #firstHeading::after {
+  text-align: center;
 }
 
 body.mw-special-Userlogin #firstHeading::after {
