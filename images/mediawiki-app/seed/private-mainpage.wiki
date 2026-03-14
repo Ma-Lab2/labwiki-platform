@@ -67,22 +67,26 @@
 == 知识与模板 ==
 {| class="labwiki-grid"
 |-
-! 理论与安全
-! 激光与靶场
-! 诊断与数据
-! 模板与项目
+! 理论
+! SOP 与安全
+! 激光、靶场与诊断
+! 数据、模板与项目
 |-
 | * [[Theory:基础理论总览]]
-* [[Safety:安全总览]]
+* [[SOP:流程总览]]
+* [[Theory:激光等离子体加速总览]]
+* [[Theory:TNSA]]
+| * [[Safety:安全总览]]
+* [[SOP:打靶前安全检查]]
+* [[SOP:10分钟全要素检查清单]]
 * [[Safety:激光安全]]
-* [[Safety:真空操作]]
 | * [[Laser:激光系统总览]]
 * [[TargetArea:靶场总览]]
-* [[SOP:流程总览]]
-| * [[Diagnostic:诊断总览]]
-* [[Data:数据管理总览]]
+* [[Diagnostic:诊断总览]]
+* [[Diagnostic:TPS]]
+| * [[Data:数据管理总览]]
 * [[Control:控制与运行总览]]
-| * [[Project:项目模板]]
+* [[Project:项目模板]]
 * [[Shot:Shot模板]]
 * [[Meeting:实验复盘模板]]
 |}
