@@ -3,7 +3,7 @@
     <el-input
       v-model="currentPath"
       size="small"
-      placeholder="图像目录路径"
+      placeholder="图像目录路径（容器内挂载目录）"
       @keyup.enter="browse"
     >
       <template #append>
@@ -13,6 +13,7 @@
     <div v-if="parentDir" class="parent-link">
       <el-link type="primary" @click="goUp">..</el-link>
     </div>
+    <p class="browser-note">只能浏览已挂载到容器内的目录。当前默认根目录通常是 <code>/data/images</code>。</p>
     <div v-for="dir in dirs" :key="dir" class="dir-item">
       <el-link type="primary" @click="enterDir(dir)">{{ dir }}/</el-link>
     </div>
@@ -85,5 +86,16 @@ function goUp() {
 .parent-link :deep(.el-link) {
   font-family: var(--tps-font-mono);
   font-size: 12px;
+}
+
+.browser-note {
+  margin: 8px 8px 10px;
+  color: var(--tps-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.browser-note code {
+  font-family: var(--tps-font-mono);
 }
 </style>
