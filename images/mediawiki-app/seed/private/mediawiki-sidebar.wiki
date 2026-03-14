@@ -27,10 +27,11 @@
 ** TargetArea:RCF运动系统|RCF运动系统
 * 诊断与数据
 ** Diagnostic:诊断总览|诊断总览
-** Diagnostic:TPS|TPS
+** Diagnostic:TPS|TPS 分析工具
 ** Diagnostic:RCF|RCF 计算工具
 ** Data:数据管理总览|数据管理总览
 ** Data:实验日志与数据关联|实验日志与数据关联
+** Data:TPS分析与归档|TPS 归档规则
 ** Data:RCF计算与归档|RCF 归档规则
 ** 数据归档|数据归档
 * 项目与复盘
@@ -43,6 +44,7 @@
 ** Control:中央控制平台|中央控制平台
 ** Control:继电器系统|继电器系统
 ** Control:照明与监控|照明与监控
+** Control:受限信息索引|受限信息索引
 ** 值班与排班|值班与排班
 ** 仪器台账|仪器台账
 ** FAQ:常见问题入口|常见问题

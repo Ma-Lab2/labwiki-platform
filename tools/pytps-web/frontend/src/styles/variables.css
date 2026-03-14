@@ -1,0 +1,29 @@
+:root,
+[data-theme="lab-console"] {
+  --tps-page-bg: #dfe8e5;
+  --tps-page-grid: rgba(24, 49, 55, 0.05);
+  --tps-bg:
+    linear-gradient(180deg, #eef3f1 0%, #dbe5e2 100%);
+  --tps-panel: rgba(250, 252, 251, 0.92);
+  --tps-panel-strong: rgba(252, 253, 252, 0.96);
+  --tps-panel-muted: rgba(238, 244, 241, 0.94);
+  --tps-text: #23363b;
+  --tps-text-secondary: #596d74;
+  --tps-text-muted: #76878d;
+  --tps-border: #d6dfdc;
+  --tps-border-strong: #b9c8c3;
+  --tps-primary: #205566;
+  --tps-primary-strong: #153844;
+  --tps-primary-soft: rgba(32, 85, 102, 0.1);
+  --tps-success: #2d6a59;
+  --tps-danger: #9d5148;
+  --tps-warning: #b07a2d;
+  --tps-shadow-card: 0 12px 30px rgba(24, 49, 55, 0.08);
+  --tps-radius-lg: 24px;
+  --tps-radius-md: 18px;
+  --tps-radius-sm: 12px;
+  --tps-font-display: "Source Serif 4", "Noto Serif SC", "Songti SC", serif;
+  --tps-font-ui: "IBM Plex Sans", "Noto Sans SC", "Segoe UI", sans-serif;
+  --tps-font-mono: "IBM Plex Mono", "SFMono-Regular", "Consolas", monospace;
+  --tps-header-color: #153844;
+}

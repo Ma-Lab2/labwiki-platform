@@ -3,6 +3,7 @@
 
 == 诊断链入口 ==
 * [[Diagnostic:TPS]]
+* [[Diagnostic:RCF]]
 
 == 每种诊断页应回答 ==
 * 原理是什么

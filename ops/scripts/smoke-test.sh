@@ -16,7 +16,7 @@ check_http() {
 
   code="$(curl --noproxy '*' -k -s -o /dev/null -w '%{http_code}' "${url}")"
   case "${label}:${code}" in
-    public:200|public:301|public:302|private:200|private:301|private:302|private:401|private:403|rcf-ui:200|rcf-api:200)
+    public:200|public:301|public:302|private:200|private:301|private:302|private:401|private:403|rcf-ui:200|rcf-api:200|tps-ui:200|tps-api:200)
       printf '[ok] %s returned %s\n' "${label}" "${code}"
       ;;
     *)
@@ -27,7 +27,7 @@ check_http() {
 }
 
 "${compose_cmd[@]}" ps mariadb mw_public mw_private caddy_public caddy_private >/dev/null
-"${compose_cmd[@]}" ps rcf_backend rcf_frontend >/dev/null
+"${compose_cmd[@]}" ps rcf_backend rcf_frontend tps_web >/dev/null
 
 PUBLIC_URL="${PUBLIC_SMOKE_URL:-$("${compose_cmd[@]}" exec -T mw_public sh -lc 'printf %s "$MW_SERVER"')}"
 PRIVATE_URL="${PRIVATE_SMOKE_URL:-$("${compose_cmd[@]}" exec -T mw_private sh -lc 'printf %s "$MW_SERVER"')}"
@@ -46,5 +46,7 @@ check_http "${PUBLIC_URL}" public
 check_http "${PRIVATE_URL}" private
 check_http "${PRIVATE_URL%/}/tools/rcf/" rcf-ui
 check_http "${PRIVATE_URL%/}/tools/rcf/api/v1/health" rcf-api
+check_http "${PRIVATE_URL%/}/tools/tps/" tps-ui
+check_http "${PRIVATE_URL%/}/tools/tps/api/health" tps-api
 
 printf '[ok] smoke test passed\n'
