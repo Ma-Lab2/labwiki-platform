@@ -19,20 +19,33 @@ const compute = useComputeStore()
 .progress-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(22, 37, 41, 0.28);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
 }
 .progress-card {
-  background: var(--rcf-bg, #1e1e2e);
-  border: 1px solid var(--rcf-primary, #00d2ff);
-  border-radius: 8px;
-  padding: 32px 48px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0)),
+    var(--rcf-bg-card-strong);
+  border: 1px solid var(--rcf-border-strong);
+  border-radius: 22px;
+  box-shadow: var(--rcf-shadow-soft);
+  padding: 28px 36px;
   min-width: 400px;
   text-align: center;
 }
-.progress-card h3 { color: var(--rcf-primary, #00d2ff); margin: 0 0 16px; }
-.progress-msg { color: #aaa; font-size: 13px; margin-top: 12px; }
+.progress-card h3 {
+  color: var(--rcf-primary-strong);
+  margin: 0 0 16px;
+  font-family: var(--rcf-font-display);
+  font-size: 1.45rem;
+}
+.progress-msg {
+  color: var(--rcf-text-secondary);
+  font-size: 13px;
+  margin-top: 12px;
+}
 </style>

@@ -1,14 +1,21 @@
 <template>
   <div class="app-header">
-    <h1>{{ t.app.title }}</h1>
-    <div class="header-controls">
-      <el-select v-model="settings.theme" size="small" style="width: 140px" @change="applyTheme">
-        <el-option label="Electric Blue" value="electric-blue" />
-        <el-option label="Matrix Green" value="matrix-green" />
-        <el-option label="Red Alert" value="red-alert" />
-        <el-option label="Clean Light" value="clean-light" />
-      </el-select>
-      <el-select v-model="settings.locale" size="small" style="width: 90px">
+    <div class="header-brand">
+      <small>{{ t.intro.kicker }}</small>
+      <div class="header-title-row">
+        <h1>{{ t.app.title }}</h1>
+        <span class="header-badge">{{ t.header.badge }}</span>
+      </div>
+      <p>{{ t.header.summary }}</p>
+    </div>
+    <div class="header-actions">
+      <div class="header-links">
+        <a class="header-link" href="/index.php?title=Diagnostic:RCF">{{ t.header.reference }}</a>
+        <a class="header-link" href="/index.php?title=Data:RCF计算与归档">{{ t.header.archive }}</a>
+        <a class="header-link" href="/">{{ t.header.backToWiki }}</a>
+      </div>
+      <div class="header-controls">
+      <el-select v-model="settings.locale" size="small" style="width: 96px">
         <el-option label="中文" value="zh-CN" />
         <el-option label="EN" value="en-US" />
       </el-select>
@@ -23,6 +30,7 @@
           </el-dropdown-menu>
         </template>
       </el-dropdown>
+      </div>
     </div>
   </div>
 </template>
@@ -41,10 +49,6 @@ const stack = useStackStore()
 const compute = useComputeStore()
 const { t } = useLocale()
 const fileInput = ref<HTMLInputElement | null>(null)
-
-function applyTheme(theme: string) {
-  document.documentElement.setAttribute('data-theme', theme)
-}
 
 function triggerImport() {
   fileInput.value?.click()
@@ -91,22 +95,121 @@ function exportMatrix() {
 <style scoped>
 .app-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: 12px 20px;
-  border-bottom: 2px solid var(--rcf-border-strong);
-  background: var(--rcf-bg-secondary);
+  gap: 20px;
+  padding: 24px 28px 18px;
+  border-bottom: 1px solid var(--rcf-border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(255, 255, 255, 0)),
+    rgba(251, 253, 252, 0.72);
 }
-.app-header h1 {
-  font-size: 18px;
-  color: var(--rcf-primary);
-  font-weight: 600;
+
+.header-brand {
+  max-width: 760px;
+}
+
+.header-brand small {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--rcf-text-secondary);
   font-family: var(--rcf-font-mono);
-  text-shadow: var(--rcf-glow);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
+
+.header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.app-header h1 {
+  font-size: clamp(1.7rem, 3vw, 2.25rem);
+  color: var(--rcf-primary-strong);
+  font-weight: 700;
+  font-family: var(--rcf-font-display);
+  line-height: 1.05;
+}
+
+.header-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(32, 85, 102, 0.08);
+  color: var(--rcf-primary);
+  font-family: var(--rcf-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.header-brand p {
+  max-width: 58ch;
+  margin-top: 10px;
+  color: var(--rcf-text-secondary);
+  line-height: 1.6;
+}
+
+.header-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.header-links {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.header-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--rcf-border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.58);
+  color: var(--rcf-text-secondary);
+  font-size: 0.92rem;
+  text-decoration: none;
+  transition: border-color 140ms ease, color 140ms ease, background-color 140ms ease, transform 140ms ease;
+}
+
+.header-link:hover {
+  border-color: var(--rcf-primary);
+  background: rgba(255, 255, 255, 0.84);
+  color: var(--rcf-primary);
+  transform: translateY(-1px);
+}
+
 .header-controls {
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+@media (max-width: 960px) {
+  .app-header,
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-actions,
+  .header-links,
+  .header-controls {
+    justify-content: flex-start;
+    align-items: flex-start;
+  }
 }
 </style>

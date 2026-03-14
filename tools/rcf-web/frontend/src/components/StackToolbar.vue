@@ -14,5 +14,10 @@ defineProps<{ selectedIndex: number }>()
 </script>
 
 <style scoped>
-.stack-toolbar { display: flex; gap: 4px; margin-bottom: 8px; }
+.stack-toolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
 </style>

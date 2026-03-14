@@ -57,10 +57,10 @@ onMounted(refreshMaterials)
 </script>
 
 <style scoped>
-.material-buttons { padding: 12px; }
+.material-buttons { padding: 16px 18px 18px; }
 .material-buttons h3 {
   margin: 0 0 10px;
-  color: var(--rcf-primary);
+  color: var(--rcf-primary-strong);
   font-family: var(--rcf-font-mono);
   font-size: 13px;
   text-transform: uppercase;
@@ -72,9 +72,9 @@ onMounted(refreshMaterials)
   font-family: var(--rcf-font-mono);
   font-size: 11px;
 }
-.btn-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn-grid { display: flex; flex-wrap: wrap; gap: 8px; }
 .btn-grid .el-button {
+  min-width: 66px;
   font-size: 12px;
-  padding: 6px 12px;
 }
 </style>

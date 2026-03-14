@@ -24,8 +24,23 @@ const emit = defineEmits<{ (e: 'transfer'): void }>()
 </script>
 
 <style scoped>
-.linear-results { margin-top: 20px; }
-.linear-results h3 { margin: 0 0 12px; color: var(--rcf-primary); }
-.linear-messages { font-size: 12px; color: #aaa; max-height: 120px; overflow-y: auto; }
-.msg-line { padding: 2px 0; }
+.linear-results {
+  margin-top: 20px;
+  padding: 18px;
+  border: 1px solid var(--rcf-border);
+  border-radius: 18px;
+  background: rgba(251, 253, 252, 0.78);
+}
+.linear-results h3 {
+  margin: 0 0 12px;
+  color: var(--rcf-primary-strong);
+  font-family: var(--rcf-font-display);
+}
+.linear-messages {
+  font-size: 12px;
+  color: var(--rcf-text-secondary);
+  max-height: 120px;
+  overflow-y: auto;
+}
+.msg-line { padding: 3px 0; }
 </style>

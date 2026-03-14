@@ -41,6 +41,7 @@ import { useStackStore } from '../stores/stack'
 import { useSettingsStore } from '../stores/settings'
 import { linearDesign } from '../api/compute'
 import type { StackLayer } from '../types'
+import { PLOT_THEME } from '../theme'
 import LinearDesignParams from './LinearDesignParams.vue'
 import LinearDesignDetectors from './LinearDesignDetectors.vue'
 import LinearDesignResults from './LinearDesignResults.vue'
@@ -107,18 +108,18 @@ function renderPlot() {
         x,
         y,
         mode: 'lines+markers',
-        marker: { color: '#00d2ff', size: 8 },
-        line: { color: '#00d2ff', width: 2 },
+        marker: { color: PLOT_THEME.accent, size: 8 },
+        line: { color: PLOT_THEME.accent, width: 2 },
         text: compute.linearAlSeq.map(a => `Al: ${a.toFixed(1)} μm`),
       },
     ],
     {
-      title: { text: '线性设计结果', font: { color: '#e0e0e0' } },
-      xaxis: { title: 'RCF #', color: '#aaa', gridcolor: '#333' },
-      yaxis: { title: '截止能量 (MeV)', color: '#aaa', gridcolor: '#333' },
-      paper_bgcolor: '#1e1e2e',
-      plot_bgcolor: '#1e1e2e',
-      font: { color: '#e0e0e0' },
+      title: { text: '线性设计结果', font: { color: PLOT_THEME.text, family: 'IBM Plex Sans' } },
+      xaxis: { title: 'RCF #', color: PLOT_THEME.muted, gridcolor: PLOT_THEME.grid, zerolinecolor: PLOT_THEME.grid },
+      yaxis: { title: '截止能量 (MeV)', color: PLOT_THEME.muted, gridcolor: PLOT_THEME.grid, zerolinecolor: PLOT_THEME.grid },
+      paper_bgcolor: PLOT_THEME.panel,
+      plot_bgcolor: PLOT_THEME.panel,
+      font: { color: PLOT_THEME.text, family: 'IBM Plex Sans' },
       margin: { t: 40, r: 20, b: 50, l: 60 },
     },
     { responsive: true },
@@ -133,7 +134,15 @@ watch(
 </script>
 
 <style scoped>
-.linear-design { padding: 16px; }
+.linear-design { padding: 4px 0 0; }
 .linear-top { display: flex; gap: 24px; flex-wrap: wrap; }
-.plot-container { width: 100%; height: 350px; margin-top: 16px; }
+.plot-container {
+  width: 100%;
+  height: 350px;
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid var(--rcf-border);
+  border-radius: 18px;
+  background: rgba(251, 253, 252, 0.86);
+}
 </style>

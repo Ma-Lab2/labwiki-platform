@@ -15,14 +15,14 @@ import IonSelector from './IonSelector.vue'
 
 <style scoped>
 .param-panel {
-  padding: 12px;
+  padding: 16px 18px 18px;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 .param-panel h3 {
   margin: 0 0 8px;
-  color: var(--rcf-primary);
+  color: var(--rcf-primary-strong);
   font-family: var(--rcf-font-mono);
   font-size: 13px;
   text-transform: uppercase;

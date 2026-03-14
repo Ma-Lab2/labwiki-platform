@@ -19,6 +19,12 @@ const settings = useSettingsStore()
 .angle-input { display: flex; flex-direction: column; gap: 8px; }
 .field { display: flex; align-items: center; justify-content: space-between; }
 .field label { font-size: 12px; min-width: 110px; color: var(--rcf-text); font-family: var(--rcf-font-mono); }
-.path-factor { font-size: 12px; color: var(--rcf-text-secondary); font-family: var(--rcf-font-mono); }
+.path-factor {
+  padding-top: 6px;
+  border-top: 1px dashed var(--rcf-border);
+  font-size: 12px;
+  color: var(--rcf-text-secondary);
+  font-family: var(--rcf-font-mono);
+}
 .path-factor strong { color: var(--rcf-primary); }
 </style>

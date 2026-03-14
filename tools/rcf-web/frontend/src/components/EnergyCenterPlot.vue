@@ -6,22 +6,14 @@
 import { ref, watch, onMounted } from 'vue'
 import Plotly from 'plotly.js-dist-min'
 import { useComputeStore } from '../stores/compute'
-import { useSettingsStore } from '../stores/settings'
+import { PLOT_THEME } from '../theme'
 
 const compute = useComputeStore()
-const settings = useSettingsStore()
 const plotEl = ref<HTMLElement>()
-
-const THEME_COLORS: Record<string, { primary: string; bg: string }> = {
-  'electric-blue': { primary: '#00d2ff', bg: '#1e1e2e' },
-  'matrix-green': { primary: '#00ff00', bg: '#0a0a0a' },
-  'red-alert': { primary: '#ff4444', bg: '#1a0a0a' },
-}
 
 function render() {
   if (!plotEl.value || compute.rcfResults.length === 0) return
 
-  const colors = THEME_COLORS[settings.theme] || THEME_COLORS['electric-blue']
   const x = compute.rcfResults.map(r => r.rcf_id + 1)
   const y = compute.rcfResults.map(r => r.cutoff_energy ?? 0)
   const text = compute.rcfResults.map(r => `${r.name} #${r.rcf_id + 1}`)
@@ -29,18 +21,18 @@ function render() {
   const trace = {
     x, y, text,
     mode: 'lines+markers' as const,
-    marker: { color: colors.primary, size: 8 },
-    line: { color: colors.primary, width: 2 },
+    marker: { color: PLOT_THEME.accent, size: 8 },
+    line: { color: PLOT_THEME.accent, width: 2 },
     name: '截止能量',
   }
 
   const layout = {
-    title: { text: '截止能量 vs RCF 编号', font: { color: '#e0e0e0' } },
-    xaxis: { title: 'RCF #', color: '#aaa', gridcolor: '#333' },
-    yaxis: { title: '截止能量 (MeV)', color: '#aaa', gridcolor: '#333' },
-    paper_bgcolor: colors.bg,
-    plot_bgcolor: colors.bg,
-    font: { color: '#e0e0e0' },
+    title: { text: '截止能量 vs RCF 编号', font: { color: PLOT_THEME.text, family: 'IBM Plex Sans' } },
+    xaxis: { title: 'RCF #', color: PLOT_THEME.muted, gridcolor: PLOT_THEME.grid, zerolinecolor: PLOT_THEME.grid },
+    yaxis: { title: '截止能量 (MeV)', color: PLOT_THEME.muted, gridcolor: PLOT_THEME.grid, zerolinecolor: PLOT_THEME.grid },
+    paper_bgcolor: PLOT_THEME.panel,
+    plot_bgcolor: PLOT_THEME.panel,
+    font: { color: PLOT_THEME.text, family: 'IBM Plex Sans' },
     margin: { t: 40, r: 20, b: 50, l: 60 },
   }
 
@@ -48,7 +40,7 @@ function render() {
 }
 
 onMounted(render)
-watch(() => [compute.rcfResults, settings.theme], render, { deep: true })
+watch(() => compute.rcfResults, render, { deep: true })
 </script>
 
 <style scoped>

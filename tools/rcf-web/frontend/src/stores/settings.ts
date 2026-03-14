@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
 export const useSettingsStore = defineStore('settings', () => {
-  const theme = ref<'electric-blue' | 'matrix-green' | 'red-alert'>('electric-blue')
+  const theme = ref<'lab-console'>('lab-console')
   const locale = ref<'zh-CN' | 'en-US'>('zh-CN')
   const incidenceAngle = ref(0)
   const pathFactor = computed(() =>
