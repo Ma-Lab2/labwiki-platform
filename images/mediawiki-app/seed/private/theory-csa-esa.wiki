@@ -1,6 +1,8 @@
 <!-- LABWIKI_MANAGED_PAGE:PRIVATE_THEORY_CSA_ESA -->
 = Theory:CSA 与 ESA =
 
+CSA 是 `Collisionless Shock Acceleration` 的缩写，中文常译为“碰撞无关激波加速”；ESA 是 `Electrostatic Shock Acceleration` 的缩写，中文常译为“静电激波加速”。两者都把“激波势垒反射离子”作为核心物理图像，只是强调的激波性质略有不同。
+
 == 物理图像 ==
 CSA / ESA 的共同点，是让离子不是被“持续拖着走”，而是被一个向前传播的激波电势像镜子一样反射出去。只要激波速度够稳，被反射的离子就更容易形成较窄的能谱。
 

@@ -1,6 +1,8 @@
 <!-- LABWIKI_MANAGED_PAGE:PRIVATE_THEORY_TRANSPARENCY -->
 = Theory:透明化相关机制 =
 
+本页里常见的几个缩写分别是：`BOA`（`Break-Out Afterburner`，常译“突破后燃加速”）、`RITA`（`Relativistically Induced Transparency Acceleration`，常译“相对论诱导透明加速”）。它们都和“主脉冲期间靶进入相对论透明化”有关，但各自强调的体加热、电流结构和加速时序不同。
+
 == 物理图像 ==
 这类机制的共同点，是靶并不一直保持“有效不透明”。当主脉冲附近进入相对论透明化后，激光可以更深地进入靶体，体加热、电流结构和增强鞘场可能同时出现。常见口径包括 `BOA`、`RITA` 和透明化增强的混合加速。
 
