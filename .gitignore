@@ -6,6 +6,8 @@ backups/*
 !backups/.gitkeep
 
 state/**/LocalSettings.php
+state/rcf/uploaded_materials/*
+!state/rcf/uploaded_materials/.gitkeep
 uploads/*
 !uploads/public/
 !uploads/private/

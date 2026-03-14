@@ -1,0 +1,5 @@
+__pycache__/
+.pytest_cache/
+tests/__pycache__/
+data/uploaded_materials/*
+!data/uploaded_materials/.gitkeep

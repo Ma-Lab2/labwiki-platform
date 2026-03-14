@@ -14,6 +14,8 @@ Services:
 - `mariadb`: single database engine with `labwiki_public` and `labwiki_private`
 - `mw_public`: MediaWiki 1.43.6 FPM with idempotent bootstrap
 - `mw_private`: MediaWiki 1.43.6 FPM with private-mode hardening
+- `rcf_backend`: FastAPI service for RCF stack design and async compute
+- `rcf_frontend`: Nginx-served Vue frontend mounted under the private site
 - `caddy_public`: HTTPS entrypoint for the public wiki
 - `caddy_private`: loopback-only HTTPS entrypoint for the private wiki
 
@@ -21,6 +23,7 @@ Persistent paths:
 
 - `state/public/LocalSettings.php`
 - `state/private/LocalSettings.php`
+- `state/rcf/uploaded_materials/`
 - `uploads/public/`
 - `uploads/private/`
 - `backups/`
@@ -56,8 +59,9 @@ cp .env.example .env
 2. Create local state directories:
 
 ```bash
-mkdir -p secrets state/public state/private uploads/public uploads/private backups
+mkdir -p secrets state/public state/private state/rcf/uploaded_materials uploads/public uploads/private backups
 touch backups/.gitkeep uploads/public/.gitkeep uploads/private/.gitkeep
+touch state/rcf/uploaded_materials/.gitkeep
 ```
 
 3. Create secrets files with strong passwords:
@@ -93,6 +97,11 @@ LABWIKI_LOCAL_OVERRIDE=true bash ops/scripts/smoke-test.sh
 
 `compose.override.yaml` is intentionally not used by production scripts unless `LABWIKI_LOCAL_OVERRIDE=true` is set.
 In local mode, the public site uses [`ops/caddy/Caddyfile.public.local`](/mnt/c/Songtan/课题组wiki/ops/caddy/Caddyfile.public.local) with `tls internal`, so `https://localhost` does not depend on ACME.
+
+The private site also exposes the RCF design tool at `/tools/rcf/`, for example:
+
+- `https://localhost:8443/tools/rcf/`
+- `https://<PRIVATE_HOST>/tools/rcf/`
 
 ## Backup, Restore, Upgrade
 

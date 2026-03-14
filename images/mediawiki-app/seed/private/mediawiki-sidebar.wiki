@@ -22,8 +22,10 @@
 * 诊断与数据
 ** Diagnostic:诊断总览|诊断总览
 ** Diagnostic:TPS|TPS
+** Diagnostic:RCF|RCF 计算工具
 ** Data:数据管理总览|数据管理总览
 ** Data:实验日志与数据关联|实验日志与数据关联
+** Data:RCF计算与归档|RCF 归档规则
 ** 数据归档|数据归档
 * 项目与复盘
 ** Project:项目总览|项目总览

@@ -1,5 +1,8 @@
 {$PRIVATE_HOST} {
     encode zstd gzip
+    handle_path /tools/rcf/* {
+        reverse_proxy rcf_frontend:80
+    }
     root * /var/www/html
     php_fastcgi mw_private:9000
     file_server

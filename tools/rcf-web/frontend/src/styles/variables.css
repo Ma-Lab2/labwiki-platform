@@ -1,0 +1,97 @@
+/* Theme CSS Variables — Cyberpunk Dark */
+:root,
+[data-theme="electric-blue"] {
+  --rcf-primary: #00f3ff;
+  --rcf-secondary: #bc13fe;
+  --rcf-bg: #0a0a12;
+  --rcf-bg-secondary: #182038;
+  --rcf-bg-card: rgba(10, 10, 18, 0.6);
+  --rcf-plot-bg: #0a0a12;
+  --rcf-text: #e0f7fa;
+  --rcf-text-secondary: #8899aa;
+  --rcf-border: rgba(0, 243, 255, 0.2);
+  --rcf-border-strong: rgba(0, 243, 255, 0.5);
+  --rcf-btn-bg: rgba(0, 243, 255, 0.1);
+  --rcf-btn-hover: rgba(0, 243, 255, 0.25);
+  --rcf-btn-active: #00f3ff;
+  --rcf-input-bg: rgba(0, 0, 0, 0.3);
+  --rcf-input-border: #455a64;
+  --rcf-input-focus: rgba(0, 243, 255, 0.15);
+  --rcf-header-color: #bc13fe;
+  --rcf-font-mono: "Consolas", "SF Mono", "Fira Code", monospace;
+  --rcf-font-ui: "Segoe UI", "SF Pro", sans-serif;
+  --rcf-glow: 0 0 8px rgba(0, 243, 255, 0.3);
+  --rcf-glow-strong: 0 0 16px rgba(0, 243, 255, 0.5);
+}
+
+[data-theme="matrix-green"] {
+  --rcf-primary: #00ff00;
+  --rcf-secondary: #ffffff;
+  --rcf-bg: #000000;
+  --rcf-bg-secondary: #001100;
+  --rcf-bg-card: rgba(0, 10, 0, 0.6);
+  --rcf-plot-bg: #000000;
+  --rcf-text: #00ff00;
+  --rcf-text-secondary: #008800;
+  --rcf-border: #003300;
+  --rcf-border-strong: #00ff00;
+  --rcf-btn-bg: rgba(0, 20, 0, 0.8);
+  --rcf-btn-hover: rgba(0, 255, 0, 0.2);
+  --rcf-btn-active: #00ff00;
+  --rcf-input-bg: #000000;
+  --rcf-input-border: #005500;
+  --rcf-input-focus: rgba(0, 255, 0, 0.1);
+  --rcf-header-color: #00ff00;
+  --rcf-font-mono: "Consolas", monospace;
+  --rcf-font-ui: "Consolas", monospace;
+  --rcf-glow: 0 0 8px rgba(0, 255, 0, 0.3);
+  --rcf-glow-strong: 0 0 16px rgba(0, 255, 0, 0.5);
+}
+
+[data-theme="red-alert"] {
+  --rcf-primary: #ff4444;
+  --rcf-secondary: #ffaa00;
+  --rcf-bg: #000000;
+  --rcf-bg-secondary: #1a0000;
+  --rcf-bg-card: rgba(20, 0, 0, 0.8);
+  --rcf-plot-bg: #0a0000;
+  --rcf-text: #ffd0d0;
+  --rcf-text-secondary: #aa6666;
+  --rcf-border: #550000;
+  --rcf-border-strong: #ff0000;
+  --rcf-btn-bg: rgba(60, 0, 0, 0.8);
+  --rcf-btn-hover: rgba(255, 0, 0, 0.2);
+  --rcf-btn-active: #ff0000;
+  --rcf-input-bg: rgba(40, 0, 0, 0.5);
+  --rcf-input-border: #880000;
+  --rcf-input-focus: rgba(255, 0, 0, 0.1);
+  --rcf-header-color: #ff0000;
+  --rcf-font-mono: "Consolas", monospace;
+  --rcf-font-ui: "Segoe UI", sans-serif;
+  --rcf-glow: 0 0 8px rgba(255, 0, 0, 0.3);
+  --rcf-glow-strong: 0 0 16px rgba(255, 0, 0, 0.5);
+}
+
+[data-theme="clean-light"] {
+  --rcf-primary: #1a73e8;
+  --rcf-secondary: #6d28d9;
+  --rcf-bg: #f5f7fa;
+  --rcf-bg-secondary: #ffffff;
+  --rcf-bg-card: #ffffff;
+  --rcf-plot-bg: #ffffff;
+  --rcf-text: #1f2937;
+  --rcf-text-secondary: #6b7280;
+  --rcf-border: #e5e7eb;
+  --rcf-border-strong: #d1d5db;
+  --rcf-btn-bg: #ffffff;
+  --rcf-btn-hover: #f0f4ff;
+  --rcf-btn-active: #1a73e8;
+  --rcf-input-bg: #ffffff;
+  --rcf-input-border: #d1d5db;
+  --rcf-input-focus: #eff6ff;
+  --rcf-header-color: #1a73e8;
+  --rcf-font-mono: "Consolas", "SF Mono", "Fira Code", monospace;
+  --rcf-font-ui: "Segoe UI", "SF Pro", -apple-system, sans-serif;
+  --rcf-glow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --rcf-glow-strong: 0 4px 12px rgba(0, 0, 0, 0.15);
+}

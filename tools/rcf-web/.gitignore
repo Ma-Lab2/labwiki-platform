@@ -1,0 +1,8 @@
+backend/**/__pycache__/
+backend/.pytest_cache/
+backend/tests/__pycache__/
+frontend/node_modules/
+frontend/dist/
+frontend/tsconfig.tsbuildinfo
+backend/data/uploaded_materials/*
+!backend/data/uploaded_materials/.gitkeep

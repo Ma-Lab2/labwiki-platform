@@ -1,0 +1,31 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_DATA_RCF_ARCHIVING -->
+= Data:RCF计算与归档 =
+
+本页规定 RCF 工具输出如何进入实验记录链路，避免结果只留在浏览器会话里。
+
+== 必须归档的内容 ==
+* 计算页面链接
+* 输入参数版本或导出 JSON
+* 结果截图
+* 对应 shot 编号
+* 原始数据目录、处理脚本版本或网盘链接
+
+== 建议命名 ==
+* 截图：`Shot-YYYY-MM-DD-RunXX-ShotYYY-RCF-summary.png`
+* 导出：`Shot-YYYY-MM-DD-RunXX-ShotYYY-RCF-input.json`
+* 如有多次调整，在文件名后追加 `-v01`、`-v02`
+
+== 回填位置 ==
+* `Shot:` 页面填写链接、截图与说明
+* 周实验日志记录本周使用过 RCF 的 shot
+* 复盘页引用最终采用的计算版本
+
+== 归档原则 ==
+* 结果必须能追溯到输入参数
+* 不允许只保留最终图像而丢失材料和叠层定义
+* 外部网盘链接要注明目录名、权限和日期
+
+== 关联页面 ==
+* [[Diagnostic:RCF]]
+* [[Shot:Shot模板]]
+* [[Data:实验日志与数据关联]]

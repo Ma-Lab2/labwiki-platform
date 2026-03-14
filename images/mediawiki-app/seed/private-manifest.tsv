@@ -24,8 +24,10 @@ TargetArea:主靶室	private/targetarea-main-chamber.wiki
 TargetArea:束靶耦合段	private/targetarea-coupling.wiki
 Diagnostic:诊断总览	private/diagnostic-index.wiki
 Diagnostic:TPS	private/diagnostic-tps.wiki
+Diagnostic:RCF	private/diagnostic-rcf.wiki
 Data:数据管理总览	private/data-index.wiki
 Data:实验日志与数据关联	private/data-shot-linking.wiki
+Data:RCF计算与归档	private/data-rcf-archiving.wiki
 SOP:流程总览	private/sop-overview.wiki
 SOP:SOP模板	private/sop-template-prefixed.wiki
 SOP:主靶室打靶流程	private/sop-main-shot.wiki
