@@ -3,10 +3,15 @@
 
 == 原理入口 ==
 * [[Diagnostic:脉冲表征与超快诊断理论]]
+* [[Theory:激光-等离子体相互作用基础]]
 
 == 诊断链入口 ==
 * [[Diagnostic:TPS]]
 * [[Diagnostic:RCF]]
+
+== 工具入口 ==
+* [{{SERVER}}/tools/tps/ TPS 在线分析工具]
+* [{{SERVER}}/tools/rcf/ RCF 在线计算工具]
 
 == 每种诊断页应回答 ==
 * 原理是什么

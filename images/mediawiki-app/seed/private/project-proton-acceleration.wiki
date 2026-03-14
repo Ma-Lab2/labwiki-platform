@@ -9,11 +9,15 @@
 * 提高 shot-to-shot 稳定性
 
 == 关键页面 ==
+* [[Theory:激光-等离子体相互作用基础]]
 * [[Theory:TNSA]]
 * [[Theory:机制判别图谱]]
 * [[Theory:尺度律与开放问题]]
+* [[Laser:高功率超短脉冲激光链路理论]]
+* [[Diagnostic:脉冲表征与超快诊断理论]]
 * [[Laser:三阶自相关与对比度]]
 * [[Diagnostic:TPS]]
+* [[Diagnostic:RCF]]
 * [[Shot:Shot日志入口]]
 
 == 当前批次 ==

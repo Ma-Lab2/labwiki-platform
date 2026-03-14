@@ -38,10 +38,17 @@
 
 == 相关页面 ==
 * [[Laser:激光链路总图]]
+* [[Laser:高功率超短脉冲激光链路理论]]
+* [[Laser:波前控制、自适应光学与聚焦理论]]
 * [[TargetArea:束靶耦合段]]
 * [[Diagnostic:TPS]]
+* [[Diagnostic:RCF]]
 * [[Shot:Shot模板]]
 * [[Data:实验日志与数据关联]]
+
+== 当轮工具入口 ==
+* TPS 在线分析：[{{SERVER}}/tools/tps/ 打开 TPS 分析工具]
+* RCF 在线计算：[{{SERVER}}/tools/rcf/ 打开 RCF 计算工具]
 
 == 信息来源 ==
 * [https://clapa.pku.edu.cn/info/1063/1773.htm 北京大学激光加速实验室：控制系统研制和应用平台建设相关新闻。]
