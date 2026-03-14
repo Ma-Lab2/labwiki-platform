@@ -15,21 +15,21 @@
         <a class="header-link" href="/">{{ t.header.backToWiki }}</a>
       </div>
       <div class="header-controls">
-      <el-select v-model="settings.locale" size="small" style="width: 96px">
-        <el-option label="中文" value="zh-CN" />
-        <el-option label="EN" value="en-US" />
-      </el-select>
-      <el-button size="small" @click="triggerImport">{{ t.header.importJson }}</el-button>
-      <input ref="fileInput" type="file" accept=".json" style="display:none" @change="handleImport" />
-      <el-dropdown trigger="click">
-        <el-button size="small">{{ t.header.export }}</el-button>
-        <template #dropdown>
-          <el-dropdown-menu>
-            <el-dropdown-item @click="exportJson">{{ t.header.exportJson }}</el-dropdown-item>
-            <el-dropdown-item @click="exportMatrix">{{ t.header.exportMatrix }}</el-dropdown-item>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
+        <el-select v-model="settings.locale" size="small" style="width: 96px">
+          <el-option label="中文" value="zh-CN" />
+          <el-option label="EN" value="en-US" />
+        </el-select>
+        <el-button size="small" @click="triggerImport">{{ t.header.importJson }}</el-button>
+        <input ref="fileInput" type="file" accept=".json" style="display:none" @change="handleImport" />
+        <el-dropdown trigger="click">
+          <el-button size="small">{{ t.header.export }}</el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item @click="exportJson">{{ t.header.exportJson }}</el-dropdown-item>
+              <el-dropdown-item @click="exportMatrix">{{ t.header.exportMatrix }}</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
     </div>
   </div>
@@ -74,7 +74,7 @@ function exportJson() {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = 'rcf_stack.json'
+  a.download = 'rcf-input-snapshot.json'
   a.click()
   URL.revokeObjectURL(url)
 }
@@ -86,7 +86,7 @@ function exportMatrix() {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = 'response_matrix.txt'
+  a.download = 'rcf-response-matrix.txt'
   a.click()
   URL.revokeObjectURL(url)
 }
