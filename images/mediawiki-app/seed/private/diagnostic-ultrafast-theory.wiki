@@ -1,0 +1,59 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_DIAGNOSTIC_ULTRAFAST -->
+= Diagnostic:脉冲表征与超快诊断理论 =
+
+== 页面定位 ==
+本页解决“怎么知道脉冲真的被压好了、对比度真的够高、相位真的平了”。它是现有 `TPS / RCF` 之外的上游超快诊断理论入口。
+
+== 为什么必须单独成页 ==
+只看一张自相关曲线，往往不足以说明脉冲已经达到理论极限。超快诊断的关键，不在“有没有图”，而在“这个图到底测到了场的哪一部分”。
+
+== 主要方法 ==
+* 强度自相关：能快速估计相关宽度，但不能唯一恢复电场。
+* 交叉相关 / 三阶对比度测量：更适合看前沿、尾巴和时间对比度。
+* `FROG`（Frequency-Resolved Optical Gating，频率分辨光学开关）
+* `SPIDER`（Spectral Phase Interferometry for Direct Electric-field Reconstruction，直接电场重建的谱相位干涉）
+
+== 方法比较 ==
+{| class="wikitable"
+! 方法
+! 直接测量的量
+! 相位可恢复？
+! 最适合解决什么问题
+|-
+| 自相关
+| 相关宽度
+| 否
+| 快速看脉宽大概是否离谱
+|-
+| 三阶对比度
+| 主峰前后的动态范围
+| 否
+| 看 ASE、prepulse、前沿干净程度
+|-
+| FROG
+| 二维 trace
+| 是
+| 重建复杂脉冲的强度和相位
+|-
+| SPIDER
+| 频域剪切干涉
+| 是
+| 更直接更快地恢复谱相位
+|}
+
+== 实验上最常见误判 ==
+* 把“自相关变窄”当成“已经达到变换极限”
+* 只看主峰，不看 `ns-ps` 时间窗里的对比度底噪
+* 不区分“谱宽不够”与“谱相位没拉平”这两类压缩失败
+
+== 本实验室中的对应位置 ==
+* 链路原理：[[Laser:高功率超短脉冲激光链路理论]]
+* 对比度测量：[[Laser:三阶自相关与对比度]]
+* 波前聚焦：[[Laser:波前控制、自适应光学与聚焦理论]]
+* 下游影响：[[Theory:对比度与预等离子体]]
+
+== 信息来源 ==
+* 来源：`激光离子加速实验室纯理论知识体系全景调研.docx`。
+* [https://www.rp-photonics.com/frequency_resolved_optical_gating.html RP Photonics: Frequency-resolved optical gating.]
+* [https://opg.optica.org/ol/viewmedia.cfm?seq=0&uri=ol-23-10-792 Iaconis C, Walmsley I. SPIDER original paper.]
+* [https://pubs.aip.org/aip/jap/article/128/17/171103/1062810/Highly-reliable-measurement-of-ultrashort-laser Trebino related FROG review.]

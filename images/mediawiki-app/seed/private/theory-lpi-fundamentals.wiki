@@ -1,0 +1,36 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_THEORY_LPI_FOUNDATIONS -->
+= Theory:激光-等离子体相互作用基础 =
+
+== 页面定位 ==
+本页是上游激光链路和下游离子机制之间的桥。它回答的不是“是哪种离子机制”，而是“靶面光场如何先变成电子加热、回流、电荷分离场和透明化条件”。
+
+== 核心物理图像 ==
+离子机制并不直接由激光器名义参数决定，而是由靶面局域场决定。决定这一步的核心，是临界密度、预等离子体尺度长度、偏振、入射角、`a0` 和电子加热路径。
+
+== 关键概念 ==
+* 临界密度 `nc`：决定激光能否进入等离子体
+* `a0`：判断是否进入相对论强场区
+* 预等离子体尺度长度 `Ln / λ`
+* 常见吸收机制：Brunel / vacuum heating、共振吸收、`J×B` 加热
+* 相对论透明化：说明为什么原本过密的靶在高强场下可能变得可透
+
+== 为什么它重要 ==
+* 上游链路的对比度、脉宽、偏振、波前误差都会在这里转化成不同的吸收与加热模式
+* 只有先理解热电子和电荷分离场是怎么建立的，后面的 `TNSA / RPA / CSA / BOA / MVA` 才不是孤立名词
+
+== 本实验室中的对应位置 ==
+* 上游入口：[[Laser:超快激光基础理论]]
+* 链路实现：[[Laser:高功率超短脉冲激光链路理论]]
+* 对比度与前沿：[[Theory:对比度与预等离子体]]
+* 下游机制：[[Theory:TNSA]]、[[Theory:RPA]]、[[Theory:CSA 与 ESA]]、[[Theory:透明化相关机制]]、[[Theory:MVA]]
+
+== 实验上最关键的判断 ==
+* 机制变化之前，先问是不是靶面条件变了
+* 同样强度条件下，不同对比度、偏振和密度梯度可能把能量流送进完全不同的电子加热路径
+* “峰值强度更高”不等于“机制一定更理想”，因为透明化、预等离子体和电子回流可能同时变化
+
+== 信息来源 ==
+* 来源：`激光离子加速实验室纯理论知识体系全景调研.docx`。
+* [https://journals.aps.org/rmp/abstract/10.1103/RevModPhys.85.751 Macchi A et al. Ion acceleration by superintense laser-plasma interaction. Rev Mod Phys (2013).]
+* [https://docs.plasmapy.org/en/latest/api/plasmapy.formulary.laser.normalized_vector_potential.html PlasmaPy normalized vector potential documentation.]
+* [https://static.sif.it/SIF/resources/public/files/va2011/gibbon_all.pdf Gibbon high-intensity laser-plasma lecture notes.]

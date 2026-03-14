@@ -1,0 +1,39 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_LASER_ULTRAFAST -->
+= Laser:超快激光基础理论 =
+
+== 页面定位 ==
+本页回答“靶面之前的激光场到底是什么”。它是整个知识链的起点：如果这里没搞清楚，后面的对比度、聚焦强度、机制判断都会失真。
+
+== 核心物理图像 ==
+超快激光不是“静态光束”，而是一个同时具有空间分布、时间包络、频谱宽度和谱相位的时变电磁场。离子加速实验真正关心的，不是名义输出能量，而是有多少能量以正确的空间和时间结构到达靶面。
+
+== 关键概念 ==
+* 高斯光束与束腰 `w0`：决定焦斑半径与衍射极限。
+* Rayleigh 长度 `zR = π w0^2 / λ`：决定有效焦深。
+* `M²`：描述真实光束偏离理想高斯的程度，直接影响可达焦斑和峰值强度。
+* 时间带宽积（TBP）：说明“宽谱”只有在谱相位排平时才真的对应“短脉冲”。
+* 啁啾与色散：说明为什么脉冲会被拉长、主峰会被稀释。
+* 偏振、相干性与时空耦合（STC）：决定焦区的瞬时场结构是否被扭曲。
+
+== 实验上最关键的判断 ==
+* 有能量不等于有强度，必须同时看脉宽、波前、焦斑和主脉冲能量占比。
+* 频谱变宽不等于脉冲一定更短，必须结合谱相位或全场表征。
+* 焦斑恶化往往不只是“镜子脏了”，也可能来自 `M²` 上升、时空耦合和压缩残差。
+
+== 本实验室中的对应位置 ==
+* 链路总入口：[[Laser:激光链路总图]]
+* 脉冲表征：[[Diagnostic:脉冲表征与超快诊断理论]]
+* 波前与聚焦：[[Laser:波前控制、自适应光学与聚焦理论]]
+* 对比度：[[Laser:三阶自相关与对比度]]
+* 下游过渡：[[Theory:激光-等离子体相互作用基础]]
+
+== 新人最该记住的式子 ==
+* 峰值功率近似由 `Ppeak ≈ Epulse / τ` 决定。
+* 峰值强度还要再除以焦斑面积，因此真正进入相对论强场依赖的是“短脉冲 + 小焦斑 + 主峰能量集中”同时成立。
+
+== 信息来源 ==
+* 来源：`激光离子加速实验室纯理论知识体系全景调研.docx`。
+* [https://www.edmundoptics.com/knowledge-center/application-notes/lasers/gaussian-beam-propagation/ Gaussian Beam Propagation, Edmund Optics.]
+* [https://www.rp-photonics.com/m2_factor.html RP Photonics: M2 factor.]
+* [https://www.rp-photonics.com/gaussian_pulses.html RP Photonics: Gaussian pulses.]
+* [https://frog.gatech.edu/Pubs/Akturk-STDs-JOpt12-2010.pdf Akturk et al. Spatio-temporal couplings in ultrashort laser pulses. J Opt (2010).]

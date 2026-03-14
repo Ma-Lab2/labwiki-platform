@@ -1,0 +1,30 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_LASER_WAVEFRONT_THEORY -->
+= Laser:波前控制、自适应光学与聚焦理论 =
+
+== 页面定位 ==
+本页解释“为什么同样的能量进了 OAP，靶面强度可能差很多”。它是现有 `Laser:波前与可变形镜` 的理论层。
+
+== 核心物理图像 ==
+聚焦质量不是单纯由 OAP 焦距决定，而是由整个入射波前的相位误差、近场填充、像差和闭环校正共同决定。波前一旦偏离理想平面，焦区能量就会从主瓣泄漏到旁瓣，峰值强度和 Strehl 比同时下降。
+
+== 关键概念 ==
+* `Strehl ratio`：衡量实际峰值强度相对理想系统还能保留多少。
+* Zernike 模式：用于分解像散、彗差、球差等常见波前误差。
+* 可变形镜（DM）与 Shack-Hartmann：构成典型自适应光学闭环。
+* OAP（Off-Axis Parabola，离轴抛物镜）：高功率聚焦中常见核心元件。
+
+== 实验上最重要的判断 ==
+* 波前闭环是否真的提升了主瓣集中度，而不只是让图样“看起来更圆”
+* 远场焦斑变化到底来自波前校正、近场填充，还是链路相位漂移
+* 靶面峰值强度变化是否和 Strehl 的变化一致
+
+== 本实验室中的对应位置 ==
+* 实务页：[[Laser:波前与可变形镜]]
+* 靶面耦合：[[TargetArea:束靶耦合段]]
+* 诊断支撑：[[Diagnostic:脉冲表征与超快诊断理论]]
+* 下游机制：[[Theory:激光-等离子体相互作用基础]]
+
+== 信息来源 ==
+* 来源：`激光离子加速实验室纯理论知识体系全景调研.docx`。
+* 文档中关于 Zernike、Strehl、自适应光学和 OAP 聚焦的综述性资料。
+* [https://www.edmundoptics.com/knowledge-center/application-notes/lasers/gaussian-beam-propagation/ Gaussian Beam Propagation, Edmund Optics.]
