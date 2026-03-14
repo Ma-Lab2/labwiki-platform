@@ -1,6 +1,9 @@
 <!-- LABWIKI_MANAGED_PAGE:PRIVATE_SHOT_TEMPLATE -->
 = Shot:Shot模板 =
 
+* 若要创建新页面，优先使用 [[Shot:表单新建]] 或 [[Form:Shot记录]]
+* 本页保留为人工填写参考模板；结构化表单实际调用 [[Template:Shot记录]]
+
 * Shot 编号：`Shot:YYYY-MM-DD-RunXX-ShotYYY`
 * 日期：
 * Run：

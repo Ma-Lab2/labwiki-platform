@@ -41,6 +41,11 @@ PRIVATE_NAME="$("${compose_cmd[@]}" exec -T mw_private sh -lc 'printf %s "$MW_SI
 
 "${compose_cmd[@]}" exec -T mw_public sh -lc "grep -F \"${PUBLIC_NAME}\" /state/LocalSettings.php >/dev/null"
 "${compose_cmd[@]}" exec -T mw_private sh -lc "grep -F \"${PRIVATE_NAME}\" /state/LocalSettings.php >/dev/null"
+printf '%s\n' 'foreach (["PageForms","TemplateData"] as $name) { if (!ExtensionRegistry::getInstance()->isLoaded($name)) { fwrite(STDERR, $name . " missing\n"); exit(1); } }' \
+  | "${compose_cmd[@]}" exec -T mw_private php maintenance/run.php eval.php >/dev/null
+"${compose_cmd[@]}" exec -T mw_private php maintenance/run.php getText "Form:Shot记录" >/dev/null
+"${compose_cmd[@]}" exec -T mw_private php maintenance/run.php getText "Template:Shot记录" >/dev/null
+"${compose_cmd[@]}" exec -T mw_private php maintenance/run.php getText "Shot:表单新建" >/dev/null
 
 check_http "${PUBLIC_URL}" public
 check_http "${PRIVATE_URL}" private

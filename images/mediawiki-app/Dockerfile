@@ -5,6 +5,7 @@ FROM ${MW_BASE} AS mw-source
 USER root
 
 COPY images/mediawiki-app/theme /var/www/html/labwiki/theme
+COPY images/mediawiki-app/extensions/PageForms /var/www/html/extensions/PageForms
 
 FROM mw-source AS mw-runtime
 
@@ -19,6 +20,7 @@ COPY images/mediawiki-app/entrypoint/bootstrap-instance.sh /usr/local/bin/bootst
 COPY images/mediawiki-app/seed /opt/labwiki/seed
 
 RUN test -d /var/www/html/extensions/VisualEditor \
+    && test -d /var/www/html/extensions/PageForms \
     && chmod +x /usr/local/bin/bootstrap-instance.sh
 
 ENTRYPOINT ["/usr/local/bin/bootstrap-instance.sh"]

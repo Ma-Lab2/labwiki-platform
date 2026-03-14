@@ -36,6 +36,7 @@
 * [[Diagnostic:TPS]]
 * [{{SERVER}}/tools/tps/ TPS 工具]
 | * [[Shot:Shot模板]]
+* [[Shot:表单新建]]
 * [[Shot:周实验日志]]
 * [[风险与问题]]
 | * [[Data:实验日志与数据关联]]
