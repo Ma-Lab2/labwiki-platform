@@ -8,6 +8,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.colors import PowerNorm
+from matplotlib.ticker import LogFormatterSciNotation, LogLocator
 from io import BytesIO
 import os
 import base64
@@ -109,12 +110,23 @@ def render_batch_spectrum(spectra_list: list, params: dict) -> bytes:
     -------
     bytes : PNG image data.
     """
-    fig, ax = plt.subplots(figsize=(10, 6))
+    plt.style.use('default')
+    fig, ax = plt.subplots(figsize=(9.0, 5.4), dpi=150)
 
     ax.set_xlim(params.get('specEmin', 0), params.get('specEmax', 100))
     ax.set_ylim(params.get('specdNdEmin', 1e6), params.get('specdNdEmax', 3e11))
-    ax.set_xlabel("E (MeV)")
-    ax.set_ylabel("dN/dE")
+    ax.set_xlabel("E (MeV)", fontsize=11)
+    ax.set_ylabel("dN/dE", fontsize=11)
+    ax.set_yscale('log')
+    ax.yaxis.set_major_locator(LogLocator(base=10.0))
+    ax.yaxis.set_major_formatter(LogFormatterSciNotation(base=10.0))
+    ax.yaxis.set_minor_locator(LogLocator(base=10.0, subs=np.arange(2, 10) * 0.1))
+    ax.tick_params(axis='both', which='major', labelsize=9, direction='out', length=4)
+    ax.tick_params(axis='both', which='minor', direction='out', length=2)
+    ax.grid(which='major', axis='both', color='#d8e0e3', linewidth=0.8)
+    ax.grid(which='minor', axis='y', color='#eef3f5', linewidth=0.5)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
 
     for item in spectra_list:
         if 'error' in item:
@@ -123,13 +135,13 @@ def render_batch_spectrum(spectra_list: list, params: dict) -> bytes:
         cutoff = item.get('cutoffEnergy', '')
         name = os.path.splitext(item['fileName'])[0]
         label = f"{name}--{cutoff}MeV" if not isinstance(cutoff, str) else f"{name}--NaN"
-        ax.semilogy(spec[0], spec[1], label=label)
+        ax.plot(spec[0], spec[1], linewidth=1.6, label=label)
 
-    ax.legend(fontsize=8)
+    ax.legend(fontsize=8, frameon=False, loc='best')
     fig.tight_layout()
 
     buf = BytesIO()
-    fig.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+    fig.savefig(buf, format='png', dpi=200, bbox_inches='tight')
     plt.close(fig)
     buf.seek(0)
     return buf.getvalue()
