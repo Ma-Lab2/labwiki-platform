@@ -6,11 +6,11 @@
 
 从纯理论视角，更适合按“主导驱动场”来分机制：
 
-* 鞘场主导：[[Theory:TNSA]]
-* 辐射压主导：[[Theory:RPA]]
-* 激波反射主导：[[Theory:CSA 与 ESA]]
-* 透明化与体加速主导：[[Theory:透明化相关机制]]
-* 近临界通道与磁涡旋主导：[[Theory:MVA]]
+* 鞘场主导：[[Theory:TNSA|TNSA（Target Normal Sheath Acceleration，靶法向鞘场加速）]]
+* 辐射压主导：[[Theory:RPA|RPA（Radiation Pressure Acceleration，辐射压加速）]]
+* 激波反射主导：[[Theory:CSA 与 ESA|CSA / ESA（碰撞无关 / 静电激波加速）]]
+* 透明化与体加速主导：[[Theory:透明化相关机制|BOA / RITA / 透明化增强混合机制]]
+* 近临界通道与磁涡旋主导：[[Theory:MVA|MVA（Magnetic Vortex Acceleration，磁涡旋加速）]]
 
 == 关键量 ==
 * 激光侧：`a0`、脉宽、峰值功率、聚焦强度、对比度、偏振、焦斑
