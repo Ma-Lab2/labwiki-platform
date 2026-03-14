@@ -1,0 +1,12 @@
+.git
+.env
+frontend/node_modules
+frontend/dist
+backend/__pycache__
+backend/api/__pycache__
+backend/core/__pycache__
+backend/models/__pycache__
+backend/services/__pycache__
+backend/ws/__pycache__
+data/images
+data/output

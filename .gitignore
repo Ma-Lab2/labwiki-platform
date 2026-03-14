@@ -7,6 +7,8 @@ backups/*
 
 state/**/LocalSettings.php
 state/**/.seed-*
+state/tps/*
+!state/tps/.gitkeep
 state/rcf/uploaded_materials/*
 !state/rcf/uploaded_materials/.gitkeep
 uploads/*
@@ -23,3 +25,9 @@ docker-data/
 docs/intake/field-manual-20250723/images/all/*
 !docs/intake/field-manual-20250723/images/all/.gitkeep
 ops/scripts/__pycache__/
+tools-data/tps/images/*
+!tools-data/tps/images/.gitkeep
+tools-data/tps/output/*
+!tools-data/tps/output/.gitkeep
+tools/pytps-web/frontend/node_modules/
+tools/pytps-web/frontend/dist/

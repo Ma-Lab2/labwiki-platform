@@ -1,0 +1,19 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_CONTROL_MOTOR_MAP -->
+= Control:自研电机与集科电机分布图 =
+
+本页作为受限信息页占位。现场补录内容只写入本地 private wiki，不进入 git。
+
+== 现场应补内容 ==
+* 原始分布图图片或 CAD 截图
+* 自研电机与集科电机的物理位置对应关系
+* 控制器、节点与回转地址映射
+* 哪些系统共用 QControl，哪些使用 OWIS 原生软件
+
+== 关联页 ==
+* [[Control:受限信息索引]]
+* [[Control:内网地址与回转记录]]
+* [[TargetArea:靶后运动系统]]
+* [[TargetArea:RCF运动系统]]
+
+== 信息来源 ==
+* 工作手册 2025-07-23 §6.3 标题页。

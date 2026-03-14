@@ -135,6 +135,35 @@ services:
       start_period: 20s
     logging: *default-logging
 
+  tps_web:
+    build:
+      context: ./tools/pytps-web
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      PYTPS_DATA_DIR: /data/config
+      PYTPS_IMAGE_DIR: /data/images
+      PYTPS_OUTPUT_DIR: /data/output
+      PYTPS_WORKERS: 4
+      PYTPS_SESSION_MAX_AGE: 3600
+    volumes:
+      - ./state/tps:/data/config
+      - ${TPS_IMAGE_DIR:-./tools-data/tps/images}:/data/images:ro
+      - ./tools-data/tps/output:/data/output
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=5).read()",
+        ]
+      interval: 20s
+      timeout: 5s
+      retries: 6
+      start_period: 25s
+    logging: *default-logging
+
   caddy_public:
     build:
       context: .
@@ -167,6 +196,8 @@ services:
       mw_private:
         condition: service_healthy
       rcf_frontend:
+        condition: service_healthy
+      tps_web:
         condition: service_healthy
     environment:
       PRIVATE_HOST: ${PRIVATE_HOST:-wiki.lab.internal}

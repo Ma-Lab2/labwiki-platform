@@ -34,6 +34,7 @@ Diagnostic:TPS	private/diagnostic-tps.wiki
 Diagnostic:RCF	private/diagnostic-rcf.wiki
 Data:数据管理总览	private/data-index.wiki
 Data:实验日志与数据关联	private/data-shot-linking.wiki
+Data:TPS分析与归档	private/data-tps-archiving.wiki
 Data:RCF计算与归档	private/data-rcf-archiving.wiki
 SOP:流程总览	private/sop-overview.wiki
 SOP:SOP模板	private/sop-template-prefixed.wiki
@@ -60,6 +61,7 @@ Control:受限信息索引	private/control-restricted-index.wiki
 Control:内网地址与回转记录	private/control-internal-network.wiki
 Control:控制电脑凭据	private/control-credentials.wiki
 Control:设备安装包索引	private/control-installers.wiki
+Control:自研电机与集科电机分布图	private/control-motor-map.wiki
 Project:项目总览	private/project-index.wiki
 Project:项目模板	private/project-template-prefixed.wiki
 Project:激光质子加速	private/project-proton-acceleration.wiki

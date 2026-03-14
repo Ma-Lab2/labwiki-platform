@@ -1,0 +1,15 @@
+services:
+  pytps-web:
+    build: .
+    ports:
+      - "8080:8000"
+    volumes:
+      - ./data:/data
+      # Mount lab shared drive (read-only)
+      # - /mnt/shared/tps-images:/data/images:ro
+    environment:
+      - PYTPS_IMAGE_DIR=/data/images
+      - PYTPS_OUTPUT_DIR=/data/output
+      - PYTPS_WORKERS=4
+      - PYTPS_SESSION_MAX_AGE=3600
+    restart: unless-stopped

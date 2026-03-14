@@ -1,5 +1,8 @@
 localhost {
     encode zstd gzip
+    handle_path /tools/tps/* {
+        reverse_proxy tps_web:8000
+    }
     handle_path /tools/rcf/* {
         reverse_proxy rcf_frontend:80
     }

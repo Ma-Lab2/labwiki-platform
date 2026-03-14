@@ -1,0 +1,57 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_DATA_TPS_ARCHIVING -->
+= Data:TPS分析与归档 =
+
+本页规定 TPS 工具输出如何进入实验记录链路，避免结果只保留在当前浏览器会话或控制电脑本地目录。
+
+== 每个 shot 至少保留的四项 ==
+* TPS 工具入口或计算记录链接
+* TPS 参数快照（包括几何参数、`X0/Y0`、粒子种类、滤波模式、`±dY`）
+* TPS 结果图 / 截图
+* TPS 导出谱线或批处理结果文件
+
+== 推荐命名 ==
+* 截图：`Shot-YYYY-MM-DD-RunXX-ShotYYY-TPS-summary.png`
+* 参数快照：`Shot-YYYY-MM-DD-RunXX-ShotYYY-TPS-params.txt`
+* 导出谱线：`Shot-YYYY-MM-DD-RunXX-ShotYYY-TPS-spectrum.txt`
+* 批处理对比：`Shot-YYYY-MM-DD-RunXX-ShotYYY-TPS-batch.png`
+
+== 页面回填位置 ==
+* `Shot:` 页面填写 `TPS 工具入口 / 计算记录`
+* `Shot:` 页面填写 `TPS 参数快照`
+* `Shot:` 页面填写 `TPS 结果图 / 截图`
+* `Shot:` 页面填写 `TPS 导出谱线`
+* 周实验日志只保留本周关键 shot 与结果摘要，不重复放整套 TPS 文件
+
+== 最小可复现信息 ==
+{| class="wikitable"
+! 字段
+! 说明
+|-
+| 原始图像路径
+| 至少能定位到本次解谱使用的源图目录
+|-
+| 几何参数
+| 狭缝、漂移段、电场、磁场、探测面版本
+|-
+| 解谱参数
+| `X0`、`Y0`、粒子种类、`±dY`、能量范围、滤波模式
+|-
+| 软件版本
+| 当前 TPS 工具版本或脚本版本
+|-
+| 输出文件
+| 截图、导出谱线、批处理对比图
+|}
+
+== 归档边界 ==
+* 小文件可直接上传到 wiki 附件
+* 大体积原始图和批处理结果放外部目录、NAS 或网盘，wiki 中记录路径和访问说明
+* 如果工具参数在现场频繁调整，至少保留最终用于写实验结论的一份参数快照
+
+== 关联页 ==
+* [[Diagnostic:TPS]]
+* [[Data:实验日志与数据关联]]
+* [[Shot:Shot模板]]
+
+== 信息来源 ==
+* 工作流约束来自本仓库 private wiki 的实验记录设计与 TPS 在线解谱工具集成要求。
