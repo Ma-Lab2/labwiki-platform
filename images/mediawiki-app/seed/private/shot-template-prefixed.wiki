@@ -92,3 +92,5 @@
 * [[Diagnostic:TPS]]
 * [[Diagnostic:RCF]]
 * [[SOP:主靶室打靶流程]]
+* [[SOP:打靶前安全检查]]
+* [[SOP:10分钟全要素检查清单]]

@@ -1,15 +1,32 @@
 <!-- LABWIKI_MANAGED_PAGE:PRIVATE_TARGETAREA_INDEX -->
 = TargetArea:靶场总览 =
 
-== 入口页职责 ==
-用空间树和功能链双重方式组织靶场内容。
+== 页面定位 ==
+这一组页面只回答“靶场里有哪些链路、设备和操作边界”。涉及账号、密码、内网地址和安装包的内容统一跳转到 [[Control:受限信息索引]]，不在普通设备页明文展开。
 
-== 优先页 ==
-* [[TargetArea:主靶室]]
-* [[TargetArea:束靶耦合段]]
+[[File:FieldManual-20250723-2-1打靶实验布局-032.png|900px|验证腔打靶实验布局。]]
 
-== 推荐补充方向 ==
-* OAP 区
-* 对比度清洗链
-* 找靶链
-* 诊断接口区
+== 阅读顺序 ==
+# [[TargetArea:靶区实验传输光路]]
+# [[TargetArea:主靶室]]
+# [[TargetArea:靶架系统与自动找靶]]
+# [[TargetArea:靶后运动系统]]
+# [[TargetArea:RCF运动系统]]
+# [[TargetArea:防溅射膜系统]]
+# [[TargetArea:判靶系统]]
+# [[TargetArea:低倍靶前系统]]
+
+== 功能链 ==
+* 靶场布局与主腔体：[[TargetArea:主靶室]]、[[TargetArea:束靶耦合段]]
+* 光路背景：[[TargetArea:靶区实验传输光路]]
+* 找靶与机械运动：[[TargetArea:靶架系统与自动找靶]]、[[TargetArea:靶后运动系统]]
+* 诊断前端与靶后位：[[TargetArea:RCF运动系统]]、[[TargetArea:判靶系统]]、[[TargetArea:低倍靶前系统]]
+* 保护部件：[[TargetArea:防溅射膜系统]]
+
+== 与 SOP 的关系 ==
+* 打靶前执行 [[SOP:打靶前安全检查]]
+* 调光与打靶切换看 [[SOP:放光模式选择与操作]]
+* 真空与腔体操作看 [[Safety:真空操作]]、[[Safety:腔体操作]]
+
+== 信息来源 ==
+* 来源：工作手册 2025-07-23 §2.1。

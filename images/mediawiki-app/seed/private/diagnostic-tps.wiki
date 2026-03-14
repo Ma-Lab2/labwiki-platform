@@ -4,6 +4,8 @@
 == 原理 ==
 汤姆逊抛物谱仪通过磁场和电场联合色散不同荷质比与能量的带电粒子，在探测面上形成可分离的抛物线轨迹。对激光驱动离子束实验，它最重要的价值不是“看见一条谱”，而是把离子种类、能量范围和截止能量在单发 shot 上区分出来。
 
+[[File:FieldManual-20250723-3-1-tps离子在线谱仪-073.png|900px|PyTPS 在线解谱主界面。]]
+
 == 读谱前必须确认 ==
 * 狭缝、漂移段、磁场区和电场区的几何参数版本
 * 磁场 / 电场设定值与最近一次标定日期
@@ -17,6 +19,18 @@
 * 数据读取脚本
 * 背景扣除与阈值设置
 * 不确定度说明
+
+== 手册给出的现场流程 ==
+# 在安道尔相机控制程序中完成冷却、外触发和保存路径设置
+# 在 PyTPS 中指向 Andor 原始图目录和“处理后”结果目录
+# 在线模式下用第一张有质子谱线的图校正 X0 / Y0 原点
+# 用参考抛物线和十字准星重合度检查当前几何参数是否仍然有效
+# 自动保存能谱图和 `.txt` 结果，并把结果路径写入 [[Shot:Shot模板]]
+
+== 本页与软件说明的边界 ==
+* 这里保留参数和判断逻辑
+* 具体电脑地址、账号和软件分发位置放到 [[Control:受限信息索引]]
+* 每轮实验只记录当前脚本版本，不在 shot 页重复抄整套操作说明
 
 == 最常见的误判 ==
 * 把探测器响应变化误当成束流变化
@@ -52,8 +66,10 @@
 * [[Theory:TNSA]]
 * [[Data:实验日志与数据关联]]
 * [[Shot:Shot模板]]
+* [[SOP:打靶前安全检查]]
 
 == 信息来源 ==
+* 来源：工作手册 2025-07-23 §3.1。
 * [https://www.mdpi.com/1424-8220/22/9/3239 Angular-Resolved Thomson Parabola Spectrometer for Laser-Driven Ion Accelerators. Sensors (2022).]
 * [https://pubmed.ncbi.nlm.nih.gov/33138598/ Thomson parabola and time-of-flight detector cross-calibration methodology on the ALLS 100 TW laser-driven ion acceleration beamline. Rev Sci Instrum / PubMed entry (2020).]
 * [https://www.osti.gov/biblio/22531502 Thomson Parabola Spectrometer: a powerful tool for on-line plasma analysis. OSTI conference record.]

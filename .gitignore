@@ -6,6 +6,7 @@ backups/*
 !backups/.gitkeep
 
 state/**/LocalSettings.php
+state/**/.seed-*
 state/rcf/uploaded_materials/*
 !state/rcf/uploaded_materials/.gitkeep
 uploads/*
@@ -18,3 +19,7 @@ uploads/private/*
 
 docker-data/
 .playwright-cli/
+【排版结果】【工作手册】20250723.docx
+docs/intake/field-manual-20250723/images/all/*
+!docs/intake/field-manual-20250723/images/all/.gitkeep
+ops/scripts/__pycache__/

@@ -6,6 +6,7 @@ LOCAL_SETTINGS="${STATE_DIR}/LocalSettings.php"
 SCRIPT_PATH="${MW_SCRIPT_PATH:-}"
 THEME_ROOT="/var/www/html/labwiki/theme"
 SEED_ROOT="/opt/labwiki/seed"
+IMAGE_SEED_ROOT="/opt/labwiki/seed/uploads"
 MAIN_PAGE_TITLE="${MW_MAIN_PAGE_TITLE:-首页}"
 
 SITE_VARIANT="public"
@@ -149,6 +150,26 @@ seed_manifest_pages() {
   done < "${manifest_file}"
 }
 
+import_seed_images_once() {
+  local relative_dir="$1"
+  local marker_name="$2"
+  local image_dir="${IMAGE_SEED_ROOT}/${relative_dir}"
+  local marker_file="${STATE_DIR}/.${marker_name}"
+
+  if [[ ! -d "${image_dir}" ]] || [[ -f "${marker_file}" ]]; then
+    return 0
+  fi
+
+  php maintenance/run.php importImages \
+    --summary="Seed labwiki image assets" \
+    --search-recursively \
+    --skip-dupes \
+    --user="${MW_ADMIN_USER}" \
+    "${image_dir}"
+
+  touch "${marker_file}"
+}
+
 if [[ ! -s "${LOCAL_SETTINGS}" ]]; then
   php maintenance/run.php install \
     --confpath="${STATE_DIR}" \
@@ -220,6 +241,10 @@ $wgGroupPermissions['*']['createaccount'] = false;
 EOF
 )"
   append_block_once "PRIVATE_WIKI_HARDENING" "${PRIVATE_BLOCK}"
+fi
+
+if [[ "${MW_PRIVATE_MODE:-false}" == "true" ]]; then
+  import_seed_images_once "private/field-manual-20250723" "seed-images-field-manual-20250723-v1"
 fi
 
 seed_page_if_default "${MAIN_PAGE_TITLE}" "${SEED_ROOT}/${SITE_VARIANT}-mainpage.wiki"
