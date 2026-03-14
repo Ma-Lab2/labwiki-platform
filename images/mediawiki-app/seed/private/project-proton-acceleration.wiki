@@ -13,3 +13,9 @@
 * [[Laser:三阶自相关与对比度]]
 * [[Diagnostic:TPS]]
 * [[Shot:Shot日志入口]]
+
+== 当前批次 ==
+* [[Shot:2026-W11 周实验日志]]
+* [[Shot:2026-03-14-Run01-Shot001]]
+* [[Shot:2026-03-14-Run01-Shot002]]
+* [[Shot:2026-03-14-Run01-Shot003]]
