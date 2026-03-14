@@ -1,0 +1,79 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_FAQ_MATH_CITATION -->
+= FAQ:公式与引用速查 =
+
+本页只保留 private wiki 最常用的公式、参考文献和源码编辑写法，避免每次都去翻 MediaWiki 帮助页。
+
+== 公式最常用写法 ==
+* 行内公式：`<math>E_k = (\gamma - 1)m_pc^2</math>`
+* 渲染效果：<math>E_k = (\gamma - 1)m_pc^2</math>
+* 独立公式：
+<pre>
+<math display="block">
+a_0 \approx 0.85 \sqrt{I_{18}\lambda_{\mu m}^2}
+</math>
+</pre>
+* 渲染效果：
+<math display="block">
+a_0 \approx 0.85 \sqrt{I_{18}\lambda_{\mu m}^2}
+</math>
+* 分数、上下标、希腊字母都按 LaTeX 写法：
+<pre>
+<math>\frac{n_e}{n_c}, \quad \lambda, \quad \Delta E / E</math>
+</pre>
+* 渲染效果：<math>\frac{n_e}{n_c}, \quad \lambda, \quad \Delta E / E</math>
+
+== 适合本实验室理论页的例子 ==
+* 强度与归一化矢势：
+<pre>
+<math display="block">
+a_0 \approx 0.85 \sqrt{I_{18}\lambda_{\mu m}^2}
+</math>
+</pre>
+* 热电子标度：
+<pre>
+<math display="block">
+T_h \sim m_ec^2(\sqrt{1 + a_0^2} - 1)
+</math>
+</pre>
+* 面密度和透明化相关量：
+<pre>
+<math>\sigma \equiv (n_e/n_c)(d/\lambda)</math>
+</pre>
+
+== 参考文献最常用写法 ==
+* 单条引用：
+<pre>
+<ref>Macchi, Borghesi, Passoni. Ion acceleration by superintense laser-plasma interaction. Rev Mod Phys (2013).</ref>
+</pre>
+* 实际效果：辐射压加速常用综述之一。<ref>Macchi, Borghesi, Passoni. Ion acceleration by superintense laser-plasma interaction. Rev Mod Phys (2013).</ref>
+* 带名字的复用引用：
+<pre>
+<ref name="macchi2013">Macchi, Borghesi, Passoni. Ion acceleration by superintense laser-plasma interaction. Rev Mod Phys (2013).</ref>
+...
+<ref name="macchi2013" />
+</pre>
+* 页面末尾统一放：
+<pre>
+== 参考文献 ==
+<references />
+</pre>
+
+== 参考文献 ==
+<references />
+
+== 理论页推荐写法 ==
+* 先给物理图像，再给 1 到 3 条关键公式，不要堆整页推导
+* 公式后面紧跟参数含义，避免只写符号
+* 机制页里如果要下判断，最好同时连到 [[Theory:机制判别图谱]] 和对应 `Shot:` 页面
+* 参考文献优先放综述、代表论文和本实验室直接相关的诊断或装置文献
+
+== 编辑器使用建议 ==
+* VisualEditor 适合普通文字、列表、链接和表格
+* 写公式、模板和复杂表格时，切到“编辑源代码”更稳
+* 若公式显示异常，先检查是否有未闭合的 `<math>`、`<ref>` 或表格标记
+
+== 关联页 ==
+* [[Theory:基础理论总览]]
+* [[Theory:激光-等离子体相互作用基础]]
+* [[Diagnostic:TPS]]
+* [[Shot:Shot模板]]

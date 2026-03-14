@@ -229,7 +229,20 @@ wfLoadExtension( 'VisualEditor' );
 EOF
 )"
 
+EDITOR_BLOCK="$(cat <<'EOF'
+wfLoadExtension( 'Math' );
+wfLoadExtension( 'Cite' );
+wfLoadExtension( 'WikiEditor' );
+$wgDefaultUserOptions['usebetatoolbar'] = 1;
+$wgDefaultUserOptions['usebetatoolbar-cgd'] = 1;
+$wgDefaultUserOptions['wikieditor-preview'] = 1;
+$wgDefaultUserOptions['wikieditor-publish'] = 1;
+$wgMathEnableFormulaLinks = true;
+EOF
+)"
+
 append_block_once "LABWIKI_COMMON" "${COMMON_BLOCK}"
+append_block_once "LABWIKI_EDITOR_EXTENSIONS_V1" "${EDITOR_BLOCK}"
 append_block_once "LABWIKI_THEME_V1" "${THEME_BLOCK}"
 append_block_once "LABWIKI_RUNTIME_OVERRIDES_V5" "${RUNTIME_BLOCK}"
 
