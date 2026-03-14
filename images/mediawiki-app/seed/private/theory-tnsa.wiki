@@ -4,31 +4,41 @@
 == 物理图像 ==
 TNSA 是固体薄靶实验里最经典、最稳健的离子加速机制之一。主脉冲与靶前表面相互作用后产生高温电子，电子穿透薄靶到达靶后表面，形成瞬态鞘场并把表面污染层中的质子或轻离子沿靶法线方向加速出去。
 
-== 机制要点 ==
-* 电子温度、电子数和横向扩展共同决定鞘场强度与持续时间。
-* 薄靶、较好聚焦和较高激光吸收通常有利于得到更高截止能量。
-* 靶后表面污染层往往先提供质子，因此很多实验默认观测到的高能质子并不来自主体靶材料本身。
+== 主导驱动场与加速区 ==
+* 主导源：靶后热电子鞘场。
+* 主要加速区：靶后表面附近的鞘层与其向真空膨胀区域。
+* 最关键的时间顺序：前表面吸收激光 → 电子加热并穿靶 → 后表面形成电荷分离场 → 质子或轻离子被沿靶法线加速。
 
-== 实验判据 ==
-* TPS 或其他能谱诊断中是否出现清晰的 proton cutoff
-* 束流主发射方向是否接近靶法线
-* 对比度变化后，截止能量、低能端和发散角是否同步变化
-* 更换靶厚、靶材或表面处理后，谱形是否系统漂移
+== 关键控制参量 ==
+* 热电子温度：决定鞘场尺度。
+* 热电子总量与横向扩展：决定可维持多久、可加速多少电荷。
+* 靶厚与表面污染层：决定电子输运与最终被优先加速的离子种类。
+* 对比度：决定主脉冲到来时后表面鞘场是不是建立在“相对干净”的靶上。
 
-== 适用范围与常见误区 ==
-* 当靶较厚、对比度有限、机制过渡不明显时，先按 TNSA 作为默认工作假设是合理的。
-* 超薄靶、极高对比度和超高强度下可能进入 RPA 或混合机制，不能仅凭“有质子就叫 TNSA”。
-* 单次高能点不能直接说明机制变化，必须结合对比度、靶前状态和多 shot 统计。
+== 关键尺度律 ==
+* 最常用的理论入口是等离子体向真空自相似膨胀模型。
+* 对实验最有用的结论不是推导全式，而是记住：截止能量通常随热电子温度升高而提高，但随加速时间延长的收益是递减的。
+* 这也是为什么 TNSA 更像“鲁棒但难窄谱、难无限外推”的机制。
+
+== 实验判据与常见误判 ==
+* TPS 或其他能谱诊断中是否出现清晰的 proton cutoff。
+* 束流主发射方向是否接近靶法线。
+* 更换靶厚、靶材或表面处理后，谱形是否系统漂移。
+* 当靶较厚、对比度有限、机制过渡不明显时，先按 TNSA 作为默认工作假设通常是合理的。
+* 不能仅凭“有质子就叫 TNSA”；超薄靶、高对比度和峰值附近透明化时，可能已经进入 RPA 或混合机制。
+* 单次高能点不能直接说明机制切换，必须结合对比度、靶前状态和多 shot 统计。
 
 == 本实验室关联页 ==
 * [[Theory:激光等离子体加速总览]]
+* [[Theory:机制判别图谱]]
 * [[Laser:三阶自相关与对比度]]
 * [[SOP:主靶室打靶流程]]
 * [[Diagnostic:TPS]]
 * [[Shot:Shot模板]]
 
 == 信息来源 ==
+* 来源：理论综述《激光离子加速的理论机制、尺度律与开放问题：纯理论导向系统调研综述》。
 * [https://pubmed.ncbi.nlm.nih.gov/11005974/ Snavely RA et al. Intense high-energy proton beams from Petawatt-laser irradiation of solids. Phys Rev Lett / PubMed entry (2000).]
 * [https://pubmed.ncbi.nlm.nih.gov/12786012/ Mora P. Plasma expansion into a vacuum. Phys Rev Lett / PubMed entry (2003).]
+* [https://journals.aps.org/rmp/abstract/10.1103/RevModPhys.85.751 Macchi A et al. Ion acceleration by superintense laser-plasma interaction. Rev Mod Phys (2013).]
 * [https://pubmed.ncbi.nlm.nih.gov/22790586/ Daido H, Nishiuchi M, Pirozhkov AS. Review of laser-driven ion sources and their applications. Rep Prog Phys (2012).]
-* [https://clapa.pku.edu.cn/sysgk/gk.htm 北京大学激光加速器实验室概况。]

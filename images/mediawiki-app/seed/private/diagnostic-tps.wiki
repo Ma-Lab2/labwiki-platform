@@ -99,6 +99,7 @@
 
 == 关联页 ==
 * [[Theory:TNSA]]
+* [[Theory:机制判别图谱]]
 * [[Data:实验日志与数据关联]]
 * [[Data:TPS分析与归档]]
 * [[Shot:Shot模板]]

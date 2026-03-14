@@ -1,0 +1,52 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_THEORY_RPA -->
+= Theory:RPA =
+
+== 物理图像 ==
+RPA 的核心不是“把电子先打热”，而是让激光辐射压直接把动量注入靶面电子层，再通过电荷约束把离子整体拖着走。按相互作用拓扑，最常见的两种口径是：
+
+* `Hole-Boring`：激光像活塞一样向过密等离子体内推进，离子在前沿被反射或推动。
+* `Light-Sail`：当超薄靶整体还能保持相干、且尚未透明化时，薄靶可被当成一张被光压推动的“帆”。
+
+== 主导驱动场与加速区 ==
+* 主导源：辐射压对应的动量通量，而不是后表面热电子鞘场。
+* 主要加速区：靶前压缩层与仍保持准中性的超薄靶整体。
+* 与 TNSA 的根本区别：RPA 更依赖“整体相干推进”，TNSA 更依赖“电子先热化后在后表面形成鞘场”。
+
+== 关键控制参量 ==
+* `a0`：决定光压与电子相对论效应的强弱。
+* 面密度：过厚推不动，过薄又会过早透明化。
+* 极化：圆偏振通常更有利，因为它更不容易把电子振荡加热得太厉害。
+* 对比度：若主脉冲到来前靶已膨胀，理想薄帆条件就会被破坏。
+
+== 关键尺度律 ==
+* `Hole-Boring` 的核心判据是动量通量平衡：激光光压要能与前沿等离子体的反冲动量流平衡。
+* `Light-Sail` 的核心问题是面密度匹配：在给定 `a0` 下，只有一段较窄的厚度窗口既能保持不透明，又能被有效推动。
+* 实验上更重要的不是死记公式，而是记住三件事：`高对比度`、`合适面密度`、`抑制横向失稳`。
+
+== 实验判据与常见误判 ==
+* 若希望判断是否接近 RPA，至少要同时看：靶厚窗口、对比度、偏振、谱形是否变窄。
+* 单次出现高截止能量，不足以说明进入 RPA；也可能只是 TNSA 或透明化增强后的偶然高点。
+* 如果薄靶早早膨胀、谱形很宽、shot-to-shot 起伏很大，通常说明还没进入稳定的 `Light-Sail` 区域。
+* RPA 讨论里最容易被忽略的是三维稳定性：二维 PIC 给出的相干薄层，在真实三维里往往更容易被 RT 类不稳定性和横向膨胀破坏。
+
+== 在本实验室中最该记录什么 ==
+* 靶厚与材料批次
+* 对比度与预等离子体判断
+* 偏振与焦斑条件
+* 是否出现异常透明化或靶面破裂迹象
+* TPS 上谱形是否比基线 TNSA 更窄、更一致
+
+== 关联页 ==
+* [[Theory:激光等离子体加速总览]]
+* [[Theory:对比度与预等离子体]]
+* [[Theory:机制判别图谱]]
+* [[TargetArea:束靶耦合段]]
+* [[Diagnostic:TPS]]
+* [[Shot:Shot模板]]
+
+== 信息来源 ==
+* 来源：理论综述《激光离子加速的理论机制、尺度律与开放问题：纯理论导向系统调研综述》。
+* [https://journals.aps.org/rmp/abstract/10.1103/RevModPhys.85.751 Macchi A et al. Ion acceleration by superintense laser-plasma interaction. Rev Mod Phys (2013).]
+* [https://ui.adsabs.harvard.edu/abs/2008NJPh...10a3021R/abstract Robinson APL et al. Radiation pressure acceleration of thin foils with circularly polarized laser pulses. New J Phys (2008).]
+* [https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.103.085003 Yan XQ et al. "Light Sail" Acceleration Reexamined. Phys Rev Lett (2009).]
+* [https://pubs.aip.org/aip/pop/article/23/5/056703/966628/Radiation-pressure-acceleration-The-factors Macchi A et al. Radiation-pressure acceleration: the factors limiting maximum attainable ion energy. Phys Plasmas (2016).]

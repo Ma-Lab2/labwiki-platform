@@ -1,0 +1,48 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_THEORY_MVA -->
+= Theory:MVA =
+
+== 物理图像 ==
+MVA 关注的是近临界密度靶中的通道电流与自生强磁场。激光在近临界等离子体中形成自引导通道，通道尾部和密度下坡区域会出现强磁涡旋与电荷分离场，离子既被加速，也可能被更好地准直。
+
+== 主导驱动场与加速区 ==
+* 主导源：通道电流、回流结构与强方位磁场耦合形成的纵向场。
+* 主要加速区：通道尾端和密度下坡附近。
+* 这类机制的优势不只是“高能”，而是有机会同时得到更高准直和更大电荷量。
+
+== 关键控制参量 ==
+* 靶密度要接近临界：既要让激光能传播形成通道，又要有足够强的吸收和电流。
+* 靶长和尾部下坡：决定磁涡旋能否在合适位置转化为有效加速场。
+* 焦斑和功率：决定通道尺度、磁场强度与准直能力。
+* 预等离子体扰动：会显著改变通道形成质量和可重复性。
+
+== 关键尺度律 ==
+* MVA 更适合用“匹配”来理解，而不是单条封闭公式：功率、焦斑、近临界密度和靶长必须同时合适。
+* 如果靶太短，通道和磁场结构来不及形成；太长又会把激光耗散掉。
+* 理论上它更接近“高准直 + 较大电荷量”的方案，而不是最窄谱方案。
+
+== 实验判据与常见误判 ==
+* 若使用近临界密度气体、泡沫或类似低密度靶，并观察到准直性明显提升，MVA 更值得优先考虑。
+* 若实验更像固体薄靶、后表面鞘场主导，则不宜轻易套用 MVA 解释。
+* 很多结果只讨论能量，却忽略了准直和电荷量，这会低估 MVA 的价值。
+* 最常见误判是把所有近临界高能结果都归为 MVA，而没有确认通道与磁场结构是否真的存在。
+
+== 在本实验室中最该记录什么 ==
+* 靶类型、有效密度与长度
+* 焦斑和能量耦合状态
+* 结果是否表现出更好的准直而不是只提高截止能量
+* RCF / TPS / 其他诊断是否同时支持“通道主导”的解释
+
+== 关联页 ==
+* [[Theory:激光等离子体加速总览]]
+* [[Theory:机制判别图谱]]
+* [[Theory:尺度律与开放问题]]
+* [[Diagnostic:RCF]]
+* [[Diagnostic:TPS]]
+* [[Project:激光质子加速]]
+* [[Shot:Shot模板]]
+
+== 信息来源 ==
+* 来源：理论综述《激光离子加速的理论机制、尺度律与开放问题：纯理论导向系统调研综述》。
+* [https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.105.135002 Helle MH et al. High-Energy Ions from Near-Critical Density Plasmas via Magnetic Vortex Acceleration. Phys Rev Lett (2010).]
+* [https://www.osti.gov/pages/biblio/1577784 George KM et al. Ion acceleration in laser generated megatesla magnetic vortex structures. High Power Laser Sci Eng (2019).]
+* [https://journals.aps.org/rmp/abstract/10.1103/RevModPhys.85.751 Macchi A et al. Ion acceleration by superintense laser-plasma interaction. Rev Mod Phys (2013).]
