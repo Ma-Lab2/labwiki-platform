@@ -7,9 +7,16 @@
 * 打靶后立刻创建或补全页面
 
 == 必填页面 ==
+* [[Shot:表单新建]]
 * [[Shot:Shot模板]]
 * [[Shot:周实验日志]]
 * [[Data:实验日志与数据关联]]
+
+== 表单入口 ==
+{{#forminput:form=Shot记录|default value=Shot:2026-03-14-Run01-Shot004|button text=新建或编辑 Shot 页面|placeholder=Shot:YYYY-MM-DD-RunXX-ShotYYY}}
+* 若要新建结构化页面，优先用上面的表单
+* 若要修改旧的实例页或补复杂内容，仍可直接编辑页面源码
+* 表单定义见 [[Form:Shot记录]]，页面骨架见 [[Template:Shot记录]]
 
 == 当前索引 ==
 === 当前开放周 ===

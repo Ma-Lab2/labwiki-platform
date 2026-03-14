@@ -1,0 +1,114 @@
+{{{info|create title=新建 Shot 记录|edit title=编辑 Shot 记录}}}
+
+{{{for template|Shot记录}}}
+;日期
+{{{field|日期|input type=date|mandatory}}}
+
+;Run
+{{{field|Run|input type=text|mandatory}}}
+
+;时间
+{{{field|时间|input type=text}}}
+
+;实验目标
+{{{field|实验目标|input type=text|size=80}}}
+
+;页面状态
+{{{field|页面状态|input type=dropdown|values=草稿,已核对,已复盘|default=草稿}}}
+
+;能量
+{{{field|能量|input type=text}}}
+
+;脉宽
+{{{field|脉宽|input type=text}}}
+
+;对比度测量
+{{{field|对比度测量|input type=text|size=80}}}
+
+;聚焦条件
+{{{field|聚焦条件|input type=text|size=80}}}
+
+;波前状态
+{{{field|波前状态|input type=text|size=80}}}
+
+;靶类型
+{{{field|靶类型|input type=text}}}
+
+;靶厚编号
+{{{field|靶厚编号|input type=text}}}
+
+;靶位置信息
+{{{field|靶位置信息|input type=text|size=80}}}
+
+;TPS
+{{{field|TPS|input type=text|size=80}}}
+
+;TPS 工具入口
+{{{field|TPS工具入口|input type=text|size=100}}}
+
+;TPS 参数快照
+{{{field|TPS参数快照|input type=text|size=100}}}
+
+;TPS 结果图
+{{{field|TPS结果图|input type=text|size=100}}}
+
+;RCF
+{{{field|RCF|input type=text|size=80}}}
+
+;RCF 工具入口
+{{{field|RCF工具入口|input type=text|size=100}}}
+
+;RCF 参数快照
+{{{field|RCF参数快照|input type=text|size=100}}}
+
+;RCF 结果截图
+{{{field|RCF结果截图|input type=text|size=100}}}
+
+;真空
+{{{field|真空|input type=text}}}
+
+;控制平台日志编号
+{{{field|控制平台日志编号|input type=text}}}
+
+;主要观测
+{{{field|主要观测|input type=textarea|rows=4|cols=100}}}
+
+;候选机制判断
+{{{field|候选机制判断|input type=text|size=80}}}
+
+;对应理论页
+{{{field|对应理论页|input type=text|size=80}}}
+
+;判断依据
+{{{field|判断依据|input type=textarea|rows=4|cols=100}}}
+
+;原始数据主目录
+{{{field|原始数据主目录|input type=text|size=100}}}
+
+;处理结果文件
+{{{field|处理结果文件|input type=text|size=100}}}
+
+;负责人
+{{{field|负责人|input type=text}}}
+
+;截止日期
+{{{field|截止日期|input type=date}}}
+
+;项目页
+{{{field|项目页|input type=text|default=Project:激光质子加速}}}
+
+;周实验日志
+{{{field|周实验日志|input type=text}}}
+
+;会议复盘
+{{{field|会议复盘|input type=text}}}
+{{{end template}}}
+
+'''补充备注：'''
+
+{{{standard input|free text|rows=8}}}
+
+{{{standard input|summary|default=Create or edit shot record via form}}}
+{{{standard input|save}}}
+{{{standard input|preview}}}
+{{{standard input|cancel}}}

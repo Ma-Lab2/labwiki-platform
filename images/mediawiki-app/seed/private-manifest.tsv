@@ -78,7 +78,10 @@ Control:自研电机与集科电机分布图	private/control-motor-map.wiki
 Project:项目总览	private/project-index.wiki
 Project:项目模板	private/project-template-prefixed.wiki
 Project:激光质子加速	private/project-proton-acceleration.wiki
+Template:Shot记录	private/template-shot-record.wiki
+Form:Shot记录	private/form-shot-record.wiki
 Shot:Shot日志入口	private/shot-index.wiki
+Shot:表单新建	private/shot-form-entry.wiki
 Shot:Shot模板	private/shot-template-prefixed.wiki
 Shot:周实验日志	private/shot-weekly-log.wiki
 Shot:周实验日志模板	private/shot-weekly-log-template.wiki

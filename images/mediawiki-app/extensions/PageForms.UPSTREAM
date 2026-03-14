@@ -1,0 +1,4 @@
+PageForms upstream source:
+- repository: https://gerrit.wikimedia.org/r/mediawiki/extensions/PageForms
+- branch: REL1_43
+- commit: deca03089f5922a5deffad407dfc03498429aa72

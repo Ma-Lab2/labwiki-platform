@@ -1,0 +1,18 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_SHOT_FORM_ENTRY -->
+= Shot:表单新建 =
+
+本页用于通过 `PageForms` 创建新的 `Shot:` 记录。旧的实例页和手工页仍然有效，但新建页面建议优先走表单。
+
+{{#forminput:form=Shot记录|default value=Shot:2026-03-14-Run01-Shot004|button text=新建或编辑 Shot 页面|placeholder=Shot:YYYY-MM-DD-RunXX-ShotYYY}}
+
+== 使用规则 ==
+* 先输入完整页面名，例如 `Shot:2026-03-14-Run01-Shot004`
+* 表单负责生成结构化骨架，不替你判断机制结论
+* `候选机制判断` 一栏必须同时补 `对应理论页` 和 `判断依据`
+* 复杂附件、外部网盘链接和长备注，后续仍可回到页面源码补充
+
+== 相关页面 ==
+* [[Form:Shot记录]]
+* [[Template:Shot记录]]
+* [[Shot:Shot日志入口]]
+* [[Shot:Shot模板]]

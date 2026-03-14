@@ -30,6 +30,7 @@ services:
     logging: *default-logging
 
   mw_public:
+    image: labwiki-platform-mw_public:latest
     build:
       context: .
       dockerfile: images/mediawiki-app/Dockerfile
@@ -67,6 +68,7 @@ services:
     logging: *default-logging
 
   mw_private:
+    image: labwiki-platform-mw_private:latest
     build:
       context: .
       dockerfile: images/mediawiki-app/Dockerfile
