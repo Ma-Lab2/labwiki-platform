@@ -41,6 +41,18 @@ const sessionStore = useSessionStore()
 const chartContainer = ref(null)
 const chartRef = shallowRef(null)
 
+function formatScientificLabel(value) {
+  if (!Number.isFinite(value) || value <= 0) return ''
+
+  const exponent = Math.round(Math.log10(value))
+  if (Math.abs(value - 10 ** exponent) / value < 1e-8) {
+    return `1e${exponent}`
+  }
+
+  const [coefficient, rawExponent] = value.toExponential(1).split('e')
+  return `${coefficient}e${Number(rawExponent)}`
+}
+
 function handleClick(event) {
   const chart = chartRef.value
   if (!chart) return
@@ -140,12 +152,13 @@ const option = computed(() => {
       borderColor: 'rgba(117, 136, 141, 0.2)',
       textStyle: { color: textColor },
       formatter: params => {
-        const p = params[0]
-        return `E = ${p.value[0].toFixed(2)} MeV<br/>dN/dE = ${p.value[1].toExponential(2)}`
+        return params.map((item) => (
+          `${item.marker}${item.seriesName}: E = ${item.value[0].toFixed(2)} MeV<br/>dN/dE = ${item.value[1].toExponential(2)}`
+        )).join('<br/>')
       },
     },
     legend: { bottom: 0, textStyle: { color: axisColor } },
-    grid: { left: 80, right: 30, top: 40, bottom: 40 },
+    grid: { left: 92, right: 24, top: 48, bottom: 48 },
     xAxis: {
       type: 'value',
       name: 'E (MeV)',
@@ -162,9 +175,13 @@ const option = computed(() => {
       min: sessionStore.params.specdNdEmin,
       max: sessionStore.params.specdNdEmax,
       nameTextStyle: { color: axisColor },
-      axisLabel: { color: axisColor },
+      axisLabel: {
+        color: axisColor,
+        formatter: (value) => formatScientificLabel(value),
+      },
       axisLine: { lineStyle: { color: gridColor } },
       splitLine: { lineStyle: { color: gridColor } },
+      minorSplitLine: { show: true, lineStyle: { color: 'rgba(117, 136, 141, 0.08)' } },
     },
     toolbox: {
       feature: {
