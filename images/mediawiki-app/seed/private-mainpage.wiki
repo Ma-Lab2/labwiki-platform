@@ -73,6 +73,7 @@
 ! 数据、模板与项目
 |-
 | * [[Theory:基础理论总览]]
+* [[Theory:新人学习路径]]
 * [[Theory:激光等离子体加速总览]]
 * [[Theory:TNSA]]
 * [[Theory:RPA]]

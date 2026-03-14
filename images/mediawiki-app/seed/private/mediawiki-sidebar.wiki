@@ -8,6 +8,7 @@
 ** Data:实验日志与数据关联|数据关联规则
 * 理论
 ** Theory:基础理论总览|理论总览
+** Theory:新人学习路径|新人学习路径
 ** Theory:激光等离子体加速总览|加速总览
 ** Theory:TNSA|TNSA
 ** Theory:RPA|RPA
