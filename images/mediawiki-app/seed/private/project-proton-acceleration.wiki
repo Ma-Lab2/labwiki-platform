@@ -10,6 +10,8 @@
 
 == 关键页面 ==
 * [[Theory:TNSA]]
+* [[Theory:机制判别图谱]]
+* [[Theory:尺度律与开放问题]]
 * [[Laser:三阶自相关与对比度]]
 * [[Diagnostic:TPS]]
 * [[Shot:Shot日志入口]]

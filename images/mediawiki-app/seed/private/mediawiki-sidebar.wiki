@@ -10,6 +10,12 @@
 ** Theory:基础理论总览|理论总览
 ** Theory:激光等离子体加速总览|加速总览
 ** Theory:TNSA|TNSA
+** Theory:RPA|RPA
+** Theory:CSA 与 ESA|CSA / ESA
+** Theory:透明化相关机制|透明化机制
+** Theory:MVA|MVA
+** Theory:机制判别图谱|机制判别图谱
+** Theory:尺度律与开放问题|尺度律与开放问题
 ** Theory:对比度与预等离子体|对比度与预等离子体
 * SOP 与安全
 ** SOP:流程总览|SOP 总览

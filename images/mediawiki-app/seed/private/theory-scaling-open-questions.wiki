@@ -1,0 +1,76 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_THEORY_SCALING_OPEN -->
+= Theory:尺度律与开放问题 =
+
+== 为什么单独成页 ==
+机制页解决“每种机制怎么理解”，本页解决“为什么很多最优结果还不能稳定复现”。它更适合在做项目路线、机制判断和复盘时使用。
+
+== 最值得记住的尺度律观念 ==
+* TNSA 更像“温度和加速时间共同受限”的机制，提升上限不是单靠延长时间就能解决。
+* RPA 的关键不是无限增大强度，而是面密度匹配和三维稳定性。
+* CSA 的关键不是峰值做多高，而是激波速度能否稳。
+* 透明化相关机制最怕时序不可控。
+* MVA 更接近“匹配问题”：近临界密度、通道形成和尾部下坡缺一不可。
+
+== 当前最重要的开放问题 ==
+{| class="wikitable"
+! 主题
+! 为什么重要
+! 对实验最直接的含义
+|-
+| 透明化时序预测
+| 决定 RPA 是被破坏，还是转成有利的混合机制
+| 对比度、靶厚和预等离子体记录必须更完整
+|-
+| RPA 三维稳定化
+| 决定窄谱和高效率是否能从理想模型走向可重复实验
+| 不能只盯单发最好结果，要看一组 shot 的一致性
+|-
+| CSA 激波稳定性
+| 决定窄谱是否真能稳定输出
+| 需要更重视密度剖面和峰位漂移
+|-
+| MVA 可重复性
+| 决定近临界机制是否只是少量漂亮 shot
+| 要同时看准直、电荷量和密度扰动敏感性
+|-
+| 重离子与电荷态动力学
+| 决定是否能把质子机制简单迁移到重离子
+| 需要把电离/复合当成动力学的一部分，而不是后处理修正
+|-
+| 超高强度 QED/RR 影响
+| 决定拍瓦以上外推是否还成立
+| “强度更高一定更好”这个直觉并不可靠
+|}
+
+== 当前最该追的 10 个问题 ==
+# 透明化时序能否由可测输入直接预测
+# 是否存在可普适抑制 RPA 失稳的物理手段
+# 有限焦斑和群速度是否决定了 RPA 的硬上限
+# CSA 从电静到电磁化的边界怎样给出可操作判据
+# MVA 在真实密度扰动下的鲁棒区间有多宽
+# 重离子电荷态动力学能否压缩成可用简化模型
+# 能否把多机制耦合压缩成少数无量纲判别图
+# 超高强度下 QED / RR 会在哪些区间重排加速机制
+# 如何把 PIC 的最优结果压缩成可解释的中尺度模型
+# 机器学习找到的最优条件，如何转回物理尺度律而不是黑箱参数
+
+== 本实验室最直接的用法 ==
+* 项目复盘时，把“最优 shot”为何不稳定的问题优先映射到本页
+* 做靶厚、对比度或诊断扫描时，用本页确定“这轮到底在验证哪一个开放问题”
+* 避免在 shot 页里过早写死机制，把候选机制和未解问题同时记录
+
+== 关联页 ==
+* [[Theory:机制判别图谱]]
+* [[Theory:RPA]]
+* [[Theory:CSA 与 ESA]]
+* [[Theory:透明化相关机制]]
+* [[Theory:MVA]]
+* [[Project:激光质子加速]]
+* [[Meeting:实验复盘模板]]
+
+== 信息来源 ==
+* 来源：理论综述《激光离子加速的理论机制、尺度律与开放问题：纯理论导向系统调研综述》。
+* [https://journals.aps.org/rmp/abstract/10.1103/RevModPhys.85.751 Macchi A et al. Ion acceleration by superintense laser-plasma interaction. Rev Mod Phys (2013).]
+* [https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.108.225002 Palmer CAJ et al. Rayleigh-Taylor instability and radiation pressure acceleration of ions. Phys Rev Lett (2012).]
+* [https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.033081 Qiao B et al. Dynamics of laser-driven heavy-ion acceleration clarified by including the effect of ionization. Phys Rev Research (2020).]
+* [https://ui.adsabs.harvard.edu/abs/2010NJPh...12l3005T Tamburini M et al. Radiation reaction effects on radiation pressure acceleration. New J Phys (2010).]
