@@ -1,6 +1,9 @@
 <!-- LABWIKI_MANAGED_PAGE:PRIVATE_DIAGNOSTIC_INDEX -->
 = Diagnostic:诊断总览 =
 
+== 原理入口 ==
+* [[Diagnostic:脉冲表征与超快诊断理论]]
+
 == 诊断链入口 ==
 * [[Diagnostic:TPS]]
 * [[Diagnostic:RCF]]

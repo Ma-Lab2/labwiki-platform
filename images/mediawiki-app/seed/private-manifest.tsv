@@ -13,6 +13,7 @@ SOP/模板	private/sop-template.wiki
 MediaWiki:Sidebar	private/mediawiki-sidebar.wiki
 Theory:基础理论总览	private/theory-index.wiki
 Theory:新人学习路径	private/theory-learning-path.wiki
+Theory:激光-等离子体相互作用基础	private/theory-lpi-fundamentals.wiki
 Theory:激光等离子体加速总览	private/theory-lpa-overview.wiki
 Theory:TNSA	private/theory-tnsa.wiki
 Theory:RPA	private/theory-rpa.wiki
@@ -23,6 +24,10 @@ Theory:机制判别图谱	private/theory-mechanism-map.wiki
 Theory:尺度律与开放问题	private/theory-scaling-open-questions.wiki
 Theory:对比度与预等离子体	private/theory-contrast-preplasma.wiki
 Laser:激光系统总览	private/laser-index.wiki
+Laser:超快激光基础理论	private/laser-ultrafast-fundamentals.wiki
+Laser:高功率超短脉冲激光链路理论	private/laser-cpa-opcpa-theory.wiki
+Laser:波前控制、自适应光学与聚焦理论	private/laser-wavefront-focusing-theory.wiki
+Laser:高功率激光常用光学元件与器件原理	private/laser-optics-components-principles.wiki
 Laser:激光链路总图	private/laser-chain-overview.wiki
 Laser:三阶自相关与对比度	private/laser-third-order-autocorrelator.wiki
 Laser:波前与可变形镜	private/laser-wavefront-dm.wiki
@@ -37,6 +42,7 @@ TargetArea:防溅射膜系统	private/targetarea-splash-foil.wiki
 TargetArea:判靶系统	private/targetarea-shot-judging.wiki
 TargetArea:低倍靶前系统	private/targetarea-lowmag-front.wiki
 Diagnostic:诊断总览	private/diagnostic-index.wiki
+Diagnostic:脉冲表征与超快诊断理论	private/diagnostic-ultrafast-theory.wiki
 Diagnostic:TPS	private/diagnostic-tps.wiki
 Diagnostic:RCF	private/diagnostic-rcf.wiki
 Data:数据管理总览	private/data-index.wiki

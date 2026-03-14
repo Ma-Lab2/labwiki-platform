@@ -1,0 +1,61 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_LASER_CHAIN_THEORY -->
+= Laser:高功率超短脉冲激光链路理论 =
+
+== 页面定位 ==
+本页回答“为什么高功率飞秒激光必须靠展宽、放大、压缩和相位管理来工作”。它对应现有链路页的理论层，不替代设备布置和操作说明。
+
+== 核心物理图像 ==
+高功率超短脉冲链路的本质，是把短脉冲先拉长来降低峰值功率，安全放大后再压回去。链路中的每一级都在修改电场的谱幅和谱相位，因此任何残余色散、非线性相位积累或增益窄化，都会在靶面表现成更长的脉冲、更差的对比度或更低的峰值强度。
+
+== 两条主线 ==
+* `CPA`（Chirped Pulse Amplification，啁啾脉冲放大）
+* `OPCPA`（Optical Parametric Chirped Pulse Amplification，光参量啁啾脉冲放大）
+
+== 最关键的链路问题 ==
+* 展宽与压缩是否成对匹配
+* `B-integral` 是否过大，导致自相位调制和非线性损伤风险
+* 增益窄化是否吃掉了本来可压缩的频谱
+* `ASE` 是否拉低时间对比度并提前形成预等离子体
+
+== CPA 与 OPCPA 对比 ==
+{| class="wikitable"
+! 维度
+! CPA
+! OPCPA
+|-
+| 增益物理
+| 反转粒子数增益
+| 二阶非线性参量增益
+|-
+| 带宽潜力
+| 受增益谱和增益窄化约束
+| 更容易做宽带，但匹配更敏感
+|-
+| 时间对比度
+| 更容易受 ASE 影响
+| 理论上更干净，但仍依赖泵浦品质
+|-
+| 主要瓶颈
+| `B-integral`、热效应、ASE、色散残差
+| 泵浦-信号时空匹配、相位匹配、效率与稳定性
+|}
+
+== 本实验室最该记录什么 ==
+* 主链放大和压缩后的脉宽变化
+* 增益带宽与压缩残差
+* 对比度清洗链是否开启
+* 链路修改后焦斑、谱宽和对比度是否同步变化
+
+== 关联页 ==
+* [[Laser:激光链路总图]]
+* [[Laser:三阶自相关与对比度]]
+* [[Diagnostic:脉冲表征与超快诊断理论]]
+* [[Laser:高功率激光常用光学元件与器件原理]]
+* [[Theory:对比度与预等离子体]]
+
+== 信息来源 ==
+* 来源：`激光离子加速实验室纯理论知识体系全景调研.docx`。
+* [https://www.sciencedirect.com/science/article/abs/pii/0030401885901518 Strickland D, Mourou G. Compression of amplified chirped optical pulses (1985).]
+* [https://pubs.aip.org/aip/rsi/article/69/3/1207/435608/High-power-ultrafast-lasers Backus et al. High-power ultrafast lasers. Rev Sci Instrum.]
+* [https://pubs.aip.org/aip/rsi/article-pdf/74/1/1/19278885/1_1_online.pdf Cerullo G, De Silvestri S. Ultrafast optical parametric amplifiers (2003).]
+* [https://www.rp-photonics.com/b_integral.html RP Photonics: B integral.]
