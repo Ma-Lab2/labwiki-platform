@@ -1,0 +1,15 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_LITERATURE_GUIDE_INDEX -->
+= 文献导读索引 =
+
+本页汇总知识助手优先检索的文献导读型结构化记录，适合作为 Zotero/PDF 快照之外的站内摘要层。
+
+== 新建入口 ==
+{{#forminput:form=文献导读|size=40|button text=新建文献导读|default value=文献导读/}}
+
+== 当前条目 ==
+{{#cargo_query:
+tables=lab_literature_guides
+|fields=Page=页面,title_text=标题,authors=作者,pub_year=年份,doi=DOI,summary=摘要
+|format=table
+|limit=200
+}}

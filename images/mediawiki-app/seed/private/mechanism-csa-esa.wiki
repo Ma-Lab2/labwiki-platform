@@ -1,0 +1,9 @@
+{{机制条目
+|机制名称=CSA 与 ESA
+|英文全称=Collisionless Shock Acceleration / Electrostatic Shock Acceleration
+|核心驱动=由近临界或欠密条件下形成的激波前沿把上游离子反射并加速，关键在于激波形成、传播稳定性和离子注入窗口。
+|关键判据=更依赖等离子体密度剖面和激波形成条件；可能出现较窄的能峰或平台结构；不能把任何窄峰都直接判成 RPA。
+|可观测量=TPS 中的窄峰或准单能段、角分布收缩、靶密度和脉冲条件变化带来的阈值效应。
+|关联诊断=Diagnostic:TPS;Diagnostic:RCF
+|来源=Theory:CSA 与 ESA;Theory:机制判别图谱
+}}

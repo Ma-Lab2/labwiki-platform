@@ -1,0 +1,9 @@
+{{机制条目
+|机制名称=TNSA
+|英文全称=Target Normal Sheath Acceleration
+|核心驱动=主脉冲先加热电子，热电子穿靶后在靶背建立瞬态鞘层场，再把污染层中的质子或轻离子沿靶法线方向加速出去。
+|关键判据=宽谱高能端;靶背鞘层主导;对厚靶和有限对比度更稳健;更换靶厚或表面状态时谱形连续漂移。
+|可观测量=TPS 截止能量、谱宽、束流主发射方向、RCF 剂量分布、shot-to-shot 稳定性。
+|关联诊断=Diagnostic:TPS;Diagnostic:RCF
+|来源=Theory:TNSA;Theory:机制判别图谱
+}}

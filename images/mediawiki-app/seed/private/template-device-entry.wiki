@@ -1,0 +1,36 @@
+<noinclude>
+<!-- LABWIKI_MANAGED_PAGE:TEMPLATE_DEVICE_ENTRY -->
+{{#cargo_declare:
+_table=lab_devices
+|Page=Page
+|device_name=String
+|system_group=String
+|key_parameters=Text
+|purpose=Text
+|run_pages=List (;) of Page
+|sources=List (;) of String
+}}
+{{#template_params:设备名称|系统归属|关键参数|用途|运行页|来源}}
+</noinclude><includeonly>
+{{#cargo_store:
+_table=lab_devices
+|Page={{FULLPAGENAME}}
+|device_name={{{设备名称|}}}
+|system_group={{{系统归属|}}}
+|key_parameters={{{关键参数|}}}
+|purpose={{{用途|}}}
+|run_pages={{{运行页|}}}
+|sources={{{来源|}}}
+}}
+== 设备用途 ==
+{{{用途|}}}
+
+== 关键参数 ==
+{{{关键参数|}}}
+
+== 运行相关页面 ==
+{{{运行页|}}}
+
+== 信息来源 ==
+{{{来源|}}}
+</includeonly>

@@ -1,5 +1,8 @@
 {$PRIVATE_HOST} {
     encode zstd gzip
+    handle_path /tools/assistant/api/* {
+        reverse_proxy assistant_api:8000
+    }
     handle_path /tools/tps/* {
         reverse_proxy tps_web:8000
     }

@@ -1,0 +1,9 @@
+{{文献导读
+|标题=Compression of amplified chirped optical pulses
+|作者=Strickland, D.; Mourou, G.
+|年份=1985
+|DOI=10.1364/OL.10.000219
+|摘要=这篇论文奠定了啁啾脉冲放大（CPA）的基本路线，是理解超短超强激光链路为何能同时获得高能量和短脉宽的起点。
+|相关页面=Laser:高功率超短脉冲激光链路理论;Laser:超快激光基础理论
+|来源=Laser:高功率超短脉冲激光链路理论;Laser:超快激光基础理论
+}}

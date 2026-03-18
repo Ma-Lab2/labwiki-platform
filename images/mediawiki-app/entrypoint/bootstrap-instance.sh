@@ -102,6 +102,9 @@ seed_page_if_default() {
   esac
 
   existing_text="$(php maintenance/run.php getText "${title}" 2>/dev/null || true)"
+  if [[ "${existing_text}" =~ ^Page[[:space:]].*[[:space:]]does[[:space:]]not[[:space:]]exist\.$ ]]; then
+    existing_text=""
+  fi
   if [[ -n "${existing_text}" ]] \
     && ! grep -Fq "已安装MediaWiki" <<<"${existing_text}" \
     && ! grep -Fq "LABWIKI_MANAGED_PAGE" <<<"${existing_text}" \
@@ -125,6 +128,9 @@ seed_page_if_missing_or_managed() {
   fi
 
   existing_text="$(php maintenance/run.php getText "${title}" 2>/dev/null || true)"
+  if [[ "${existing_text}" =~ ^Page[[:space:]].*[[:space:]]does[[:space:]]not[[:space:]]exist\.$ ]]; then
+    existing_text=""
+  fi
   if [[ -n "${existing_text}" ]] && ! grep -Fq "LABWIKI_MANAGED_PAGE" <<<"${existing_text}"; then
     return 0
   fi
@@ -167,6 +173,26 @@ import_seed_images_once() {
     --user="${MW_ADMIN_USER}" \
     "${image_dir}"
 
+  touch "${marker_file}"
+}
+
+rebuild_cargo_tables_once() {
+  local marker_name="$1"
+  local marker_file="${STATE_DIR}/.${marker_name}"
+  local table_name
+
+  if [[ -f "${marker_file}" ]]; then
+    return 0
+  fi
+
+  for table_name in \
+    lab_terms \
+    lab_devices \
+    lab_mechanisms \
+    lab_diagnostics \
+    lab_literature_guides; do
+    php extensions/Cargo/maintenance/cargoRecreateData.php --quiet --table="${table_name}"
+  done
   touch "${marker_file}"
 }
 
@@ -234,6 +260,7 @@ wfLoadExtension( 'Math' );
 wfLoadExtension( 'Cite' );
 wfLoadExtension( 'WikiEditor' );
 wfLoadExtension( 'TemplateData' );
+wfLoadExtension( 'Cargo' );
 wfLoadExtension( 'PageForms' );
 $wgDefaultUserOptions['usebetatoolbar'] = 1;
 $wgDefaultUserOptions['usebetatoolbar-cgd'] = 1;
@@ -244,7 +271,7 @@ EOF
 )"
 
 append_block_once "LABWIKI_COMMON" "${COMMON_BLOCK}"
-append_block_once "LABWIKI_EDITOR_EXTENSIONS_V2" "${EDITOR_BLOCK}"
+append_block_once "LABWIKI_EDITOR_EXTENSIONS_V3" "${EDITOR_BLOCK}"
 append_block_once "LABWIKI_THEME_V1" "${THEME_BLOCK}"
 append_block_once "LABWIKI_RUNTIME_OVERRIDES_V5" "${RUNTIME_BLOCK}"
 
@@ -253,10 +280,16 @@ if [[ "${MW_PRIVATE_MODE:-false}" == "true" ]]; then
 $wgGroupPermissions['*']['read'] = false;
 $wgGroupPermissions['*']['edit'] = false;
 $wgGroupPermissions['*']['createaccount'] = false;
+wfLoadExtension( 'LabAssistant' );
+$wgLabAssistantApiBase = getenv( 'MW_ASSISTANT_API_BASE' ) ?: '/tools/assistant/api';
+$wgLabAssistantDraftPrefix = getenv( 'MW_ASSISTANT_DRAFT_PREFIX' ) ?: '知识助手草稿';
 EOF
 )"
-  append_block_once "PRIVATE_WIKI_HARDENING" "${PRIVATE_BLOCK}"
+  append_block_once "PRIVATE_WIKI_HARDENING_V2" "${PRIVATE_BLOCK}"
 fi
+
+ln -sf "${LOCAL_SETTINGS}" /var/www/html/LocalSettings.php
+php maintenance/run.php update --quick
 
 if [[ "${MW_PRIVATE_MODE:-false}" == "true" ]]; then
   import_seed_images_once "private/field-manual-20250723" "seed-images-field-manual-20250723-v1"
@@ -265,7 +298,11 @@ fi
 seed_page_if_default "${MAIN_PAGE_TITLE}" "${SEED_ROOT}/${SITE_VARIANT}-mainpage.wiki"
 seed_manifest_pages "${SEED_ROOT}/${SITE_VARIANT}-manifest.tsv"
 
+if [[ "${MW_PRIVATE_MODE:-false}" == "true" ]]; then
+  rebuild_cargo_tables_once "cargo-bootstrap-v5"
+  seed_manifest_pages "${SEED_ROOT}/private-cargo-manifest.tsv"
+fi
+
 chmod 600 "${LOCAL_SETTINGS}"
-ln -sf "${LOCAL_SETTINGS}" /var/www/html/LocalSettings.php
 
 exec "$@"

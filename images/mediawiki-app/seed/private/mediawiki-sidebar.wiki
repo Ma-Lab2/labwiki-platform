@@ -1,6 +1,7 @@
 <!-- LABWIKI_MANAGED_PAGE:PRIVATE_MEDIAWIKI_SIDEBAR -->
 * 工作台
 ** 首页|首页
+** Special:LabAssistant|知识助手
 ** Shot:Shot日志入口|Shot 日志入口
 ** Shot:周实验日志|周实验日志
 ** SOP:主靶室打靶流程|打靶 SOP
@@ -66,8 +67,15 @@
 ** Control:中央控制平台|中央控制平台
 ** Control:继电器系统|继电器系统
 ** Control:照明与监控|照明与监控
+** Special:LabAssistantAdmin|知识助手管理
+** 术语条目索引|术语条目索引
+** 设备条目索引|设备条目索引
+** 机制条目索引|机制条目索引
+** 诊断条目索引|诊断条目索引
+** 文献导读索引|文献导读索引
 ** Control:受限信息索引|受限信息索引
 ** 值班与排班|值班与排班
 ** 仪器台账|仪器台账
 ** FAQ:常见问题入口|常见问题
 ** FAQ:公式与引用速查|公式与引用速查
+** FAQ:知识助手使用说明|知识助手说明

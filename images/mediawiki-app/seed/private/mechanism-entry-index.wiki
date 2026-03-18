@@ -1,0 +1,15 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_MECHANISM_ENTRY_INDEX -->
+= 机制条目索引 =
+
+本页汇总知识助手优先检索的机制型结构化记录。它们对应 `Theory:` 长页，但更适合在对照、判别和草稿预填时被快速调用。
+
+== 新建入口 ==
+{{#forminput:form=机制条目|size=40|button text=新建机制条目|default value=机制条目/}}
+
+== 当前条目 ==
+{{#cargo_query:
+tables=lab_mechanisms
+|fields=Page=页面,mechanism_name=机制名称,english_name=英文全称,core_driver=核心驱动,key_signals=关键判据
+|format=table
+|limit=200
+}}

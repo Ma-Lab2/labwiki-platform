@@ -1,0 +1,41 @@
+<noinclude>
+<!-- LABWIKI_MANAGED_PAGE:TEMPLATE_TERM_ENTRY -->
+{{#cargo_declare:
+_table=lab_terms
+|Page=Page
+|name_zh=String
+|name_en=String
+|abbr=String
+|summary=Text
+|aliases=List (;) of String
+|related_pages=List (;) of Page
+|sources=List (;) of String
+}}
+{{#template_params:中文名|英文名|缩写|摘要|别名|关联页面|来源}}
+</noinclude><includeonly>
+{{#cargo_store:
+_table=lab_terms
+|Page={{FULLPAGENAME}}
+|name_zh={{{中文名|}}}
+|name_en={{{英文名|}}}
+|abbr={{{缩写|}}}
+|summary={{{摘要|}}}
+|aliases={{{别名|}}}
+|related_pages={{{关联页面|}}}
+|sources={{{来源|}}}
+}}
+== 摘要 ==
+{{{摘要|}}}
+
+== 术语信息 ==
+* 中文名：{{{中文名|}}}
+* 英文名：{{{英文名|}}}
+* 缩写：{{{缩写|}}}
+* 别名：{{{别名|}}}
+
+== 关联页面 ==
+{{{关联页面|}}}
+
+== 信息来源 ==
+{{{来源|}}}
+</includeonly>

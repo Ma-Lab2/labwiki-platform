@@ -1,0 +1,15 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_DIAGNOSTIC_ENTRY_INDEX -->
+= 诊断条目索引 =
+
+本页汇总知识助手优先检索的诊断型结构化记录。它们适合回答“测什么、输出什么、最容易错在哪里”这类高频问题。
+
+== 新建入口 ==
+{{#forminput:form=诊断条目|size=40|button text=新建诊断条目|default value=诊断条目/}}
+
+== 当前条目 ==
+{{#cargo_query:
+tables=lab_diagnostics
+|fields=Page=页面,diagnostic_name=诊断名称,measurement_target=测量对象,primary_outputs=主要输出,pitfalls=易错点
+|format=table
+|limit=200
+}}

@@ -1,0 +1,45 @@
+<noinclude>
+<!-- LABWIKI_MANAGED_PAGE:TEMPLATE_MECHANISM_ENTRY -->
+{{#cargo_declare:
+_table=lab_mechanisms
+|Page=Page
+|mechanism_name=String
+|english_name=String
+|core_driver=Text
+|key_signals=Text
+|observables=Text
+|related_diagnostics=List (;) of Page
+|sources=List (;) of String
+}}
+{{#template_params:机制名称|英文全称|核心驱动|关键判据|可观测量|关联诊断|来源}}
+</noinclude><includeonly>
+{{#cargo_store:
+_table=lab_mechanisms
+|Page={{FULLPAGENAME}}
+|mechanism_name={{{机制名称|}}}
+|english_name={{{英文全称|}}}
+|core_driver={{{核心驱动|}}}
+|key_signals={{{关键判据|}}}
+|observables={{{可观测量|}}}
+|related_diagnostics={{{关联诊断|}}}
+|sources={{{来源|}}}
+}}
+== 机制说明 ==
+* 机制名称：{{{机制名称|}}}
+* 英文全称：{{{英文全称|}}}
+
+== 核心驱动 ==
+{{{核心驱动|}}}
+
+== 关键判据 ==
+{{{关键判据|}}}
+
+== 可观测量 ==
+{{{可观测量|}}}
+
+== 关联诊断 ==
+{{{关联诊断|}}}
+
+== 信息来源 ==
+{{{来源|}}}
+</includeonly>

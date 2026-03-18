@@ -1,0 +1,9 @@
+{{机制条目
+|机制名称=Hole-Boring RPA
+|英文全称=Hole-Boring Radiation Pressure Acceleration
+|核心驱动=辐射压把过密靶前沿不断向内推进，形成移动界面并把离子从该前沿区域反射或推动出去，是 RPA 在较厚靶或前沿推进情形下的典型子模式。
+|关键判据=靶前界面推进速度、偏振和对比度敏感；和 Light-Sail 不同，它不要求整片超薄靶整体被拖动；判读时要避免把所有 RPA 现象混成一类。
+|可观测量=TPS 上对靶厚和偏振敏感的谱形变化、RCF 束斑稳定性、与对比度和靶厚联动的最优窗口。
+|关联诊断=Diagnostic:TPS;Diagnostic:RCF
+|来源=Theory:RPA;Theory:机制判别图谱
+}}

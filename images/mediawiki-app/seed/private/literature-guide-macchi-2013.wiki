@@ -1,0 +1,9 @@
+{{文献导读
+|标题=Ion acceleration by superintense laser-plasma interaction
+|作者=Macchi, A.; Borghesi, M.; Passoni, M.
+|年份=2013
+|DOI=10.1103/RevModPhys.85.751
+|摘要=这是离子加速机制综述中的核心文献之一，系统讨论了 TNSA、RPA、透明化相关机制等主要路线及其尺度律和限制。
+|相关页面=Theory:激光等离子体加速总览;Theory:机制判别图谱;Theory:尺度律与开放问题
+|来源=Theory:激光等离子体加速总览;Theory:机制判别图谱
+}}

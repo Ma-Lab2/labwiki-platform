@@ -1,0 +1,9 @@
+{{文献导读
+|标题=Review of laser-driven ion sources and their applications
+|作者=Daido, H.; Nishiuchi, M.; Pirozhkov, A. S.
+|年份=2012
+|DOI=10.1088/0034-4885/75/5/056401
+|摘要=这篇离子加速综述覆盖了 TNSA、RPA、冲击波和透明化相关路径，是本组离子机制页和机制判别图谱的主要综述基线之一。
+|相关页面=Theory:TNSA;Theory:RPA;Theory:CSA 与 ESA;Theory:透明化相关机制;Theory:机制判别图谱
+|来源=Theory:TNSA;Theory:RPA;Theory:机制判别图谱
+}}

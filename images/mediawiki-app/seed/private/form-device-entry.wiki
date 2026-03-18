@@ -1,0 +1,20 @@
+<!-- LABWIKI_MANAGED_PAGE:FORM_DEVICE_ENTRY -->
+{{{for template|设备条目}}}
+;设备名称
+{{{field|设备名称|input type=text}}}
+;系统归属
+{{{field|系统归属|input type=text}}}
+;关键参数
+{{{field|关键参数|input type=textarea|rows=6}}}
+;用途
+{{{field|用途|input type=textarea|rows=5}}}
+;运行页
+{{{field|运行页|input type=tokens}}}
+;来源
+{{{field|来源|input type=tokens}}}
+{{{end template}}}
+
+{{{standard input|summary|default=Create assistant-backed device entry}}}
+{{{standard input|preview}}}
+{{{standard input|save}}}
+

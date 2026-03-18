@@ -1,0 +1,40 @@
+<noinclude>
+<!-- LABWIKI_MANAGED_PAGE:TEMPLATE_DIAGNOSTIC_ENTRY -->
+{{#cargo_declare:
+_table=lab_diagnostics
+|Page=Page
+|diagnostic_name=String
+|measurement_target=String
+|primary_outputs=Text
+|pitfalls=Text
+|tool_links=List (;) of String
+|sources=List (;) of String
+}}
+{{#template_params:诊断名称|测量对象|主要输出|易错点|工具入口|来源}}
+</noinclude><includeonly>
+{{#cargo_store:
+_table=lab_diagnostics
+|Page={{FULLPAGENAME}}
+|diagnostic_name={{{诊断名称|}}}
+|measurement_target={{{测量对象|}}}
+|primary_outputs={{{主要输出|}}}
+|pitfalls={{{易错点|}}}
+|tool_links={{{工具入口|}}}
+|sources={{{来源|}}}
+}}
+== 诊断作用 ==
+* 诊断名称：{{{诊断名称|}}}
+* 测量对象：{{{测量对象|}}}
+
+== 主要输出 ==
+{{{主要输出|}}}
+
+== 常见误判 ==
+{{{易错点|}}}
+
+== 工具入口 ==
+{{{工具入口|}}}
+
+== 信息来源 ==
+{{{来源|}}}
+</includeonly>

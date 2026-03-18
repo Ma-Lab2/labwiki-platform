@@ -17,6 +17,9 @@ Services:
 - `rcf_backend`: FastAPI service for RCF stack design and async compute
 - `rcf_frontend`: Nginx-served Vue frontend mounted under the private site
 - `tps_web`: FastAPI + Vue service for Thomson parabola image analysis, mounted under the private site
+- `assistant_store`: PostgreSQL + pgvector for assistant sessions, chunks, and jobs
+- `assistant_api`: FastAPI + LangGraph orchestrator for knowledge assistant chat, retrieval, and draft preview
+- `assistant_worker`: background worker for wiki / Zotero indexing jobs
 - `caddy_public`: HTTPS entrypoint for the public wiki
 - `caddy_private`: loopback-only HTTPS entrypoint for the private wiki
 
@@ -30,6 +33,7 @@ Persistent paths:
 - `uploads/private/`
 - `tools-data/tps/images/`
 - `tools-data/tps/output/`
+- `docs/zotero/`
 - `backups/`
 
 ## Why Two Wikis
@@ -78,6 +82,7 @@ secrets/public_db_password.txt
 secrets/private_db_password.txt
 secrets/public_admin_password.txt
 secrets/private_admin_password.txt
+secrets/assistant_db_password.txt
 ```
 
 4. Build and start:
@@ -108,14 +113,71 @@ The private site also exposes integrated tool pages:
 
 - `https://localhost:8443/tools/rcf/`
 - `https://localhost:8443/tools/tps/`
+- `https://localhost:8443/index.php/Special:LabAssistant`
 - `https://<PRIVATE_HOST>/tools/rcf/`
 - `https://<PRIVATE_HOST>/tools/tps/`
+- `https://<PRIVATE_HOST>/index.php/Special:LabAssistant`
 
 `TPS_IMAGE_DIR` controls which host directory is mounted into the TPS tool as its read-only raw image root. By default it falls back to `./tools-data/tps/images`, but on the lab machine it should point at the real experiment image tree, for example:
 
 ```bash
 TPS_IMAGE_DIR=/mnt/c/path/to/lab-tps-images
 ```
+
+The assistant can run in retrieval-only mode without an LLM. It now supports two LLM backends:
+
+1. OpenAI-compatible API
+2. `sim-advisor` executor as a model gateway
+
+OpenAI-compatible mode:
+
+```bash
+ASSISTANT_LLM_BACKEND=openai
+ASSISTANT_OPENAI_BASE_URL=https://your-provider.example/v1
+ASSISTANT_OPENAI_API_KEY=...
+ASSISTANT_OPENAI_MODEL=gpt-4.1-mini
+ASSISTANT_EMBEDDING_MODEL=text-embedding-3-small
+```
+
+SimAdvisor mode:
+
+```bash
+ASSISTANT_LLM_BACKEND=simadvisor
+ASSISTANT_SIMADVISOR_EXECUTOR=/mnt/c/Songtan/Gewu/skills/L2-methodology/sim-advisor/executor.py
+ASSISTANT_SIMADVISOR_DEFAULT_MODEL=claude-sonnet-4-5-20250929-thinking
+ASSISTANT_SIMADVISOR_FALLBACK_MODEL=gemini-3.1-pro-preview-all
+ASSISTANT_SIMADVISOR_REVIEW_MODEL=claude-opus-4-6
+```
+
+To provide local literature snapshots for the assistant, export Zotero JSON / notes / extracted text into `docs/zotero/` and trigger reindexing:
+
+```bash
+bash ops/scripts/reindex-assistant.sh wiki
+bash ops/scripts/reindex-assistant.sh zotero
+```
+
+To validate the SimAdvisor-backed model path before wiring it into the wiki loop:
+
+```bash
+python ops/scripts/probe-simadvisor-models.py
+python ops/scripts/test-simadvisor-agent-loop.py
+```
+
+These scripts write markdown reports under `docs/reports/assistant/`.
+You can narrow the loop test to specific cases while iterating:
+
+```bash
+SIMADVISOR_AGENT_CASE_FILTER=concept_explain,failure_path \
+python ops/scripts/test-simadvisor-agent-loop.py
+```
+
+Recommended runtime routing after the current probe:
+
+- `claude-sonnet-4-5-20250929-thinking`: default agent loop model
+- `claude-opus-4-6`: review / draft synthesis model
+- `gemini-3.1-pro-preview-all`: single-step fallback model
+- `claude-sonnet-4-20250514-thinking`: usable but too slow for the default realtime loop
+- `gemini-3-pro-deepsearch`: keep for async deep research only
 
 ## Backup, Restore, Upgrade
 
@@ -150,10 +212,12 @@ bash ops/scripts/upgrade.sh --yes
 ```text
 compose.yaml
 compose.override.yaml
+assistant_api/
 images/mediawiki-app/
 ops/caddy/
 ops/db-init/
 ops/scripts/
+docs/zotero/
 secrets/
 state/
 uploads/

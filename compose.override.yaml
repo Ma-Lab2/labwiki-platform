@@ -1,4 +1,13 @@
 services:
+  assistant_api:
+    environment:
+      ASSISTANT_WIKI_URL: https://host.docker.internal:8443
+      ASSISTANT_CORS_ALLOWED_ORIGINS: https://localhost:8443
+
+  assistant_worker:
+    environment:
+      ASSISTANT_WIKI_URL: https://host.docker.internal:8443
+
   mw_public:
     environment:
       MW_SERVER: https://localhost

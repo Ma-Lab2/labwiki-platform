@@ -1,0 +1,15 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_DEVICE_ENTRY_INDEX -->
+= 设备条目索引 =
+
+本页汇总知识助手优先检索的设备型结构化记录，适合沉淀“是什么、归哪个系统、有哪些关键参数、该回看哪些运行页”。
+
+== 新建入口 ==
+{{#forminput:form=设备条目|size=40|button text=新建设备条目|default value=设备条目/}}
+
+== 当前条目 ==
+{{#cargo_query:
+tables=lab_devices
+|fields=Page=页面,device_name=设备名称,system_group=系统归属,key_parameters=关键参数,purpose=用途
+|format=table
+|limit=200
+}}

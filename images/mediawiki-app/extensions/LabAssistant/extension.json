@@ -1,0 +1,75 @@
+{
+  "name": "LabAssistant",
+  "version": "0.1.0",
+  "author": [
+    "OpenAI Codex"
+  ],
+  "url": "https://github.com/Ma-Lab2/labwiki-platform",
+  "descriptionmsg": "labassistant-desc",
+  "license-name": "MIT",
+  "AutoloadNamespaces": {
+    "MediaWiki\\Extension\\LabAssistant\\": "includes/"
+  },
+  "MessagesDirs": {
+    "LabAssistant": [
+      "i18n"
+    ]
+  },
+  "ExtensionMessagesFiles": {
+    "LabAssistantAliases": "LabAssistant.alias.php"
+  },
+  "SpecialPages": {
+    "LabAssistant": "MediaWiki\\Extension\\LabAssistant\\SpecialLabAssistant",
+    "LabAssistantAdmin": "MediaWiki\\Extension\\LabAssistant\\SpecialLabAssistantAdmin"
+  },
+  "ResourceModules": {
+    "ext.labassistant.ui": {
+      "scripts": [
+        "modules/ext.labassistant.ui.js"
+      ],
+      "styles": [
+        "modules/ext.labassistant.ui.css"
+      ],
+      "targets": [
+        "desktop",
+        "mobile"
+      ]
+    },
+    "ext.labassistant.admin": {
+      "scripts": [
+        "modules/ext.labassistant.admin.js"
+      ],
+      "styles": [
+        "modules/ext.labassistant.ui.css"
+      ],
+      "targets": [
+        "desktop",
+        "mobile"
+      ]
+    }
+  },
+  "config": {
+    "LabAssistantApiBase": {
+      "value": "/tools/assistant/api"
+    },
+    "LabAssistantDraftPrefix": {
+      "value": "知识助手草稿"
+    },
+    "LabAssistantModes": {
+      "value": [
+        "qa",
+        "compare",
+        "draft"
+      ]
+    },
+    "LabAssistantDetailLevels": {
+      "value": [
+        "intro",
+        "intermediate",
+        "research"
+      ]
+    }
+  },
+  "manifest_version": 2
+}
+

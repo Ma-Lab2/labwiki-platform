@@ -1,0 +1,9 @@
+{{文献导读
+|标题=Physics of laser-driven plasma-based electron accelerators
+|作者=Esarey, E.; Schroeder, C. B.; Leemans, W. P.
+|年份=2009
+|DOI=10.1103/RevModPhys.81.1229
+|摘要=这篇综述系统梳理了激光驱动等离子体加速的关键物理量、尺度和实验约束。虽然重点是电子加速，但对理解强场、波破裂、相位匹配和能量耦合的通用框架仍然很重要。
+|相关页面=Theory:激光-等离子体相互作用基础;Theory:激光等离子体加速总览;Laser:超快激光基础理论
+|来源=Theory:激光等离子体加速总览;Theory:激光-等离子体相互作用基础
+}}

@@ -1,0 +1,22 @@
+<!-- LABWIKI_MANAGED_PAGE:FORM_MECHANISM_ENTRY -->
+{{{for template|机制条目}}}
+;机制名称
+{{{field|机制名称|input type=text}}}
+;英文全称
+{{{field|英文全称|input type=text}}}
+;核心驱动
+{{{field|核心驱动|input type=textarea|rows=5}}}
+;关键判据
+{{{field|关键判据|input type=textarea|rows=5}}}
+;可观测量
+{{{field|可观测量|input type=textarea|rows=5}}}
+;关联诊断
+{{{field|关联诊断|input type=tokens}}}
+;来源
+{{{field|来源|input type=tokens}}}
+{{{end template}}}
+
+{{{standard input|summary|default=Create assistant-backed mechanism entry}}}
+{{{standard input|preview}}}
+{{{standard input|save}}}
+

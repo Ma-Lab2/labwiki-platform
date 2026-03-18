@@ -1,0 +1,20 @@
+<!-- LABWIKI_MANAGED_PAGE:FORM_DIAGNOSTIC_ENTRY -->
+{{{for template|诊断条目}}}
+;诊断名称
+{{{field|诊断名称|input type=text}}}
+;测量对象
+{{{field|测量对象|input type=text}}}
+;主要输出
+{{{field|主要输出|input type=textarea|rows=5}}}
+;易错点
+{{{field|易错点|input type=textarea|rows=4}}}
+;工具入口
+{{{field|工具入口|input type=tokens}}}
+;来源
+{{{field|来源|input type=tokens}}}
+{{{end template}}}
+
+{{{standard input|summary|default=Create assistant-backed diagnostic entry}}}
+{{{standard input|preview}}}
+{{{standard input|save}}}
+

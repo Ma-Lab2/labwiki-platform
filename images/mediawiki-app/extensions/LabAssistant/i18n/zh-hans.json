@@ -1,0 +1,11 @@
+{
+  "@metadata": {
+    "authors": [
+      "OpenAI Codex"
+    ]
+  },
+  "labassistant-desc": "为实验室私有知识库提供站内知识助手工作台。",
+  "labassistant": "知识助手",
+  "labassistantadmin": "知识助手管理"
+}
+

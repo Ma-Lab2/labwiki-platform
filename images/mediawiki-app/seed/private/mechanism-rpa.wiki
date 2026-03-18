@@ -1,0 +1,9 @@
+{{机制条目
+|机制名称=RPA
+|英文全称=Radiation Pressure Acceleration
+|核心驱动=激光辐射压把动量直接注入靶面电子层，再通过电荷约束整体拖动离子层，典型子类型包括 Hole-Boring 和 Light-Sail。
+|关键判据=高对比度、薄靶窗口、偏振敏感、谱形趋窄或出现更相干的离子层运动特征；不能仅凭单发高能点判定。
+|可观测量=TPS 谱宽变化、峰值结构、靶厚窗口、对比度变化响应、RCF 角分布稳定性。
+|关联诊断=Diagnostic:TPS;Diagnostic:RCF
+|来源=Theory:RPA;Theory:机制判别图谱
+}}

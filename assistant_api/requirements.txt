@@ -1,0 +1,8 @@
+fastapi==0.115.12
+httpx==0.27.2
+langgraph==0.2.60
+pgvector==0.3.6
+psycopg[binary]==3.2.6
+pydantic==2.10.6
+sqlalchemy==2.0.39
+uvicorn[standard]==0.34.0

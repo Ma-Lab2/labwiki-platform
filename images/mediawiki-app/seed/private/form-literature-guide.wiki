@@ -1,0 +1,22 @@
+<!-- LABWIKI_MANAGED_PAGE:FORM_LITERATURE_GUIDE -->
+{{{for template|文献导读}}}
+;标题
+{{{field|标题|input type=text}}}
+;作者
+{{{field|作者|input type=tokens}}}
+;年份
+{{{field|年份|input type=text}}}
+;DOI
+{{{field|DOI|input type=text}}}
+;摘要
+{{{field|摘要|input type=textarea|rows=6}}}
+;相关页面
+{{{field|相关页面|input type=tokens}}}
+;来源
+{{{field|来源|input type=tokens}}}
+{{{end template}}}
+
+{{{standard input|summary|default=Create assistant-backed literature guide}}}
+{{{standard input|preview}}}
+{{{standard input|save}}}
+

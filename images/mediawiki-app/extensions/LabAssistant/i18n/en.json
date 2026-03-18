@@ -1,0 +1,11 @@
+{
+  "@metadata": {
+    "authors": [
+      "OpenAI Codex"
+    ]
+  },
+  "labassistant-desc": "Adds an in-wiki knowledge assistant workspace for private lab knowledge.",
+  "labassistant": "Knowledge Assistant",
+  "labassistantadmin": "Knowledge Assistant Admin"
+}
+

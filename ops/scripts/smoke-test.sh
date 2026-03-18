@@ -16,7 +16,7 @@ check_http() {
 
   code="$(curl --noproxy '*' -k -s -o /dev/null -w '%{http_code}' "${url}")"
   case "${label}:${code}" in
-    public:200|public:301|public:302|private:200|private:301|private:302|private:401|private:403|rcf-ui:200|rcf-api:200|tps-ui:200|tps-api:200)
+    public:200|public:301|public:302|private:200|private:301|private:302|private:401|private:403|assistant-api:200|rcf-ui:200|rcf-api:200|tps-ui:200|tps-api:200)
       printf '[ok] %s returned %s\n' "${label}" "${code}"
       ;;
     *)
@@ -27,7 +27,7 @@ check_http() {
 }
 
 "${compose_cmd[@]}" ps mariadb mw_public mw_private caddy_public caddy_private >/dev/null
-"${compose_cmd[@]}" ps rcf_backend rcf_frontend tps_web >/dev/null
+"${compose_cmd[@]}" ps rcf_backend rcf_frontend tps_web assistant_store assistant_api assistant_worker >/dev/null
 
 PUBLIC_URL="${PUBLIC_SMOKE_URL:-$("${compose_cmd[@]}" exec -T mw_public sh -lc 'printf %s "$MW_SERVER"')}"
 PRIVATE_URL="${PRIVATE_SMOKE_URL:-$("${compose_cmd[@]}" exec -T mw_private sh -lc 'printf %s "$MW_SERVER"')}"
@@ -43,12 +43,19 @@ PRIVATE_NAME="$("${compose_cmd[@]}" exec -T mw_private sh -lc 'printf %s "$MW_SI
 "${compose_cmd[@]}" exec -T mw_private sh -lc "grep -F \"${PRIVATE_NAME}\" /state/LocalSettings.php >/dev/null"
 printf '%s\n' 'foreach (["PageForms","TemplateData"] as $name) { if (!ExtensionRegistry::getInstance()->isLoaded($name)) { fwrite(STDERR, $name . " missing\n"); exit(1); } }' \
   | "${compose_cmd[@]}" exec -T mw_private php maintenance/run.php eval.php >/dev/null
+printf '%s\n' 'foreach (["Cargo","LabAssistant"] as $name) { if (!ExtensionRegistry::getInstance()->isLoaded($name)) { fwrite(STDERR, $name . " missing\n"); exit(1); } }' \
+  | "${compose_cmd[@]}" exec -T mw_private php maintenance/run.php eval.php >/dev/null
 "${compose_cmd[@]}" exec -T mw_private php maintenance/run.php getText "Form:Shot记录" >/dev/null
 "${compose_cmd[@]}" exec -T mw_private php maintenance/run.php getText "Template:Shot记录" >/dev/null
 "${compose_cmd[@]}" exec -T mw_private php maintenance/run.php getText "Shot:表单新建" >/dev/null
+"${compose_cmd[@]}" exec -T mariadb sh -lc \
+  'mariadb -N -uroot -p"$(cat /run/secrets/db_root_password)" labwiki_private -e "SELECT COUNT(*) FROM page WHERE page_namespace = 0 AND page_title = '\''FAQ:知识助手使用说明'\'';" | grep -qx 1'
+"${compose_cmd[@]}" exec -T assistant_api python -c "import langgraph"
+"${compose_cmd[@]}" exec -T assistant_api python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).read()"
 
 check_http "${PUBLIC_URL}" public
 check_http "${PRIVATE_URL}" private
+check_http "${PRIVATE_URL%/}/tools/assistant/api/health" assistant-api
 check_http "${PRIVATE_URL%/}/tools/rcf/" rcf-ui
 check_http "${PRIVATE_URL%/}/tools/rcf/api/v1/health" rcf-api
 check_http "${PRIVATE_URL%/}/tools/tps/" tps-ui

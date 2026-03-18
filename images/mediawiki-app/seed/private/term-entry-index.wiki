@@ -1,0 +1,15 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_TERM_ENTRY_INDEX -->
+= 术语条目索引 =
+
+本页汇总知识助手优先检索的术语型结构化记录。它们不替代理论页，而是把最关键的定义、无量纲量和关联页面压缩成可查询条目。
+
+== 新建入口 ==
+{{#forminput:form=术语条目|size=40|button text=新建术语条目|default value=术语条目/}}
+
+== 当前条目 ==
+{{#cargo_query:
+tables=lab_terms
+|fields=Page=页面,name_zh=中文名,name_en=英文名,abbr=缩写,summary=摘要
+|format=table
+|limit=200
+}}

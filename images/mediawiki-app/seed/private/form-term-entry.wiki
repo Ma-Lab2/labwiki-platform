@@ -1,0 +1,22 @@
+<!-- LABWIKI_MANAGED_PAGE:FORM_TERM_ENTRY -->
+{{{for template|术语条目}}}
+;中文名
+{{{field|中文名|input type=text}}}
+;英文名
+{{{field|英文名|input type=text}}}
+;缩写
+{{{field|缩写|input type=text}}}
+;摘要
+{{{field|摘要|input type=textarea|rows=6}}}
+;别名
+{{{field|别名|input type=tokens}}}
+;关联页面
+{{{field|关联页面|input type=tokens}}}
+;来源
+{{{field|来源|input type=tokens}}}
+{{{end template}}}
+
+{{{standard input|summary|default=Create assistant-backed term entry}}}
+{{{standard input|preview}}}
+{{{standard input|save}}}
+
