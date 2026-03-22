@@ -1,27 +1,130 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
+from dataclasses import dataclass
 from typing import Any
 
-import httpx
-
 from ..config import Settings
-from .simadvisor_gateway import SimAdvisorGateway
+from ..providers import (
+    AnthropicGenerationProvider,
+    NullEmbeddingProvider,
+    NullGenerationProvider,
+    NullWebSearchProvider,
+    OpenAICompatibleEmbeddingProvider,
+    OpenAICompatibleGenerationProvider,
+    OpenAIGenerationProvider,
+    OpenAIWebSearchProvider,
+    TavilyWebSearchProvider,
+)
+from .model_catalog import should_fallback_generation_error
+from ..services.prompts import build_answer_prompt, build_draft_prompt
+from .model_catalog import default_generation_selection
+
+
+@dataclass(frozen=True)
+class GenerationRuntimeConfig:
+    provider: str
+    requested_model: str
+    resolved_model: str
+    fallback_chain: list[str]
 
 
 class LLMClient:
-    def __init__(self, settings: Settings) -> None:
+    generation_retry_limit = 2
+
+    def __init__(
+        self,
+        settings: Settings,
+        *,
+        generation_config: GenerationRuntimeConfig | None = None,
+        embedding_provider: Any | None = None,
+        web_search_provider: Any | None = None,
+    ) -> None:
         self.settings = settings
-        self.backend = settings.llm_backend
-        self.openai_enabled = bool(settings.openai_base_url and settings.openai_api_key)
-        self.client = httpx.Client(timeout=60.0) if self.openai_enabled else None
-        self.simadvisor = None
-        if self.backend == "simadvisor":
-            self.simadvisor = SimAdvisorGateway(
-                settings.simadvisor_executor_path,
-                settings.simadvisor_default_model,
-                timeout=settings.simadvisor_timeout,
+        default_selection = default_generation_selection(settings)
+        default_model = default_selection.requested_model
+        self.generation_config = generation_config or GenerationRuntimeConfig(
+            provider=default_selection.provider,
+            requested_model=default_model,
+            resolved_model=default_model,
+            fallback_chain=default_selection.fallback_chain,
+        )
+        self.embedding_provider = embedding_provider or self._build_embedding_provider()
+        self.web_search_provider = web_search_provider or self._build_web_search_provider()
+        self.generation_provider = self._build_generation_provider_for(
+            provider=self.generation_config.provider,
+            model=self.generation_config.resolved_model,
+        )
+        self.embedding_enabled = self.embedding_provider.enabled
+        self.fallback_applied = self.generation_config.requested_model != self.generation_config.resolved_model
+        self.fallback_reason: str | None = None
+
+    def _default_requested_model(self) -> str:
+        return default_generation_selection(self.settings).requested_model
+
+    def _build_generation_provider_for(self, *, provider: str, model: str):
+        if provider == "anthropic" and self.settings.anthropic_api_key:
+            return AnthropicGenerationProvider(
+                api_key=self.settings.anthropic_api_key,
+                base_url=self.settings.anthropic_base_url,
+                model=model,
+                timeout=self.settings.anthropic_timeout,
+                max_tokens=self.settings.anthropic_max_tokens,
             )
+        if provider == "openai" and self.settings.openai_api_key:
+            return OpenAIGenerationProvider(
+                api_key=self.settings.openai_api_key,
+                base_url=self.settings.openai_base_url,
+                model=model,
+                timeout=self.settings.openai_timeout,
+                max_tokens=self.settings.openai_max_tokens,
+            )
+        if provider in {"openai_compatible", "domestic"} and self.settings.openai_compatible_generation_api_key:
+            return OpenAICompatibleGenerationProvider(
+                api_key=self.settings.openai_compatible_generation_api_key,
+                base_url=self.settings.openai_compatible_generation_base_url,
+                model=model,
+                timeout=self.settings.openai_compatible_timeout,
+                max_tokens=self.settings.openai_compatible_max_tokens,
+            )
+        return NullGenerationProvider()
+
+    def _build_embedding_provider(self):
+        if (
+            self.settings.embedding_base_url
+            and self.settings.embedding_api_key
+            and self.settings.embedding_model
+        ):
+            return OpenAICompatibleEmbeddingProvider(
+                base_url=self.settings.embedding_base_url,
+                api_key=self.settings.embedding_api_key,
+                model=self.settings.embedding_model,
+                timeout=self.settings.embedding_timeout,
+            )
+        return NullEmbeddingProvider()
+
+    def _build_web_search_provider(self):
+        if not self.settings.enable_web_search:
+            return NullWebSearchProvider()
+        provider = self.settings.web_search_provider
+        if provider == "openai" and self.settings.openai_api_key and self.settings.openai_web_search_model:
+            return OpenAIWebSearchProvider(
+                api_key=self.settings.openai_api_key,
+                base_url=self.settings.openai_base_url,
+                model=self.settings.openai_web_search_model,
+            )
+        if provider == "tavily" and self.settings.tavily_api_key:
+            return TavilyWebSearchProvider(api_key=self.settings.tavily_api_key)
+        return NullWebSearchProvider()
+
+    def with_generation_config(self, generation_config: GenerationRuntimeConfig) -> "LLMClient":
+        return LLMClient(
+            self.settings,
+            generation_config=generation_config,
+            embedding_provider=self.embedding_provider,
+            web_search_provider=self.web_search_provider,
+        )
 
     def answer_from_evidence(
         self,
@@ -30,9 +133,41 @@ class LLMClient:
         task_type: str,
         detail_level: str,
         mode: str,
+        current_page: str | None = None,
         evidence: list[dict[str, Any]],
         unresolved_gaps: list[str],
+        conversation_history: list[dict[str, str]] | None = None,
     ) -> str:
+        if self.generation_provider.enabled:
+            try:
+                return "".join(
+                    self.answer_stream(
+                        question=question,
+                        task_type=task_type,
+                        detail_level=detail_level,
+                        mode=mode,
+                        current_page=current_page,
+                        evidence=evidence,
+                        unresolved_gaps=unresolved_gaps,
+                        conversation_history=conversation_history,
+                    )
+                ).strip()
+            except Exception:
+                return self._fallback_answer(question, detail_level, evidence, unresolved_gaps, conversation_history or [])
+        return self._fallback_answer(question, detail_level, evidence, unresolved_gaps, conversation_history or [])
+
+    def answer_stream(
+        self,
+        *,
+        question: str,
+        task_type: str,
+        detail_level: str,
+        mode: str,
+        current_page: str | None = None,
+        evidence: list[dict[str, Any]],
+        unresolved_gaps: list[str],
+        conversation_history: list[dict[str, str]] | None = None,
+    ) -> Iterator[str]:
         structured_only = any(
             hint in question for hint in [
                 "结构化定义",
@@ -43,43 +178,25 @@ class LLMClient:
                 "只给定义",
             ]
         )
-        if self.backend == "simadvisor" and self.simadvisor:
-            return self._answer_via_simadvisor(
+        if self.generation_provider.enabled:
+            prompt = build_answer_prompt(
                 question=question,
                 task_type=task_type,
                 detail_level=detail_level,
                 mode=mode,
+                current_page=current_page,
                 evidence=evidence,
                 unresolved_gaps=unresolved_gaps,
                 structured_only=structured_only,
+                conversation_history=conversation_history or [],
             )
-
-        if not self.openai_enabled:
-            return self._fallback_answer(question, detail_level, evidence, unresolved_gaps)
-
-        system_prompt = (
-            "你是实验室私有 MediaWiki 的知识助手。"
-            "回答必须以本组语境为先，显式指出证据边界。"
-            "如果证据不足，不能把通用答案说成课题组共识。"
-        )
-        if structured_only:
-            system_prompt += " 如果用户要求结构化定义，只能优先使用结构化条目证据，不要复述索引页、模板页或普通导航页。"
-        evidence_block = "\n\n".join(
-            f"[{index + 1}] {item['title']} ({item['source_type']})\n{item.get('snippet', '')}\n{item.get('content', '')[:800]}"
-            for index, item in enumerate(evidence[:6])
-        )
-        user_prompt = (
-            f"问题：{question}\n"
-            f"任务类型：{task_type}\n"
-            f"解释层级：{detail_level}\n"
-            f"模式：{mode}\n"
-            f"证据缺口：{'; '.join(unresolved_gaps) if unresolved_gaps else '无'}\n"
-            f"结构化优先：{'是' if structured_only else '否'}\n\n"
-            f"已检索证据：\n{evidence_block}\n\n"
-            "请输出简洁但有层次的中文回答，不要捏造未命中的实验细节。"
-        )
-        data = self._chat(system_prompt, user_prompt)
-        return data["choices"][0]["message"]["content"].strip()
+            try:
+                yield from self.stream_prompt(prompt)
+                return
+            except Exception:
+                yield self._fallback_answer(question, detail_level, evidence, unresolved_gaps, conversation_history or [])
+                return
+        yield self._fallback_answer(question, detail_level, evidence, unresolved_gaps, conversation_history or [])
 
     def draft_from_answer(
         self,
@@ -88,164 +205,28 @@ class LLMClient:
         answer: str,
         source_titles: list[str],
         draft_prefix: str,
+        conversation_history: list[dict[str, str]] | None = None,
     ) -> dict[str, str]:
-        if self.backend == "simadvisor" and self.simadvisor:
-            return self._draft_via_simadvisor(
+        if self.generation_provider.enabled:
+            prompt = build_draft_prompt(
                 question=question,
                 answer=answer,
                 source_titles=source_titles,
                 draft_prefix=draft_prefix,
+                conversation_history=conversation_history or [],
             )
-
-        if not self.openai_enabled:
-            title = self._fallback_draft_title(question)
-            content = (
-                f"== 触发问题 ==\n{question}\n\n"
-                f"== 助手整理结果 ==\n{answer}\n\n"
-                f"== 来源 ==\n* " + "\n* ".join(source_titles or ["待补充"])
-            )
-            return {"title": title, "content": content}
-
-        system_prompt = (
-            "你负责把知识助手回答整理成 MediaWiki 草稿页。"
-            "输出 JSON，字段必须包含 title 和 content。"
-        )
-        user_prompt = (
-            f"草稿前缀：{draft_prefix}\n"
-            f"原始问题：{question}\n"
-            f"答案：{answer}\n"
-            f"来源：{', '.join(source_titles) if source_titles else '待补充'}\n"
-            "请输出一个适合课题组私有 wiki 的草稿标题和页面正文。"
-        )
-        raw = self._chat(system_prompt, user_prompt, response_format={"type": "json_object"})
-        payload = json.loads(raw["choices"][0]["message"]["content"])
-        return {
-            "title": payload.get("title") or self._fallback_draft_title(question),
-            "content": payload.get("content") or answer,
-        }
-
-    def embed(self, texts: list[str]) -> list[list[float]] | None:
-        if self.backend == "simadvisor":
-            return None
-        if not self.openai_enabled or not self.settings.embedding_model or not texts:
-            return None
-        response = self.client.post(
-            f"{self.settings.openai_base_url.rstrip('/')}/embeddings",
-            headers={
-                "Authorization": f"Bearer {self.settings.openai_api_key}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": self.settings.embedding_model,
-                "input": texts,
-            },
-        )
-        response.raise_for_status()
-        return [item["embedding"] for item in response.json().get("data", [])]
-
-    def _chat(self, system_prompt: str, user_prompt: str, response_format: dict[str, str] | None = None) -> dict[str, Any]:
-        payload: dict[str, Any] = {
-            "model": self.settings.openai_model,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            "temperature": 0.2,
-        }
-        if response_format:
-            payload["response_format"] = response_format
-        response = self.client.post(
-            f"{self.settings.openai_base_url.rstrip('/')}/chat/completions",
-            headers={
-                "Authorization": f"Bearer {self.settings.openai_api_key}",
-                "Content-Type": "application/json",
-            },
-            json=payload,
-        )
-        response.raise_for_status()
-        return response.json()
-
-    def _answer_via_simadvisor(
-        self,
-        *,
-        question: str,
-        task_type: str,
-        detail_level: str,
-        mode: str,
-        evidence: list[dict[str, Any]],
-        unresolved_gaps: list[str],
-        structured_only: bool,
-    ) -> str:
-        evidence_block = "\n\n".join(
-            f"[{index + 1}] {item['title']} ({item['source_type']})\n{item.get('snippet', '')}\n{item.get('content', '')[:800]}"
-            for index, item in enumerate(evidence[:6])
-        )
-        prompt = (
-            "你是实验室私有 MediaWiki 的知识助手。\n"
-            "回答必须以本组语境为先，显式指出证据边界。\n"
-            "如果证据不足，不能把通用答案说成课题组共识。\n\n"
-            f"问题：{question}\n"
-            f"任务类型：{task_type}\n"
-            f"解释层级：{detail_level}\n"
-            f"模式：{mode}\n"
-            f"证据缺口：{'; '.join(unresolved_gaps) if unresolved_gaps else '无'}\n"
-            f"结构化优先：{'是' if structured_only else '否'}\n\n"
-            f"已检索证据：\n{evidence_block}\n\n"
-            "请输出简洁但有层次的中文回答，不要捏造未命中的实验细节。"
-        )
-        if structured_only:
-            prompt += "\n如果用户要求结构化定义，只能优先使用结构化条目证据，不要复述索引页、模板页或普通导航页。"
-        result = self.simadvisor.chat(
-            prompt=prompt,
-            model=self.settings.simadvisor_default_model,
-            temperature=0.2,
-            timeout=self.settings.simadvisor_timeout,
-        )
-        if result.success and result.content:
-            return result.content.strip()
-
-        fallback = self.simadvisor.chat(
-            prompt=prompt,
-            model=self.settings.simadvisor_fallback_model,
-            temperature=0.2,
-            timeout=self.settings.simadvisor_timeout,
-        )
-        if fallback.success and fallback.content:
-            return fallback.content.strip()
-
-        return self._fallback_answer(question, detail_level, evidence, unresolved_gaps)
-
-    def _draft_via_simadvisor(
-        self,
-        *,
-        question: str,
-        answer: str,
-        source_titles: list[str],
-        draft_prefix: str,
-    ) -> dict[str, str]:
-        prompt = (
-            "请把下面的知识助手回答整理成 MediaWiki 草稿页。\n"
-            "输出严格 JSON，对象必须只有 title 和 content 两个字段。\n\n"
-            f"草稿前缀：{draft_prefix}\n"
-            f"原始问题：{question}\n"
-            f"答案：{answer}\n"
-            f"来源：{', '.join(source_titles) if source_titles else '待补充'}"
-        )
-        result = self.simadvisor.chat(
-            prompt=prompt,
-            model=self.settings.simadvisor_review_model,
-            temperature=0.1,
-            timeout=self.settings.simadvisor_timeout,
-        )
-        if result.success and result.content:
+            raw = self.generate_prompt(prompt)
             try:
-                payload = json.loads(result.content)
+                payload = self._load_json_object(raw)
                 return {
                     "title": payload.get("title") or self._fallback_draft_title(question),
                     "content": payload.get("content") or answer,
                 }
             except json.JSONDecodeError:
-                pass
+                return {
+                    "title": self._fallback_draft_title(question),
+                    "content": answer,
+                }
 
         title = self._fallback_draft_title(question)
         content = (
@@ -255,14 +236,124 @@ class LLMClient:
         )
         return {"title": title, "content": content}
 
+    def embed(self, texts: list[str]) -> list[list[float]] | None:
+        return self.embedding_provider.embed(texts)
+
+    def search_web(self, query: str, limit: int = 5) -> list[dict[str, Any]]:
+        if not self.web_search_provider.enabled:
+            return []
+        return self.web_search_provider.search(query, limit=limit)
+
+    def generate_prompt(self, prompt: Any) -> str:
+        return self._call_with_generation_fallback(lambda provider: provider.generate(prompt))
+
+    def stream_prompt(self, prompt: Any) -> Iterator[str]:
+        attempts = 0
+        while True:
+            emitted = False
+            try:
+                for chunk in self.generation_provider.stream(prompt):
+                    emitted = True
+                    yield chunk
+                return
+            except Exception as error:
+                if emitted:
+                    raise
+                if self._try_generation_fallback(error):
+                    continue
+                if self._is_retryable_generation_error(error) and attempts < self.generation_retry_limit:
+                    attempts += 1
+                    continue
+                raise
+
+    def _call_with_generation_fallback(self, callback):
+        attempts = 0
+        while True:
+            try:
+                return callback(self.generation_provider)
+            except Exception as error:
+                if self._try_generation_fallback(error):
+                    continue
+                if self._is_retryable_generation_error(error) and attempts < self.generation_retry_limit:
+                    attempts += 1
+                    continue
+                raise
+
+    def _try_generation_fallback(self, error: Exception) -> bool:
+        if not should_fallback_generation_error(error):
+            return False
+        if not self.generation_config.fallback_chain:
+            return False
+        next_model = self.generation_config.fallback_chain[0]
+        self.generation_provider = self._build_generation_provider_for(
+            provider=self.generation_config.provider,
+            model=next_model,
+        )
+        self.generation_config = GenerationRuntimeConfig(
+            provider=self.generation_config.provider,
+            requested_model=self.generation_config.requested_model,
+            resolved_model=next_model,
+            fallback_chain=self.generation_config.fallback_chain[1:],
+        )
+        self.fallback_applied = True
+        self.fallback_reason = str(error)
+        return self.generation_provider.enabled
+
     @staticmethod
-    def _fallback_answer(question: str, detail_level: str, evidence: list[dict[str, Any]], unresolved_gaps: list[str]) -> str:
+    def _is_retryable_generation_error(error: Exception) -> bool:
+        message = str(error).lower()
+        tokens = [
+            "timed out",
+            "timeout",
+            "429",
+            "rate limit",
+            "too many requests",
+            "bad gateway",
+            "gateway timeout",
+            "internal server error",
+            "temporarily unavailable",
+            "server disconnected",
+            "connection error",
+        ]
+        return isinstance(error, TimeoutError) or any(token in message for token in tokens)
+
+    @property
+    def model_info(self) -> dict[str, Any]:
+        return {
+            "requested_model": self.generation_config.requested_model,
+            "resolved_model": self.generation_config.resolved_model,
+            "provider": self.generation_config.provider,
+            "fallback_applied": self.fallback_applied,
+            "fallback_reason": self.fallback_reason,
+        }
+
+    @staticmethod
+    def _load_json_object(raw: str) -> dict[str, Any]:
+        candidate = raw.strip()
+        if candidate.startswith("```"):
+            candidate = "\n".join(
+                line for line in candidate.splitlines()
+                if not line.strip().startswith("```")
+            ).strip()
+        return json.loads(candidate)
+
+    @staticmethod
+    def _fallback_answer(
+        question: str,
+        detail_level: str,
+        evidence: list[dict[str, Any]],
+        unresolved_gaps: list[str],
+        conversation_history: list[dict[str, str]],
+    ) -> str:
         if not evidence:
             return "当前没有命中足够的站内证据。请先补充关联页面、术语或文献，再让助手继续整理。"
         snippets = []
         for item in evidence[:4]:
             detail = item.get("snippet") or item.get("content", "")[:140]
             snippets.append(f"《{item['title']}》指出：{detail}")
+        history_text = ""
+        if conversation_history:
+            history_text = f"\n\n最近上下文提示：上一轮主要在讨论“{conversation_history[-1].get('question', '')}”。"
         gap_text = ""
         if unresolved_gaps:
             gap_text = "\n\n仍待补证的部分：\n- " + "\n- ".join(unresolved_gaps)
@@ -270,6 +361,7 @@ class LLMClient:
             f"针对“{question}”，当前检索到的本组材料更支持以下判断。\n\n"
             + "\n".join(f"{index + 1}. {snippet}" for index, snippet in enumerate(snippets))
             + gap_text
+            + history_text
             + f"\n\n解释层级：{detail_level}。如果需要，我可以继续把这些结果整理成草稿预览。"
         )
 

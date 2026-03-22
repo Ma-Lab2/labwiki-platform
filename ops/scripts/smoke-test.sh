@@ -9,6 +9,16 @@ if [[ "${LABWIKI_LOCAL_OVERRIDE:-false}" == "true" ]]; then
   compose_cmd+=(-f compose.override.yaml)
 fi
 
+if ! command -v docker >/dev/null 2>&1; then
+  echo "docker is not installed or not in PATH." >&2
+  exit 1
+fi
+
+if ! docker compose version >/dev/null 2>&1; then
+  echo "docker compose plugin is not available." >&2
+  exit 1
+fi
+
 check_http() {
   local url="$1"
   local label="$2"
@@ -29,8 +39,16 @@ check_http() {
 "${compose_cmd[@]}" ps mariadb mw_public mw_private caddy_public caddy_private >/dev/null
 "${compose_cmd[@]}" ps rcf_backend rcf_frontend tps_web assistant_store assistant_api assistant_worker >/dev/null
 
-PUBLIC_URL="${PUBLIC_SMOKE_URL:-$("${compose_cmd[@]}" exec -T mw_public sh -lc 'printf %s "$MW_SERVER"')}"
-PRIVATE_URL="${PRIVATE_SMOKE_URL:-$("${compose_cmd[@]}" exec -T mw_private sh -lc 'printf %s "$MW_SERVER"')}"
+if [[ "${LABWIKI_LOCAL_OVERRIDE:-false}" == "true" ]]; then
+  default_public_url="http://127.0.0.1"
+  default_private_url="http://localhost:8443"
+else
+  default_public_url="$("${compose_cmd[@]}" exec -T mw_public sh -lc 'printf %s "$MW_SERVER"')"
+  default_private_url="$("${compose_cmd[@]}" exec -T mw_private sh -lc 'printf %s "$MW_SERVER"')"
+fi
+
+PUBLIC_URL="${PUBLIC_SMOKE_URL:-${default_public_url}}"
+PRIVATE_URL="${PRIVATE_SMOKE_URL:-${default_private_url}}"
 PUBLIC_NAME="$("${compose_cmd[@]}" exec -T mw_public sh -lc 'printf %s "$MW_SITE_NAME"')"
 PRIVATE_NAME="$("${compose_cmd[@]}" exec -T mw_private sh -lc 'printf %s "$MW_SITE_NAME"')"
 

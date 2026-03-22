@@ -34,6 +34,7 @@ def run_worker_loop(poll_interval: int = 5) -> None:
             job.status = "running"
             db.flush()
             log_audit(db, action_type="job_started", payload={"job_id": job.id, "job_type": job.job_type})
+            db.commit()
             try:
                 if job.job_type == "reindex_wiki":
                     job.result = reindex_wiki(db, settings, llm)

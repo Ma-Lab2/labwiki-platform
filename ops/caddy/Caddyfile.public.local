@@ -1,7 +1,6 @@
-localhost {
+http://{$PUBLIC_HOST} {
     encode zstd gzip
     root * /var/www/html
     php_fastcgi mw_public:9000
     file_server
-    tls internal
 }

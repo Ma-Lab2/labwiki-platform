@@ -48,18 +48,41 @@ fi
 mkdir -p "${STATE_DIR}" /var/www/html/images
 cd /var/www/html
 
-append_block_once() {
+upsert_managed_block() {
   local marker="$1"
   local content="$2"
+  local tmp_file=""
+  local output_file=""
 
-  if [[ ! -f "${LOCAL_SETTINGS}" ]] || grep -Fq "${marker}" "${LOCAL_SETTINGS}"; then
-    return 0
+  tmp_file="$(mktemp)"
+  output_file="$(mktemp)"
+
+  if [[ -f "${LOCAL_SETTINGS}" ]]; then
+    awk -v marker="${marker}" '
+      BEGIN {
+        skip = 0
+      }
+      $0 == "# " marker {
+        skip = 1
+        next
+      }
+      skip && /^# / {
+        skip = 0
+      }
+      !skip {
+        print
+      }
+    ' "${LOCAL_SETTINGS}" > "${tmp_file}"
   fi
 
   {
+    cat "${tmp_file}"
     printf "\n# %s\n" "${marker}"
     printf "%s\n" "${content}"
-  } >> "${LOCAL_SETTINGS}"
+  } > "${output_file}"
+
+  mv "${output_file}" "${LOCAL_SETTINGS}"
+  rm -f "${tmp_file}"
 }
 
 wait_for_db() {
@@ -211,7 +234,31 @@ if [[ ! -s "${LOCAL_SETTINGS}" ]]; then
     "${MW_SITE_NAME}" "${MW_ADMIN_USER}"
 fi
 
-RUNTIME_BLOCK="$(cat <<EOF
+if [[ "${SITE_VARIANT}" == "private" ]]; then
+  RUNTIME_BLOCK="$(cat <<EOF
+\$wgServer = '${MW_SERVER}';
+\$wgScriptPath = '${SCRIPT_PATH}';
+\$wgResourceBasePath = \$wgScriptPath;
+\$wgSitename = '${MW_SITE_NAME}';
+\$wgLogos = [
+  '1x' => '${LOGO_PATH}',
+  'icon' => '${LOGO_PATH}',
+];
+\$wgEnableUploads = true;
+\$labwikiCanonicalServer = '${MW_SERVER}';
+\$labwikiAllowedServerHosts = [ '192.168.1.2:8443', '127.0.0.1:8443', 'localhost:8443' ];
+if ( PHP_SAPI !== 'cli' ) {
+  \$labwikiRequestHost = \$_SERVER['HTTP_HOST'] ?? '';
+  if ( in_array( \$labwikiRequestHost, \$labwikiAllowedServerHosts, true ) ) {
+    \$wgServer = 'http://' . \$labwikiRequestHost;
+  } else {
+    \$wgServer = \$labwikiCanonicalServer;
+  }
+}
+EOF
+)"
+else
+  RUNTIME_BLOCK="$(cat <<EOF
 \$wgServer = '${MW_SERVER}';
 \$wgScriptPath = '${SCRIPT_PATH}';
 \$wgResourceBasePath = \$wgScriptPath;
@@ -223,6 +270,7 @@ RUNTIME_BLOCK="$(cat <<EOF
 \$wgEnableUploads = true;
 EOF
 )"
+fi
 
 THEME_BLOCK="$(cat <<EOF
 \$wgResourceModules['ext.labwiki.theme'] = [
@@ -270,10 +318,10 @@ $wgMathEnableFormulaLinks = true;
 EOF
 )"
 
-append_block_once "LABWIKI_COMMON" "${COMMON_BLOCK}"
-append_block_once "LABWIKI_EDITOR_EXTENSIONS_V3" "${EDITOR_BLOCK}"
-append_block_once "LABWIKI_THEME_V1" "${THEME_BLOCK}"
-append_block_once "LABWIKI_RUNTIME_OVERRIDES_V5" "${RUNTIME_BLOCK}"
+upsert_managed_block "LABWIKI_COMMON" "${COMMON_BLOCK}"
+upsert_managed_block "LABWIKI_EDITOR_EXTENSIONS_V3" "${EDITOR_BLOCK}"
+upsert_managed_block "LABWIKI_THEME_V1" "${THEME_BLOCK}"
+upsert_managed_block "LABWIKI_RUNTIME_OVERRIDES_V5" "${RUNTIME_BLOCK}"
 
 if [[ "${MW_PRIVATE_MODE:-false}" == "true" ]]; then
   PRIVATE_BLOCK="$(cat <<'EOF'
@@ -285,7 +333,7 @@ $wgLabAssistantApiBase = getenv( 'MW_ASSISTANT_API_BASE' ) ?: '/tools/assistant/
 $wgLabAssistantDraftPrefix = getenv( 'MW_ASSISTANT_DRAFT_PREFIX' ) ?: '知识助手草稿';
 EOF
 )"
-  append_block_once "PRIVATE_WIKI_HARDENING_V2" "${PRIVATE_BLOCK}"
+  upsert_managed_block "PRIVATE_WIKI_HARDENING_V2" "${PRIVATE_BLOCK}"
 fi
 
 ln -sf "${LOCAL_SETTINGS}" /var/www/html/LocalSettings.php

@@ -17,6 +17,8 @@ RUN if php -m | grep -iq '^apcu$'; then \
       pecl install apcu && docker-php-ext-enable apcu; \
     fi
 
+RUN sed -i 's/^listen = 9000$/listen = 0.0.0.0:9000/' /usr/local/etc/php-fpm.d/docker.conf
+
 COPY images/mediawiki-app/php/zz-mediawiki.ini /usr/local/etc/php/conf.d/zz-mediawiki.ini
 COPY images/mediawiki-app/entrypoint/bootstrap-instance.sh /usr/local/bin/bootstrap-instance.sh
 COPY images/mediawiki-app/seed /opt/labwiki/seed

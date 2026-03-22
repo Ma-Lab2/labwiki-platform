@@ -1,29 +1,38 @@
 services:
   assistant_api:
     environment:
-      ASSISTANT_WIKI_URL: https://host.docker.internal:8443
-      ASSISTANT_CORS_ALLOWED_ORIGINS: https://localhost:8443
+      ASSISTANT_WIKI_URL: http://192.168.1.2:8443
+      ASSISTANT_WIKI_API_BASE_URL: http://caddy_private
+      ASSISTANT_WIKI_API_HOST_HEADER: 192.168.1.2
+      ASSISTANT_CORS_ALLOWED_ORIGINS: http://192.168.1.2:8443,http://127.0.0.1:8443,http://localhost:8443
 
   assistant_worker:
     environment:
-      ASSISTANT_WIKI_URL: https://host.docker.internal:8443
+      ASSISTANT_WIKI_URL: http://192.168.1.2:8443
+      ASSISTANT_WIKI_API_BASE_URL: http://caddy_private
+      ASSISTANT_WIKI_API_HOST_HEADER: 192.168.1.2
+
+  rcf_backend:
+    environment:
+      CORS_ALLOWED_ORIGINS: http://192.168.1.2:8443,http://127.0.0.1:8443,http://localhost:8443
 
   mw_public:
     environment:
-      MW_SERVER: https://localhost
+      MW_SERVER: http://192.168.1.2
 
   mw_private:
     environment:
-      MW_SERVER: https://localhost:8443
+      MW_SERVER: http://192.168.1.2:8443
 
   caddy_public:
     environment:
-      PUBLIC_HOST: localhost
+      PUBLIC_HOST: 192.168.1.2
     volumes:
       - ./ops/caddy/Caddyfile.public.local:/etc/caddy/Caddyfile:ro
 
   caddy_private:
     environment:
-      PRIVATE_HOST: localhost
+      PRIVATE_HOST: 192.168.1.2
+      PRIVATE_BIND_IP: 0.0.0.0
     volumes:
       - ./ops/caddy/Caddyfile.private.local:/etc/caddy/Caddyfile:ro

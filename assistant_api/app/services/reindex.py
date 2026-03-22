@@ -16,6 +16,9 @@ from .audit import log_audit
 from .chunking import chunk_wiki_text
 from .llm import LLMClient
 
+WIKI_REINDEX_COMMIT_INTERVAL = 10
+CARGO_REINDEX_COMMIT_INTERVAL = 25
+
 
 def upsert_document(
     db: Session,
@@ -73,13 +76,23 @@ def reindex_wiki(db: Session, settings: Settings, llm: LLMClient) -> dict[str, A
     namespaces = [0, 10, 106]
     titles = wiki.iter_all_pages(namespaces)
     indexed = 0
+    pending_wiki_writes = 0
 
     for title in titles:
         raw_text = wiki.get_page_text(title)
         if not raw_text.strip():
             continue
         chunks = chunk_wiki_text(raw_text)
-        embeddings = llm.embed([chunk["content"][:3000] for chunk in chunks]) if chunks else None
+        embeddings = None
+        if chunks:
+            try:
+                embeddings = llm.embed([chunk["content"][:3000] for chunk in chunks])
+            except Exception as error:
+                log_audit(
+                    db,
+                    action_type="reindex_wiki_embedding_error",
+                    payload={"title": title, "detail": str(error)},
+                )
         upsert_document(
             db,
             source_type=SourceType.WIKI.value,
@@ -93,6 +106,10 @@ def reindex_wiki(db: Session, settings: Settings, llm: LLMClient) -> dict[str, A
             embeddings=embeddings,
         )
         indexed += 1
+        pending_wiki_writes += 1
+        if pending_wiki_writes >= WIKI_REINDEX_COMMIT_INTERVAL:
+            db.commit()
+            pending_wiki_writes = 0
 
     cargo_specs = [
         ("lab_terms", "Page,name_zh,name_en,abbr,summary"),
@@ -102,6 +119,7 @@ def reindex_wiki(db: Session, settings: Settings, llm: LLMClient) -> dict[str, A
         ("lab_literature_guides", "Page,title_text,authors,pub_year,doi,summary"),
     ]
     cargo_indexed = 0
+    pending_cargo_writes = 0
     for table_name, fields in cargo_specs:
         try:
             rows = wiki.cargo_query(table_name, fields, limit=500)
@@ -130,6 +148,10 @@ def reindex_wiki(db: Session, settings: Settings, llm: LLMClient) -> dict[str, A
                 chunks=chunks or [{"heading": table_name, "content": raw, "snippet": raw[:280]}],
             )
             cargo_indexed += 1
+            pending_cargo_writes += 1
+            if pending_cargo_writes >= CARGO_REINDEX_COMMIT_INTERVAL:
+                db.commit()
+                pending_cargo_writes = 0
 
     log_audit(db, action_type="reindex_wiki", payload={"wiki_pages": indexed, "cargo_rows": cargo_indexed})
     return {"wiki_pages": indexed, "cargo_rows": cargo_indexed}
@@ -144,9 +166,14 @@ def _iter_snapshot_documents(root: Path):
 
 
 def reindex_zotero(db: Session, settings: Settings, llm: LLMClient) -> dict[str, Any]:
+    if not settings.enable_zotero:
+        log_audit(db, action_type="reindex_zotero", payload={"zotero_items": 0, "status": "disabled"})
+        return {"zotero_items": 0, "status": "disabled"}
+
     root = Path(settings.zotero_snapshot_dir)
     if not root.exists():
-        return {"zotero_items": 0}
+        log_audit(db, action_type="reindex_zotero", payload={"zotero_items": 0, "status": "missing_snapshot"})
+        return {"zotero_items": 0, "status": "missing_snapshot"}
 
     indexed = 0
     for path in _iter_snapshot_documents(root):
@@ -201,8 +228,8 @@ def reindex_zotero(db: Session, settings: Settings, llm: LLMClient) -> dict[str,
             )
             indexed += 1
 
-    log_audit(db, action_type="reindex_zotero", payload={"zotero_items": indexed})
-    return {"zotero_items": indexed}
+    log_audit(db, action_type="reindex_zotero", payload={"zotero_items": indexed, "status": "completed"})
+    return {"zotero_items": indexed, "status": "completed"}
 
 
 def create_job(db: Session, job_type: str, payload: dict[str, Any] | None = None) -> Job:

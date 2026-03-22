@@ -23,14 +23,21 @@ class MediaWikiClient:
             timeout=30.0,
             verify=settings.wiki_verify_tls,
             follow_redirects=True,
+            trust_env=False,
         )
         self.csrf_token: str | None = None
         self.logged_in = False
+
+    def _request_headers(self) -> dict[str, str] | None:
+        if not self.settings.wiki_api_host_header:
+            return None
+        return {"Host": self.settings.wiki_api_host_header}
 
     def _get(self, params: dict[str, Any]) -> dict[str, Any]:
         response = self.client.get(
             self.settings.wiki_api_url,
             params={"format": "json", **params},
+            headers=self._request_headers(),
         )
         response.raise_for_status()
         return response.json()
@@ -39,6 +46,7 @@ class MediaWikiClient:
         response = self.client.post(
             self.settings.wiki_api_url,
             data={"format": "json", **data},
+            headers=self._request_headers(),
         )
         response.raise_for_status()
         return response.json()

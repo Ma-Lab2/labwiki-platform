@@ -1,0 +1,135 @@
+[
+  {
+    "name": "assistant-faq",
+    "category": "faq",
+    "query": "知识助手使用说明",
+    "source_types": ["wiki", "cargo"],
+    "expected_titles": ["FAQ:知识助手使用说明"]
+  },
+  {
+    "name": "shot-log",
+    "category": "log",
+    "query": "周实验日志",
+    "source_types": ["wiki", "cargo"],
+    "expected_titles": ["Shot:周实验日志"]
+  },
+  {
+    "name": "theory-basics",
+    "category": "theory",
+    "query": "激光 等离子体 相互作用 基础",
+    "source_types": ["wiki", "cargo"],
+    "expected_titles": ["Theory:激光-等离子体相互作用基础"]
+  },
+  {
+    "name": "shot-record-form",
+    "category": "form",
+    "query": "Shot 记录 表单",
+    "source_types": ["wiki", "cargo"],
+    "expected_titles": ["Form:Shot记录", "Shot:表单新建"]
+  },
+  {
+    "name": "tnsa-mechanism-mixed",
+    "category": "mechanism",
+    "query": "TNSA 靶法向鞘层加速",
+    "source_types": ["wiki", "cargo"],
+    "expected_titles": ["Theory:TNSA", "机制条目/TNSA"]
+  },
+  {
+    "name": "rcf-archive",
+    "category": "data",
+    "query": "RCF 计算 归档",
+    "source_types": ["wiki", "cargo"],
+    "expected_titles": ["Data:RCF计算与归档"]
+  },
+  {
+    "name": "diagnostic-overview",
+    "category": "diagnostic",
+    "query": "诊断 总览 diagnostic overview",
+    "source_types": ["wiki", "cargo"],
+    "expected_titles": ["Diagnostic:诊断总览"]
+  },
+  {
+    "name": "shot-log-entry",
+    "category": "log",
+    "query": "Shot 日志 入口 shot log entry",
+    "source_types": ["wiki", "cargo"],
+    "expected_titles": ["Shot:Shot日志入口"]
+  },
+  {
+    "name": "mechanism-map",
+    "category": "mechanism",
+    "query": "机制 判别 图谱 机制比较",
+    "source_types": ["wiki", "cargo"],
+    "expected_titles": ["Theory:机制判别图谱"]
+  },
+  {
+    "name": "contrast-preplasma-theory",
+    "category": "theory",
+    "query": "对比度 预等离子体 contrast preplasma",
+    "source_types": ["wiki", "cargo"],
+    "expected_titles": ["Theory:对比度与预等离子体", "术语条目/对比度", "术语条目/预等离子体"]
+  },
+  {
+    "name": "term-a0",
+    "category": "term",
+    "query": "a0 激光 强度 归一化矢势",
+    "source_types": ["wiki", "cargo"],
+    "expected_titles": ["术语条目/a0"]
+  },
+  {
+    "name": "device-tps",
+    "category": "device",
+    "query": "TPS 汤姆逊抛物谱仪 质子能谱",
+    "source_types": ["wiki", "cargo"],
+    "expected_titles": ["设备条目/汤姆逊抛物谱仪", "诊断条目/TPS"]
+  },
+  {
+    "name": "device-dpm",
+    "category": "device",
+    "query": "双等离子体镜 提高对比度 plasma mirror",
+    "source_types": ["wiki", "cargo"],
+    "expected_titles": ["设备条目/双等离子体镜"]
+  },
+  {
+    "name": "diagnostic-frog",
+    "category": "diagnostic",
+    "query": "FROG 脉冲表征 频率分辨光学开关",
+    "source_types": ["wiki", "cargo"],
+    "expected_titles": ["诊断条目/FROG"]
+  },
+  {
+    "name": "diagnostic-shot-judging",
+    "category": "diagnostic",
+    "query": "在线 判靶 shot judging",
+    "source_types": ["wiki", "cargo"],
+    "expected_titles": ["诊断条目/在线判靶"]
+  },
+  {
+    "name": "shot-template",
+    "category": "form",
+    "query": "Shot 模板 字段 填写 说明",
+    "source_types": ["wiki", "cargo"],
+    "expected_titles": ["Shot:Shot模板", "Template:Shot记录"]
+  },
+  {
+    "name": "shot-instance",
+    "category": "shot",
+    "query": "2026 03 14 Run01 Shot003",
+    "source_types": ["wiki", "cargo"],
+    "expected_titles": ["Shot:2026-03-14-Run01-Shot003"]
+  },
+  {
+    "name": "weekly-log-current",
+    "category": "log",
+    "query": "2026 W11 周实验日志",
+    "source_types": ["wiki", "cargo"],
+    "expected_titles": ["Shot:2026-W11 周实验日志"]
+  },
+  {
+    "name": "control-central-platform",
+    "category": "control",
+    "query": "中央 控制 平台 central control platform",
+    "source_types": ["wiki", "cargo"],
+    "expected_titles": ["Control:中央控制平台"]
+  }
+]

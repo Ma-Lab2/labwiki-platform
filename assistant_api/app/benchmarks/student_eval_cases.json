@@ -1,0 +1,449 @@
+[
+  {
+    "id": "concept-tnsa-intro",
+    "category": "concept",
+    "question": "什么是 TNSA？请用新人能懂的话解释。",
+    "current_page": "Theory:TNSA",
+    "expected_behavior": "直接解释 TNSA，优先引用本组理论页和相关术语页，不把索引页说明当主回答。",
+    "must_have": ["TNSA 的基本含义", "站内页面或术语引用", "新人可读表述"],
+    "must_not_have": ["把索引页解释当主回答", "脱离本组语境的泛泛百科"],
+    "gold_reference_pages": ["Theory:TNSA", "术语条目/TNSA"],
+    "eval_type": "answer"
+  },
+  {
+    "id": "concept-a0-relation",
+    "category": "concept",
+    "question": "a0 是什么，和激光强度有什么关系？",
+    "current_page": "Theory:激光-等离子体相互作用基础",
+    "expected_behavior": "解释 a0 的物理意义和与激光强度的关系，贴合站内理论页。",
+    "must_have": ["a0 的含义", "与激光强度的关系", "站内理论语境"],
+    "must_not_have": ["只给纯数学公式不解释", "与当前理论页无关"],
+    "gold_reference_pages": ["Theory:激光-等离子体相互作用基础", "术语条目/a0"],
+    "eval_type": "answer"
+  },
+  {
+    "id": "concept-contrast-preplasma",
+    "category": "concept",
+    "question": "为什么对比度会影响预等离子体？",
+    "current_page": "Theory:激光对比度与预等离子体",
+    "expected_behavior": "说明对比度、前脉冲和预等离子体的关系，使用站内解释路径。",
+    "must_have": ["对比度", "预等离子体", "本组理论页线索"],
+    "must_not_have": ["脱离页面背景空谈", "把别的机制当主因"],
+    "gold_reference_pages": ["Theory:激光对比度与预等离子体"],
+    "eval_type": "answer"
+  },
+  {
+    "id": "concept-rayleigh-use",
+    "category": "concept",
+    "question": "Rayleigh 长度在本组语境里有什么用？",
+    "current_page": "术语条目/Rayleigh长度",
+    "expected_behavior": "结合束靶耦合和聚焦语境解释 Rayleigh 长度的用途。",
+    "must_have": ["Rayleigh 长度用途", "本组实验语境", "关联页面"],
+    "must_not_have": ["只做教科书定义", "忽略站内术语页"],
+    "gold_reference_pages": ["术语条目/Rayleigh长度", "TargetArea:束靶耦合段"],
+    "eval_type": "answer"
+  },
+  {
+    "id": "concept-rpa-vs-tnsa",
+    "category": "concept",
+    "question": "RPA 和 TNSA 的核心差别是什么？",
+    "current_page": "Theory:离子加速机制概览",
+    "expected_behavior": "对比两种机制，突出本组关注的判据和适用语境。",
+    "must_have": ["TNSA", "RPA", "核心差别"],
+    "must_not_have": ["只列百科差异", "不结合本组机制页"],
+    "gold_reference_pages": ["Theory:离子加速机制概览", "Theory:TNSA"],
+    "eval_type": "compare"
+  },
+
+  {
+    "id": "guidance-newcomer-shot-flow",
+    "category": "page_guidance",
+    "question": "我是新来的，先看哪几页能理解主靶室打靶流程？",
+    "current_page": "首页",
+    "expected_behavior": "给出清晰学习路径，从 SOP、设备、Shot 模板到日志页。",
+    "must_have": ["学习顺序", "站内页面推荐", "简短原因"],
+    "must_not_have": ["只罗列很多页不排序", "推荐站外资料当主路径"],
+    "gold_reference_pages": ["首页", "SOP:主靶室打靶流程", "Shot:Shot模板"],
+    "eval_type": "answer"
+  },
+  {
+    "id": "guidance-learn-tps",
+    "category": "page_guidance",
+    "question": "如果我要学 TPS，建议按什么顺序看 wiki？",
+    "current_page": "Diagnostic:TPS",
+    "expected_behavior": "给出 TPS 的学习路径，连接理论、设备和工具页。",
+    "must_have": ["TPS 学习顺序", "理论和设备页", "工具页"],
+    "must_not_have": ["只解释 TPS 本身", "不提供顺序"],
+    "gold_reference_pages": ["Diagnostic:TPS", "FAQ:知识助手使用说明"],
+    "eval_type": "answer"
+  },
+  {
+    "id": "guidance-theory-device-shot-path",
+    "category": "page_guidance",
+    "question": "给我从理论到设备到 shot 的学习路径。",
+    "current_page": "首页",
+    "expected_behavior": "输出一个从理论、设备、SOP 到 Shot 的分阶段路径。",
+    "must_have": ["理论", "设备", "Shot", "分阶段路径"],
+    "must_not_have": ["无顺序清单", "与首页导航脱节"],
+    "gold_reference_pages": ["首页", "TargetArea:束靶耦合段", "Shot:表单新建"],
+    "eval_type": "answer"
+  },
+  {
+    "id": "guidance-coupling-pages",
+    "category": "page_guidance",
+    "question": "我要理解束靶耦合段，先读哪些页面？",
+    "current_page": "TargetArea:束靶耦合段",
+    "expected_behavior": "围绕当前页给出相关页面阅读建议，不偏离主题。",
+    "must_have": ["当前页", "相关页面", "阅读顺序"],
+    "must_not_have": ["忽略当前页", "推荐无关条目"],
+    "gold_reference_pages": ["TargetArea:束靶耦合段", "Laser:波前控制、自适应光学与聚焦理论"],
+    "eval_type": "current_page"
+  },
+  {
+    "id": "guidance-mechanism-map",
+    "category": "page_guidance",
+    "question": "请帮我把 Mechanism 相关页面串起来。",
+    "current_page": "机制条目索引",
+    "expected_behavior": "用机制页之间的关系组织一条阅读路线。",
+    "must_have": ["相关 Mechanism 页面", "串联关系", "学习路径"],
+    "must_not_have": ["只解释索引页", "没有结构"],
+    "gold_reference_pages": ["机制条目索引", "Theory:离子加速机制概览"],
+    "eval_type": "answer"
+  },
+
+  {
+    "id": "current-page-role",
+    "category": "current_page",
+    "question": "这页在整个 wiki 里的作用是什么？",
+    "current_page": "Diagnostic:TPS",
+    "expected_behavior": "优先解释当前页的定位、用途和上下游关系。",
+    "must_have": ["当前页定位", "在 wiki 里的作用", "上下游关系"],
+    "must_not_have": ["完全转去解释别的页", "忽略当前页"],
+    "gold_reference_pages": ["Diagnostic:TPS"],
+    "eval_type": "current_page"
+  },
+  {
+    "id": "current-page-summary",
+    "category": "current_page",
+    "question": "帮我总结这个页面的核心信息。",
+    "current_page": "TargetArea:束靶耦合段",
+    "expected_behavior": "用当前页内容做 3 到 5 点总结。",
+    "must_have": ["当前页总结", "核心信息", "简洁结构"],
+    "must_not_have": ["泛泛介绍领域背景", "主要回答检索过程"],
+    "gold_reference_pages": ["TargetArea:束靶耦合段"],
+    "eval_type": "current_page"
+  },
+  {
+    "id": "current-page-related-pages",
+    "category": "current_page",
+    "question": "这页和哪些页面最相关？",
+    "current_page": "Theory:TNSA",
+    "expected_behavior": "以当前页为核心，给出相关页面和关系说明。",
+    "must_have": ["当前页相关页面", "关系说明"],
+    "must_not_have": ["把索引页当主回答", "不解释为什么相关"],
+    "gold_reference_pages": ["Theory:TNSA", "术语条目/TNSA"],
+    "eval_type": "current_page"
+  },
+  {
+    "id": "current-page-missing-info",
+    "category": "current_page",
+    "question": "如果我只看这一页，可能遗漏什么？",
+    "current_page": "SOP:主靶室打靶流程",
+    "expected_behavior": "指出当前页边界，并推荐补看的相关页。",
+    "must_have": ["当前页边界", "遗漏项", "补充阅读建议"],
+    "must_not_have": ["说当前页什么都有", "脱离当前页"],
+    "gold_reference_pages": ["SOP:主靶室打靶流程", "首页"],
+    "eval_type": "current_page"
+  },
+  {
+    "id": "current-page-five-sentences",
+    "category": "current_page",
+    "question": "把这个页面压缩成 5 句重点。",
+    "current_page": "Theory:激光-等离子体相互作用基础",
+    "expected_behavior": "只基于当前页输出 5 句压缩总结。",
+    "must_have": ["5 句重点", "当前页核心"],
+    "must_not_have": ["长篇展开", "忽略当前页"],
+    "gold_reference_pages": ["Theory:激光-等离子体相互作用基础"],
+    "eval_type": "current_page"
+  },
+
+  {
+    "id": "current-page-term-entry",
+    "category": "term_structuring",
+    "question": "帮我整理这个页面的词条。",
+    "current_page": "Theory:TNSA",
+    "expected_behavior": "直接把当前页整理成词条草案，优先输出词条结构而不是解释索引页。",
+    "must_have": ["词条标题建议", "摘要", "关键词或别名", "关联页面", "结构化草案"],
+    "must_not_have": ["把术语条目索引当主回答", "只解释词条模板"],
+    "gold_reference_pages": ["Theory:TNSA", "术语条目/TNSA", "术语条目索引"],
+    "eval_type": "draft"
+  },
+  {
+    "id": "term-structuring-current-page-entry",
+    "category": "term_structuring",
+    "question": "把当前页整理成术语条目草案。",
+    "current_page": "Theory:Rayleigh长度",
+    "expected_behavior": "生成术语条目格式的草案，并保守处理缺失字段。",
+    "must_have": ["术语条目字段", "草案", "待补字段提示"],
+    "must_not_have": ["拒绝整理", "只说模板长什么样"],
+    "gold_reference_pages": ["Theory:Rayleigh长度", "术语条目/Rayleigh长度"],
+    "eval_type": "draft"
+  },
+  {
+    "id": "term-structuring-newcomer-page",
+    "category": "term_structuring",
+    "question": "把这页改写成新人可读的知识页。",
+    "current_page": "Theory:激光-等离子体相互作用基础",
+    "expected_behavior": "以当前页为基准，给出面向新人的结构化改写草案。",
+    "must_have": ["新人可读", "结构化改写", "保留站内术语"],
+    "must_not_have": ["纯百科重写", "忽略当前页"],
+    "gold_reference_pages": ["Theory:激光-等离子体相互作用基础"],
+    "eval_type": "draft"
+  },
+  {
+    "id": "term-structuring-mechanism-compress",
+    "category": "term_structuring",
+    "question": "把这个机制页压成词条格式。",
+    "current_page": "Theory:TNSA",
+    "expected_behavior": "输出精简词条格式，不只是长回答。",
+    "must_have": ["词条格式", "机制摘要", "关联页面"],
+    "must_not_have": ["普通长答案", "过程说明盖过结果"],
+    "gold_reference_pages": ["Theory:TNSA", "术语条目/TNSA"],
+    "eval_type": "draft"
+  },
+  {
+    "id": "term-structuring-template-format",
+    "category": "term_structuring",
+    "question": "按本组词条模板整理这一页。",
+    "current_page": "Theory:离子加速机制概览",
+    "expected_behavior": "显式按本组词条字段输出，不偏成普通总结。",
+    "must_have": ["中文名", "摘要", "关联页面"],
+    "must_not_have": ["只说模板字段", "不生成草案"],
+    "gold_reference_pages": ["Theory:离子加速机制概览", "术语条目索引"],
+    "eval_type": "draft"
+  },
+
+  {
+    "id": "records-shot-draft",
+    "category": "records_logs",
+    "question": "根据当前页，帮我生成一版 Shot 记录草案。",
+    "current_page": "Shot:Shot模板",
+    "expected_behavior": "输出 Shot 记录草案或说明缺失字段，不乱写。",
+    "must_have": ["Shot 记录草案", "缺失字段提示"],
+    "must_not_have": ["凭空编造实验数据", "完全不进入记录路径"],
+    "gold_reference_pages": ["Shot:Shot模板", "Shot:表单新建"],
+    "eval_type": "draft"
+  },
+  {
+    "id": "records-weekly-log-entry",
+    "category": "records_logs",
+    "question": "把这个 shot 的关键信息整理成周实验日志条目。",
+    "current_page": "Shot:周实验日志",
+    "expected_behavior": "围绕周日志格式整理条目，不覆盖整页。",
+    "must_have": ["周日志条目", "关键信息", "追加语义"],
+    "must_not_have": ["覆盖整页", "脱离周日志格式"],
+    "gold_reference_pages": ["Shot:周实验日志", "Shot:Shot模板"],
+    "eval_type": "draft"
+  },
+  {
+    "id": "records-page-fields",
+    "category": "records_logs",
+    "question": "这个页面里哪些信息适合写进周日志？",
+    "current_page": "Shot:Shot模板",
+    "expected_behavior": "筛出适合周日志的字段和摘要，不乱延伸。",
+    "must_have": ["适合周日志的信息", "字段筛选"],
+    "must_not_have": ["整页照抄", "无筛选"],
+    "gold_reference_pages": ["Shot:Shot模板", "Shot:周实验日志"],
+    "eval_type": "current_page"
+  },
+  {
+    "id": "records-retrospective-summary",
+    "category": "records_logs",
+    "question": "把这次实验结果整理成复盘摘要。",
+    "current_page": "风险与问题",
+    "expected_behavior": "输出复盘摘要，突出结果、问题和后续动作。",
+    "must_have": ["结果", "问题", "后续动作"],
+    "must_not_have": ["只有过程没有结论", "泛泛空话"],
+    "gold_reference_pages": ["风险与问题", "Shot:周实验日志"],
+    "eval_type": "draft"
+  },
+  {
+    "id": "records-missing-shot-fields",
+    "category": "records_logs",
+    "question": "如果我要补齐 Shot 记录，还缺哪些字段？",
+    "current_page": "Shot:Shot模板",
+    "expected_behavior": "指出当前记录可能缺失的关键字段和补充建议。",
+    "must_have": ["缺失字段", "补充建议"],
+    "must_not_have": ["假定字段已齐全", "不结合模板"],
+    "gold_reference_pages": ["Shot:Shot模板"],
+    "eval_type": "current_page"
+  },
+
+  {
+    "id": "workflow-tps-basic",
+    "category": "tools_workflow",
+    "question": "TPS 的基本使用流程是什么？",
+    "current_page": "Diagnostic:TPS",
+    "expected_behavior": "回答本组 TPS 使用流程，并引用相关工具/设备页。",
+    "must_have": ["TPS 流程", "本组语境", "相关页面或工具"],
+    "must_not_have": ["完全抽象化", "只做通用仪器介绍"],
+    "gold_reference_pages": ["Diagnostic:TPS", "FAQ:知识助手使用说明"],
+    "eval_type": "answer"
+  },
+  {
+    "id": "workflow-rcf-archive",
+    "category": "tools_workflow",
+    "question": "RCF 计算之后应该怎么归档？",
+    "current_page": "Data:实验日志与数据关联",
+    "expected_behavior": "回答本组归档流程，优先用数据与日志页面。",
+    "must_have": ["RCF 归档", "数据关联", "本组流程"],
+    "must_not_have": ["泛泛文件管理建议", "忽略站内数据页"],
+    "gold_reference_pages": ["Data:实验日志与数据关联", "风险与问题"],
+    "eval_type": "answer"
+  },
+  {
+    "id": "workflow-online-shot-check",
+    "category": "tools_workflow",
+    "question": "在线判靶一般看哪些信号？",
+    "current_page": "Diagnostic:TPS",
+    "expected_behavior": "结合本组诊断链路回答在线判靶关注信号。",
+    "must_have": ["判靶信号", "本组诊断链路"],
+    "must_not_have": ["与现有诊断无关的泛化答案"],
+    "gold_reference_pages": ["Diagnostic:TPS", "Shot:Shot模板"],
+    "eval_type": "answer"
+  },
+  {
+    "id": "workflow-tps-no-spectrum",
+    "category": "tools_workflow",
+    "question": "如果 TPS 没出谱，应该先查什么？",
+    "current_page": "Diagnostic:TPS",
+    "expected_behavior": "给出本组 TPS 排查顺序，优先站内设备/流程页。",
+    "must_have": ["排查顺序", "TPS", "本组页面"],
+    "must_not_have": ["只给笼统排障建议", "无顺序"],
+    "gold_reference_pages": ["Diagnostic:TPS", "风险与问题"],
+    "eval_type": "answer"
+  },
+  {
+    "id": "workflow-post-shot-record",
+    "category": "tools_workflow",
+    "question": "打靶后第一步应该记录哪些内容？",
+    "current_page": "Shot:Shot模板",
+    "expected_behavior": "围绕 Shot 模板和周日志给出记录优先级。",
+    "must_have": ["打靶后记录内容", "优先级", "Shot 模板"],
+    "must_not_have": ["脱离本组模板", "泛泛而谈"],
+    "gold_reference_pages": ["Shot:Shot模板", "Shot:周实验日志"],
+    "eval_type": "answer"
+  },
+
+  {
+    "id": "compare-tnsa-rpa-criteria",
+    "category": "compare_judgment",
+    "question": "比较 TNSA 和 RPA 在本组实验里的判据。",
+    "current_page": "Theory:离子加速机制概览",
+    "expected_behavior": "给出本组判据比较，优先站内机制页。",
+    "must_have": ["判据比较", "TNSA", "RPA", "本组实验语境"],
+    "must_not_have": ["只有通用定义", "无判据"],
+    "gold_reference_pages": ["Theory:离子加速机制概览", "Theory:TNSA"],
+    "eval_type": "compare"
+  },
+  {
+    "id": "compare-tps-rcf-boundary",
+    "category": "compare_judgment",
+    "question": "比较 TPS 和 RCF 的用途边界。",
+    "current_page": "Diagnostic:TPS",
+    "expected_behavior": "用本组诊断语境解释 TPS 与 RCF 的用途边界。",
+    "must_have": ["TPS", "RCF", "用途边界"],
+    "must_not_have": ["只说二者都是诊断", "无边界"],
+    "gold_reference_pages": ["Diagnostic:TPS", "Data:实验日志与数据关联"],
+    "eval_type": "compare"
+  },
+  {
+    "id": "compare-two-theory-pages",
+    "category": "compare_judgment",
+    "question": "这两个理论页讲的是不是一回事？",
+    "current_page": "Theory:TNSA",
+    "expected_behavior": "在当前页和检索到的相关理论页之间做保守比较。",
+    "must_have": ["是否同一回事", "相同点/不同点"],
+    "must_not_have": ["武断判断", "不引用站内理论页"],
+    "gold_reference_pages": ["Theory:TNSA", "Theory:离子加速机制概览"],
+    "eval_type": "compare"
+  },
+  {
+    "id": "compare-which-case-like",
+    "category": "compare_judgment",
+    "question": "这个机制判断更像哪一类情况？",
+    "current_page": "Theory:离子加速机制概览",
+    "expected_behavior": "根据站内机制分类做保守判断，明确证据边界。",
+    "must_have": ["判断更像哪类", "证据边界"],
+    "must_not_have": ["过度确定", "不说明依据"],
+    "gold_reference_pages": ["Theory:离子加速机制概览"],
+    "eval_type": "compare"
+  },
+  {
+    "id": "compare-best-first-page",
+    "category": "compare_judgment",
+    "question": "哪个页面更适合新人先看？",
+    "current_page": "首页",
+    "expected_behavior": "给出适合新人的页面优先级和理由。",
+    "must_have": ["推荐页面", "理由", "新人视角"],
+    "must_not_have": ["只说都重要", "无建议"],
+    "gold_reference_pages": ["首页", "FAQ:知识助手使用说明"],
+    "eval_type": "compare"
+  },
+
+  {
+    "id": "boundary-incomplete-page",
+    "category": "boundary_failure",
+    "question": "这页内容不完整，你先按现有信息整理。",
+    "current_page": "Theory:TNSA",
+    "expected_behavior": "先给保守草案，同时明确缺失项。",
+    "must_have": ["现有信息整理", "缺失项"],
+    "must_not_have": ["因为信息不全而完全拒绝", "编造缺失内容"],
+    "gold_reference_pages": ["Theory:TNSA"],
+    "eval_type": "draft"
+  },
+  {
+    "id": "boundary-no-clear-answer",
+    "category": "boundary_failure",
+    "question": "如果站内没有明确答案，你怎么说？",
+    "current_page": "FAQ:知识助手使用说明",
+    "expected_behavior": "明确站内证据不足，并给出保守后续路径。",
+    "must_have": ["证据不足", "保守说明", "后续建议"],
+    "must_not_have": ["强行编造答案", "假装确定"],
+    "gold_reference_pages": ["FAQ:知识助手使用说明"],
+    "eval_type": "answer"
+  },
+  {
+    "id": "boundary-no-generalization",
+    "category": "boundary_failure",
+    "question": "不要泛泛解释，只按本组页面回答。",
+    "current_page": "Theory:TNSA",
+    "expected_behavior": "输出紧贴站内页面的答案，不扩成百科。",
+    "must_have": ["站内页面依据", "收敛表达"],
+    "must_not_have": ["百科式扩展", "站外主导"],
+    "gold_reference_pages": ["Theory:TNSA"],
+    "eval_type": "answer"
+  },
+  {
+    "id": "boundary-preview-only",
+    "category": "boundary_failure",
+    "question": "不要写回，只给我预览。",
+    "current_page": "Theory:TNSA",
+    "expected_behavior": "只输出 draft 或 write preview，不执行写入。",
+    "must_have": ["预览", "不写回"],
+    "must_not_have": ["直接写入", "没有预览"],
+    "gold_reference_pages": ["Theory:TNSA", "术语条目/TNSA"],
+    "eval_type": "write_preview"
+  },
+  {
+    "id": "boundary-direct-write",
+    "category": "boundary_failure",
+    "question": "直接写入一个词条。",
+    "current_page": "Theory:TNSA",
+    "expected_behavior": "只有在白名单和字段足够时才给写入路径，否则保守拒绝或先预览。",
+    "must_have": ["白名单约束", "字段完整性或预览"],
+    "must_not_have": ["无保护直接写入", "越权写入"],
+    "gold_reference_pages": ["Theory:TNSA", "术语条目索引"],
+    "eval_type": "write"
+  }
+]

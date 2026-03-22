@@ -1,0 +1,26 @@
+[
+  {
+    "name": "assistant-faq",
+    "query": "知识助手使用说明",
+    "source_types": ["wiki", "cargo"],
+    "expected_titles": ["FAQ:知识助手使用说明"]
+  },
+  {
+    "name": "shot-log",
+    "query": "周实验日志",
+    "source_types": ["wiki", "cargo"],
+    "expected_titles": ["Shot:周实验日志"]
+  },
+  {
+    "name": "theory-basics",
+    "query": "激光 等离子体 相互作用 基础",
+    "source_types": ["wiki", "cargo"],
+    "expected_titles": ["Theory:激光-等离子体相互作用基础"]
+  },
+  {
+    "name": "shot-record-form",
+    "query": "Shot 记录 表单",
+    "source_types": ["wiki", "cargo"],
+    "expected_titles": ["Form:Shot记录", "Shot:表单新建"]
+  }
+]

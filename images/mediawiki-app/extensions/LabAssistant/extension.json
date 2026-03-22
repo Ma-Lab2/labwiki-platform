@@ -1,6 +1,6 @@
 {
   "name": "LabAssistant",
-  "version": "0.1.0",
+  "version": "0.1.8",
   "author": [
     "OpenAI Codex"
   ],
@@ -23,12 +23,36 @@
     "LabAssistantAdmin": "MediaWiki\\Extension\\LabAssistant\\SpecialLabAssistantAdmin"
   },
   "ResourceModules": {
-    "ext.labassistant.ui": {
+    "ext.labassistant.shell": {
       "scripts": [
-        "modules/ext.labassistant.ui.js"
+        "modules/ext.labassistant.editor-utils.js",
+        "modules/ext.labassistant.shell.js"
       ],
       "styles": [
         "modules/ext.labassistant.ui.css"
+      ],
+      "dependencies": [
+        "mediawiki.util"
+      ],
+      "targets": [
+        "desktop",
+        "mobile"
+      ]
+    },
+    "ext.labassistant.ui": {
+      "scripts": [
+        "modules/vendor/highlight/highlight.min.js",
+        "modules/vendor/marked.umd.js",
+        "modules/vendor/purify.min.js",
+        "modules/ext.labassistant.editor-utils.js",
+        "modules/ext.labassistant.ui.js"
+      ],
+      "styles": [
+        "modules/vendor/highlight/github.min.css",
+        "modules/ext.labassistant.ui.css"
+      ],
+      "dependencies": [
+        "mediawiki.util"
       ],
       "targets": [
         "desktop",
@@ -47,6 +71,13 @@
         "mobile"
       ]
     }
+  },
+  "ResourceFileModulePaths": {
+    "localBasePath": "",
+    "remoteExtPath": "LabAssistant"
+  },
+  "Hooks": {
+    "BeforePageDisplay": "MediaWiki\\Extension\\LabAssistant\\Hooks::onBeforePageDisplay"
   },
   "config": {
     "LabAssistantApiBase": {
@@ -72,4 +103,3 @@
   },
   "manifest_version": 2
 }
-

@@ -1,0 +1,4 @@
+name: labwiki-assistant-py312
+dependencies:
+  - python=3.12
+  - pip

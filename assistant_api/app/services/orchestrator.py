@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
 from typing import Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..clients.openalex import OpenAlexClient
@@ -12,11 +14,21 @@ from ..clients.wiki import MediaWikiClient
 from ..config import Settings
 from ..constants import AssistantMode, SourceType, TaskType
 from ..models import AssistantSession, AssistantTurn
-from ..schemas import ChatRequest, ChatResponse, DraftPreviewPayload, PlanResponse, SourceItem, StepItem
+from ..schemas import ActionTraceItem, ChatRequest, ChatResponse, DraftPreviewPayload, ModelInfoPayload, PlanResponse, SourceItem, StepItem, WritePreviewPayload, WriteResultPayload
+from .agent_loop import AgentExecutor
 from .audit import log_audit
 from .drafts import prepare_draft_preview, save_draft_preview
+from .intent import (
+    is_compare_request,
+    is_learning_path_request,
+    is_page_structuring_request,
+    is_tool_workflow_request,
+    is_write_action_request,
+)
 from .llm import LLMClient
+from .model_catalog import fallback_model_for, resolve_generation_selection
 from .search import search_chunks
+from .write_actions import prepare_write_preview
 
 
 class WorkflowState(TypedDict, total=False):
@@ -36,14 +48,19 @@ class WorkflowState(TypedDict, total=False):
     external_attempts: int
     external_hits: int
     tool_calls: list[dict[str, Any]]
+    action_trace: list[dict[str, Any]]
     unresolved_gaps: list[str]
     confidence: float
     answer: str
     suggested_followups: list[str]
     draft_preview_data: dict[str, Any] | None
+    write_preview_data: dict[str, Any] | None
+    write_result_data: dict[str, Any] | None
     pending_write_action: dict[str, Any] | None
     stop_reason: str | None
     structured_only: bool
+    conversation_history: list[dict[str, str]]
+    should_generate_write_preview: bool
 
 
 def _append_step(steps: list[dict[str, str]], stage: str, title: str, status: str, detail: str) -> list[dict[str, str]]:
@@ -55,18 +72,25 @@ def _append_step(steps: list[dict[str, str]], stage: str, title: str, status: st
     }]
 
 
-def classify_question(question: str, mode: AssistantMode | str) -> TaskType:
+def classify_question(question: str, mode: AssistantMode | str, context_pages: list[str] | None = None) -> TaskType:
     mode_value = mode.value if isinstance(mode, AssistantMode) else str(mode)
     lowered = question.lower()
-    if mode_value == AssistantMode.DRAFT.value or any(token in question for token in ["草稿", "整理成条目", "生成条目", "生成模板"]):
-        return TaskType.DRAFT
-    if any(token in question for token in ["对照", "比较", "区别", "差异", "一致点", "不同点"]):
+    current_page = context_pages[0] if context_pages else None
+    if is_write_action_request(question):
+        return TaskType.WRITE_ACTION
+    if is_compare_request(question):
         return TaskType.COMPARE
+    if (
+        mode_value == AssistantMode.DRAFT.value
+        or is_page_structuring_request(question, current_page)
+        or any(token in question for token in ["草稿", "整理成条目", "生成条目", "生成模板"])
+    ):
+        return TaskType.DRAFT
     if any(token in lowered for token in ["paper", "zotero", "doi"]) or any(token in question for token in ["论文", "文献", "参考文献"]):
         return TaskType.LITERATURE
-    if any(token in question for token in ["学习路径", "从哪开始", "新人", "入门"]):
+    if is_learning_path_request(question):
         return TaskType.LEARNING_PATH
-    if any(token in lowered for token in ["tps", "rcf"]) or any(token in question for token in ["解谱", "能谱", "堆栈"]):
+    if is_tool_workflow_request(question):
         return TaskType.TOOL_WORKFLOW
     return TaskType.CONCEPT
 
@@ -113,12 +137,13 @@ def _match_compare_targets(item: dict[str, Any], targets: list[str]) -> tuple[in
 def _source_priority(source_type: str, structured_only: bool) -> int:
     if structured_only:
         order = {
-            SourceType.CARGO.value: 0,
-            SourceType.CONTEXT.value: 1,
+            SourceType.CONTEXT.value: 0,
+            SourceType.CARGO.value: 1,
             SourceType.WIKI.value: 2,
             SourceType.ZOTERO.value: 3,
             SourceType.OPENALEX.value: 4,
-            SourceType.TOOL.value: 5,
+            SourceType.WEB.value: 5,
+            SourceType.TOOL.value: 6,
         }
         return order.get(source_type, 99)
     order = {
@@ -127,7 +152,8 @@ def _source_priority(source_type: str, structured_only: bool) -> int:
         SourceType.WIKI.value: 2,
         SourceType.ZOTERO.value: 3,
         SourceType.OPENALEX.value: 4,
-        SourceType.TOOL.value: 5,
+        SourceType.WEB.value: 5,
+        SourceType.TOOL.value: 6,
     }
     return order.get(source_type, 99)
 
@@ -188,22 +214,30 @@ def _focus_compare_evidence(evidence: list[dict[str, Any]], targets: list[str]) 
     return coverage + remaining
 
 
-def plan_sources(task_type: TaskType, context_pages: list[str], structured_only: bool) -> tuple[list[str], bool]:
+def plan_sources(
+    task_type: TaskType,
+    context_pages: list[str],
+    structured_only: bool,
+    enable_zotero: bool,
+) -> tuple[list[str], bool]:
     if structured_only:
         sources = [SourceType.CARGO.value]
         needs_external = task_type in {TaskType.COMPARE, TaskType.LITERATURE}
-        if needs_external:
+        if needs_external and enable_zotero:
             sources.append(SourceType.ZOTERO.value)
         return sources, needs_external
     sources = [SourceType.CARGO.value, SourceType.WIKI.value]
     if context_pages:
         sources.insert(0, SourceType.CONTEXT.value)
     needs_external = False
-    if task_type in {TaskType.COMPARE, TaskType.LITERATURE}:
+    if task_type in {TaskType.COMPARE, TaskType.LITERATURE} and enable_zotero:
         sources.append(SourceType.ZOTERO.value)
+    if task_type in {TaskType.COMPARE, TaskType.LITERATURE}:
         needs_external = True
     if task_type == TaskType.TOOL_WORKFLOW:
         sources.append(SourceType.TOOL.value)
+    if task_type == TaskType.WRITE_ACTION:
+        needs_external = False
     return list(dict.fromkeys(sources)), needs_external
 
 
@@ -219,6 +253,29 @@ def _session_for_request(db: Session, request: ChatRequest) -> AssistantSession:
     db.add(record)
     db.flush()
     return record
+
+
+def _apply_generation_selection(
+    settings: Settings,
+    session_record: AssistantSession,
+    request: ChatRequest,
+) -> dict[str, str | None]:
+    selection = resolve_generation_selection(
+        settings,
+        requested_provider=request.generation_provider,
+        requested_model=request.generation_model,
+        session_provider=session_record.generation_provider,
+        session_model=session_record.generation_model,
+    )
+    session_record.generation_provider = selection.provider
+    session_record.generation_model = selection.requested_model
+    session_record.generation_fallback_model = fallback_model_for(selection.requested_model)
+    return {
+        "provider": selection.provider,
+        "requested_model": selection.requested_model,
+        "resolved_model": selection.resolved_model,
+        "fallback_model": session_record.generation_fallback_model,
+    }
 
 
 def _gaps_for_answer(task_type: str, evidence: list[dict[str, Any]], has_external: bool) -> list[str]:
@@ -254,6 +311,31 @@ def _dedupe_evidence(existing: list[dict[str, Any]], incoming: list[dict[str, An
         merged.append(item)
         seen.add(key)
     return merged
+
+
+def _conversation_history_for_session(db: Session, session_id: str | None, limit: int) -> list[dict[str, str]]:
+    if not session_id:
+        return []
+    turns = db.execute(
+        select(AssistantTurn)
+        .where(AssistantTurn.session_id == session_id)
+        .order_by(AssistantTurn.created_at.desc())
+        .limit(limit)
+    ).scalars().all()
+    return [
+        {"question": turn.question, "answer": turn.answer or ""}
+        for turn in reversed(turns)
+    ]
+
+
+def _serialize_sources(evidence: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [{
+        "source_type": item["source_type"],
+        "source_id": item["source_id"],
+        "title": item["title"],
+        "url": item.get("url"),
+        "snippet": item.get("snippet"),
+    } for item in evidence[:8]]
 
 
 class AssistantWorkflow:
@@ -331,13 +413,14 @@ class AssistantWorkflow:
         graph.add_edge("finalize", END)
         return graph.compile()
 
-    def run(self, request: ChatRequest) -> WorkflowState:
+    def run(self, request: ChatRequest, conversation_history: list[dict[str, str]] | None = None) -> WorkflowState:
         initial_state: WorkflowState = {
             "question": request.question,
             "mode": request.mode.value,
             "detail_level": request.detail_level.value,
             "context_pages": request.context_pages,
             "user_name": request.user_name,
+            "conversation_history": conversation_history or [],
             "steps": [],
             "evidence": [],
             "external_attempts": 0,
@@ -348,6 +431,7 @@ class AssistantWorkflow:
             "answer": "",
             "suggested_followups": [],
             "draft_preview_data": None,
+            "write_preview_data": None,
             "pending_write_action": None,
             "stop_reason": None,
         }
@@ -380,12 +464,18 @@ class AssistantWorkflow:
     def plan(self, state: WorkflowState) -> WorkflowState:
         task_type = TaskType(state["task_type"])
         structured_only = _prefers_structured_only(state["question"])
-        planned_sources, needs_external = plan_sources(task_type, state["context_pages"], structured_only)
+        planned_sources, needs_external = plan_sources(
+            task_type,
+            state["context_pages"],
+            structured_only,
+            self.settings.enable_zotero,
+        )
         return {
             "planned_sources": planned_sources,
             "needs_external_search": needs_external,
             "structured_only": structured_only,
             "should_generate_draft_preview": state["mode"] == AssistantMode.DRAFT.value or task_type == TaskType.DRAFT,
+            "should_generate_write_preview": task_type == TaskType.WRITE_ACTION,
             "steps": _append_step(
                 state["steps"],
                 "plan",
@@ -416,9 +506,16 @@ class AssistantWorkflow:
                 loaded_context += 1
 
         indexed_source_types = [SourceType.CARGO.value] if structured_only else [SourceType.CARGO.value, SourceType.WIKI.value]
-        if TaskType(state["task_type"]) in {TaskType.COMPARE, TaskType.LITERATURE}:
+        if self.settings.enable_zotero and TaskType(state["task_type"]) in {TaskType.COMPARE, TaskType.LITERATURE}:
             indexed_source_types.append(SourceType.ZOTERO.value)
-        indexed_hits = search_chunks(self.db, state["question"], source_types=indexed_source_types, limit=8)
+        query_embedding = self.llm.embed([state["question"]])
+        indexed_hits = search_chunks(
+            self.db,
+            state["question"],
+            source_types=indexed_source_types,
+            limit=8,
+            query_embedding=query_embedding[0] if query_embedding else None,
+        )
         evidence = _dedupe_evidence(evidence, indexed_hits)
 
         if len(evidence) < 4 and not structured_only:
@@ -498,22 +595,27 @@ class AssistantWorkflow:
 
     def retrieve_external(self, state: WorkflowState) -> WorkflowState:
         external_attempts = state["external_attempts"] + 1
-        external_hits_list: list[dict[str, Any]] = []
-        detail = "当前未启用外部学术检索。"
+        academic_hits: list[dict[str, Any]] = []
+        web_hits: list[dict[str, Any]] = []
+        detail_parts: list[str] = []
+
+        try:
+            academic_hits = self.openalex.search(state["question"], limit=4)
+            detail_parts.append(f"新增 {len(academic_hits)} 条学术线索")
+        except Exception as error:
+            detail_parts.append(f"学术检索失败：{error}")
+
         if self.settings.enable_web_search:
             try:
-                external_hits_list = self.openalex.search(state["question"], limit=4)
-                detail = f"新增 {len(external_hits_list)} 条外部线索。"
+                web_hits = self.llm.search_web(state["question"], limit=3)
+                detail_parts.append(f"新增 {len(web_hits)} 条网页线索")
             except Exception as error:
-                external_hits_list = [{
-                    "source_type": SourceType.OPENALEX.value,
-                    "source_id": "search-error",
-                    "title": "外部搜索失败",
-                    "url": None,
-                    "snippet": str(error),
-                    "content": str(error),
-                }]
-                detail = f"外部检索失败：{error}"
+                detail_parts.append(f"网页搜索失败：{error}")
+        else:
+            detail_parts.append("网页搜索未启用")
+
+        external_hits_list = academic_hits + web_hits
+        detail = "；".join(detail_parts) if detail_parts else "外部检索未返回新线索。"
 
         evidence = _dedupe_evidence(state["evidence"], external_hits_list)
         added = len(evidence) - len(state["evidence"])
@@ -547,6 +649,7 @@ class AssistantWorkflow:
             mode=state["mode"],
             evidence=state["evidence"],
             unresolved_gaps=state["unresolved_gaps"],
+            conversation_history=state.get("conversation_history", []),
         )
         return {
             "answer": answer,
@@ -568,6 +671,8 @@ class AssistantWorkflow:
         ]
         if state["should_generate_draft_preview"]:
             stop_reason = "draft_preview_requested"
+        elif state["should_generate_write_preview"]:
+            stop_reason = "write_preview_requested"
         elif confidence >= self.settings.confidence_threshold and not state["unresolved_gaps"]:
             stop_reason = "confidence_threshold_reached"
         elif state["stop_reason"]:
@@ -596,6 +701,7 @@ class AssistantWorkflow:
             question=state["question"],
             answer=state["answer"],
             source_titles=[item["title"] for item in state["evidence"][:6]],
+            conversation_history=state.get("conversation_history", []),
         )
         return {
             "draft_preview_data": prepared,
@@ -666,9 +772,9 @@ class AssistantWorkflow:
         )
 
 
-def build_plan(question: str, mode: AssistantMode | str, context_pages: list[str]) -> PlanResponse:
+def build_plan(question: str, mode: AssistantMode | str, context_pages: list[str], settings: Settings) -> PlanResponse:
     task_type = classify_question(question, mode)
-    sources, needs_external = plan_sources(task_type, context_pages)
+    sources, needs_external = plan_sources(task_type, context_pages, _prefers_structured_only(question), settings.enable_zotero)
     mode_value = mode.value if isinstance(mode, AssistantMode) else str(mode)
     return PlanResponse(
         task_type=task_type,
@@ -678,21 +784,13 @@ def build_plan(question: str, mode: AssistantMode | str, context_pages: list[str
     )
 
 
-def run_chat(
+def _persist_chat_state(
     db: Session,
     settings: Settings,
-    llm: LLMClient,
-    wiki: MediaWikiClient,
-    openalex: OpenAlexClient,
-    tools: ToolClients,
+    session_record: AssistantSession,
     request: ChatRequest,
-) -> ChatResponse:
-    session_record = _session_for_request(db, request)
-    session_record.current_page = request.context_pages[0] if request.context_pages else session_record.current_page
-
-    workflow = AssistantWorkflow(db, settings, llm, wiki, openalex, tools)
-    state = workflow.run(request)
-
+    state: WorkflowState,
+) -> tuple[AssistantTurn, DraftPreviewPayload | None, WritePreviewPayload | None, WriteResultPayload | None]:
     turn = AssistantTurn(
         session_id=session_record.id,
         question=request.question,
@@ -701,13 +799,12 @@ def run_chat(
         task_type=state["task_type"],
         answer=state["answer"],
         step_stream=state["steps"],
-        sources=[{
-            "source_type": item["source_type"],
-            "source_id": item["source_id"],
-            "title": item["title"],
-            "url": item.get("url"),
-            "snippet": item.get("snippet"),
-        } for item in state["evidence"][:8]],
+        action_trace=state.get("action_trace", []),
+        sources=_serialize_sources(state["evidence"]),
+        draft_preview=state.get("draft_preview_data"),
+        write_preview=state.get("write_preview_data"),
+        write_result=state.get("write_result_data"),
+        model_info=state.get("model_info"),
         unresolved_gaps=state["unresolved_gaps"],
         suggested_followups=state["suggested_followups"],
         confidence=state["confidence"],
@@ -735,6 +832,39 @@ def run_chat(
             content=preview.content,
             metadata=preview.metadata_json,
         )
+        turn.draft_preview = draft_preview.model_dump()
+
+    write_preview = None
+    if state.get("write_preview_data"):
+        prepared = state["write_preview_data"]
+        preview = save_draft_preview(
+            db,
+            session_id=session_record.id,
+            turn_id=turn.id,
+            title=prepared["action_type"],
+            target_page=prepared["target_page"],
+            content=prepared["preview_text"],
+            metadata_json=prepared.get("metadata_json"),
+        )
+        metadata = preview.metadata_json or {}
+        write_preview = WritePreviewPayload(
+            preview_id=preview.id,
+            action_type=prepared["action_type"],
+            operation=prepared["operation"],
+            target_page=preview.target_page,
+            preview_text=preview.content,
+            structured_payload=prepared["structured_payload"],
+            missing_fields=metadata.get("missing_fields", []),
+            metadata=metadata,
+        )
+        turn.write_preview = write_preview.model_dump()
+
+    write_result = None
+    if state.get("write_result_data"):
+        write_result = WriteResultPayload(**state["write_result_data"])
+        turn.write_result = write_result.model_dump()
+    if state.get("model_info"):
+        turn.model_info = state["model_info"]
 
     session_record.last_stage = "completed"
     session_record.step_count = len(state["steps"])
@@ -751,9 +881,22 @@ def run_chat(
             "mode": request.mode.value,
             "stop_reason": state.get("stop_reason"),
             "tool_calls": state.get("tool_calls", []),
+            "action_trace": state.get("action_trace", []),
+            "model_info": state.get("model_info"),
+            "write_result": state.get("write_result_data"),
         },
     )
+    return turn, draft_preview, write_preview, write_result
 
+
+def _build_chat_response(
+    session_record: AssistantSession,
+    turn: AssistantTurn,
+    state: WorkflowState,
+    draft_preview: DraftPreviewPayload | None,
+    write_preview: WritePreviewPayload | None,
+    write_result: WriteResultPayload | None,
+) -> ChatResponse:
     return ChatResponse(
         session_id=session_record.id,
         turn_id=turn.id,
@@ -770,5 +913,125 @@ def run_chat(
         confidence=state["confidence"],
         unresolved_gaps=state["unresolved_gaps"],
         suggested_followups=state["suggested_followups"],
+        action_trace=[ActionTraceItem(**item) for item in state.get("action_trace", [])],
         draft_preview=draft_preview,
+        write_preview=write_preview,
+        write_result=write_result,
+        model_info=ModelInfoPayload(**state["model_info"]) if state.get("model_info") else None,
     )
+
+
+def run_chat(
+    db: Session,
+    settings: Settings,
+    llm: LLMClient,
+    wiki: MediaWikiClient,
+    openalex: OpenAlexClient,
+    tools: ToolClients,
+    request: ChatRequest,
+) -> ChatResponse:
+    session_record = _session_for_request(db, request)
+    session_record.current_page = request.context_pages[0] if request.context_pages else session_record.current_page
+    _apply_generation_selection(settings, session_record, request)
+    request_llm = llm.with_generation_config(
+        resolve_generation_selection(
+            settings,
+            requested_provider=session_record.generation_provider,
+            requested_model=session_record.generation_model,
+            session_provider=session_record.generation_provider,
+            session_model=session_record.generation_model,
+        )
+    )
+    conversation_history = _conversation_history_for_session(db, session_record.id, settings.conversation_history_turns)
+    task_type = classify_question(request.question, request.mode, request.context_pages).value
+    planned_sources, _ = plan_sources(task_type=TaskType(task_type), context_pages=request.context_pages, structured_only=_prefers_structured_only(request.question), enable_zotero=settings.enable_zotero)
+    executor = AgentExecutor(db, settings, request_llm, wiki, openalex, tools)
+    state = executor.execute(
+        request,
+        conversation_history=conversation_history,
+        task_type=task_type,
+        planned_sources=planned_sources,
+    )
+    if not state.get("answer"):
+        state["answer"] = request_llm.answer_from_evidence(
+            question=request.question,
+            task_type=task_type,
+            detail_level=request.detail_level.value,
+            mode=request.mode.value,
+            current_page=request.context_pages[0] if request.context_pages else None,
+            evidence=state["evidence"],
+            unresolved_gaps=state["unresolved_gaps"],
+            conversation_history=conversation_history,
+        )
+        state["steps"] = _append_step(state["steps"], "synthesize", "生成回答", "complete", "回答已生成。")
+    state = executor.finalize(state, request)
+    state["model_info"] = request_llm.model_info
+    turn, draft_preview, write_preview, write_result = _persist_chat_state(db, settings, session_record, request, state)
+    return _build_chat_response(session_record, turn, state, draft_preview, write_preview, write_result)
+
+
+def run_chat_stream(
+    db: Session,
+    settings: Settings,
+    llm: LLMClient,
+    wiki: MediaWikiClient,
+    openalex: OpenAlexClient,
+    tools: ToolClients,
+    request: ChatRequest,
+) -> Iterator[dict[str, Any]]:
+    session_record = _session_for_request(db, request)
+    session_record.current_page = request.context_pages[0] if request.context_pages else session_record.current_page
+    _apply_generation_selection(settings, session_record, request)
+    request_llm = llm.with_generation_config(
+        resolve_generation_selection(
+            settings,
+            requested_provider=session_record.generation_provider,
+            requested_model=session_record.generation_model,
+            session_provider=session_record.generation_provider,
+            session_model=session_record.generation_model,
+        )
+    )
+    conversation_history = _conversation_history_for_session(db, session_record.id, settings.conversation_history_turns)
+
+    yield {
+        "event": "session_started",
+        "data": {
+            "session_id": session_record.id,
+            "history": conversation_history,
+            "model_info": request_llm.model_info,
+        },
+    }
+    task_type = classify_question(request.question, request.mode, request.context_pages).value
+    planned_sources, _ = plan_sources(task_type=TaskType(task_type), context_pages=request.context_pages, structured_only=_prefers_structured_only(request.question), enable_zotero=settings.enable_zotero)
+    executor = AgentExecutor(db, settings, request_llm, wiki, openalex, tools)
+    state = executor.execute(
+        request,
+        conversation_history=conversation_history,
+        task_type=task_type,
+        planned_sources=planned_sources,
+    )
+    for step in state["steps"]:
+        yield {"event": "step", "data": step}
+    if state.get("action_trace"):
+        yield {"event": "action_trace", "data": {"items": state["action_trace"]}}
+    yield from executor.stream_answer(state)
+    state = executor.finalize(state, request)
+    state["model_info"] = request_llm.model_info
+    final_steps_to_emit = 1
+    if state.get("draft_preview_data"):
+        final_steps_to_emit += 1
+    if state.get("write_preview_data"):
+        final_steps_to_emit += 1
+    for step in state["steps"][-final_steps_to_emit:]:
+        yield {"event": "step", "data": step}
+    yield {"event": "sources", "data": {"sources": _serialize_sources(state["evidence"])}}
+
+    turn, draft_preview, write_preview, write_result = _persist_chat_state(db, settings, session_record, request, state)
+    if draft_preview is not None:
+        yield {"event": "draft_preview", "data": draft_preview.model_dump()}
+    if write_preview is not None:
+        yield {"event": "write_preview", "data": write_preview.model_dump()}
+    if write_result is not None:
+        yield {"event": "write_result", "data": write_result.model_dump()}
+    response = _build_chat_response(session_record, turn, state, draft_preview, write_preview, write_result)
+    yield {"event": "done", "data": response.model_dump()}

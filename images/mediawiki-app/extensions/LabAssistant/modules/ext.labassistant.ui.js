@@ -1,4 +1,25 @@
 ( function () {
+  var STORAGE_KEY = 'labassistant-active-session-id';
+  var MODEL_STORAGE_KEY = 'labassistant-selected-model';
+  var MODEL_FAMILY_STORAGE_KEY = 'labassistant-selected-model-family';
+  var HOST_STORAGE_KEY = 'labassistant-active-host';
+  var MODEL_PREF_VERSION_KEY = 'labassistant-model-pref-version';
+  var MODEL_PREF_VERSION = '2026-03-20-drawer-chat-1';
+  var DRAWER_ROOT_ID = 'labassistant-drawer-root';
+  var DRAFT_HANDOFF_FALLBACK_PREFIX = 'labassistant-draft-handoff::';
+
+  function getEditorUtils() {
+    return window.LabAssistantEditorUtils || ( window.mw && mw.labassistantEditorUtils ) || null;
+  }
+
+  function getDraftHandoffKey( title, host ) {
+    var editorUtils = getEditorUtils();
+    if ( editorUtils && editorUtils.buildDraftHandoffStorageKey ) {
+      return editorUtils.buildDraftHandoffStorageKey( title, host );
+    }
+    return DRAFT_HANDOFF_FALLBACK_PREFIX + String( host || '' ) + '::' + String( title || '' );
+  }
+
   function createEl( tag, attrs, children ) {
     var el = document.createElement( tag );
     Object.entries( attrs || {} ).forEach( function ( entry ) {
@@ -13,6 +34,8 @@
         el.textContent = value;
       } else if ( key === 'html' ) {
         el.innerHTML = value;
+      } else if ( key === 'checked' ) {
+        el.checked = !!value;
       } else {
         el.setAttribute( key, value );
       }
@@ -25,309 +48,2699 @@
     return el;
   }
 
-  function createHero( config ) {
-    var left = createEl( 'div', {}, [
-      createEl( 'span', { className: 'labassistant-eyebrow', text: 'Knowledge Console' } ),
-      createEl( 'h1', { text: '知识助手' } ),
-      createEl( 'p', {
-        text: '站内问题、文献对照、导师式解释和条目草稿都从这里走。助手会先检索实验室自己的条目和结构化记录，再按证据需要扩展到文献和工具结果。'
-      } ),
-      createEl( 'div', { className: 'labassistant-hero-list' }, [
-        createEl( 'span', { text: '优先检索本组 Wiki / Cargo / Shot / SOP' } ),
-        createEl( 'span', { text: '需要时再查 Zotero / PDF / 外部学术来源' } ),
-        createEl( 'span', { text: '生成草稿前必须给出预览与来源' } )
-      ] )
-    ] );
-
-    var meta = createEl( 'div', { className: 'labassistant-hero-meta' }, [
-      createEl( 'span', { className: 'labassistant-eyebrow', text: 'Session Context' } ),
-      createEl( 'dl', {}, [
-        createEl( 'div', {}, [
-          createEl( 'dt', { text: '当前用户' } ),
-          createEl( 'dd', { text: config.userName || '未登录' } )
-        ] ),
-        createEl( 'div', {}, [
-          createEl( 'dt', { text: '解释模式' } ),
-          createEl( 'dd', { text: '入门 / 进阶 / 研究' } )
-        ] ),
-        createEl( 'div', {}, [
-          createEl( 'dt', { text: '草稿前缀' } ),
-          createEl( 'dd', { text: config.draftPrefix || '知识助手草稿' } )
-        ] ),
-        createEl( 'div', {}, [
-          createEl( 'dt', { text: '当前页' } ),
-          createEl( 'dd', { text: config.currentTitle || 'Special:LabAssistant' } )
-        ] )
-      ] )
-    ] );
-
-    return createEl( 'section', { className: 'labassistant-hero' }, [ left, meta ] );
+  function clearNode( node ) {
+    while ( node.firstChild ) {
+      node.removeChild( node.firstChild );
+    }
   }
 
-  function renderStepStream( container, steps ) {
-    container.innerHTML = '';
-    if ( !steps || !steps.length ) {
-      container.appendChild( createEl( 'div', { className: 'labassistant-empty', html: '<strong>还没有步骤。</strong><span>输入一个问题后，这里会显示站内检索、文献扩搜、工具调用和证据校验过程。</span>' } ) );
-      return;
+  function escapeHtml( value ) {
+    return String( value || '' )
+      .replace( /&/g, '&amp;' )
+      .replace( /</g, '&lt;' )
+      .replace( />/g, '&gt;' )
+      .replace( /"/g, '&quot;' )
+      .replace( /'/g, '&#39;' );
+  }
+
+  function escapeAttr( value ) {
+    return escapeHtml( value );
+  }
+
+  function sanitizeUrl( value ) {
+    if ( !value ) {
+      return null;
     }
-    steps.forEach( function ( step ) {
-      container.appendChild( createEl( 'div', { className: 'labassistant-step is-' + ( step.status || 'waiting' ) }, [
-        createEl( 'div', { className: 'labassistant-step-head' }, [
-          createEl( 'strong', { className: 'labassistant-step-title', text: step.title || step.stage || '步骤' } ),
-          createEl( 'span', { className: 'labassistant-step-state', text: step.status || 'waiting' } )
-        ] ),
-        createEl( 'div', { className: 'labassistant-status-note', text: step.detail || '' } )
-      ] ) );
+    var trimmed = String( value ).trim();
+    if ( !trimmed ) {
+      return null;
+    }
+    if ( trimmed.charAt( 0 ) === '#' || trimmed.charAt( 0 ) === '/' ) {
+      return trimmed;
+    }
+    try {
+      var parsed = new URL( trimmed, window.location.origin );
+      var protocol = parsed.protocol.toLowerCase();
+      if ( protocol === 'http:' || protocol === 'https:' ) {
+        return parsed.toString();
+      }
+    } catch ( error ) {
+      return null;
+    }
+    return null;
+  }
+
+  function getCanonicalHost() {
+    if ( !window.mw || !mw.config ) {
+      return null;
+    }
+    var canonicalServer = mw.config.get( 'wgServer' );
+    if ( !canonicalServer ) {
+      return null;
+    }
+    try {
+      return new URL( canonicalServer, window.location.origin ).host;
+    } catch ( error ) {
+      return null;
+    }
+  }
+
+  function getHostName( host ) {
+    if ( !host ) {
+      return '';
+    }
+    return String( host ).split( ':' )[ 0 ].toLowerCase();
+  }
+
+  function isLoopbackHost( host ) {
+    var hostName = getHostName( host );
+    return hostName === '127.0.0.1' || hostName === 'localhost';
+  }
+
+  function isEquivalentPrivateHost( left, right ) {
+    if ( !left || !right ) {
+      return left === right;
+    }
+    if ( left === right ) {
+      return true;
+    }
+    return isLoopbackHost( left ) && isLoopbackHost( right ) ||
+      isLoopbackHost( left ) && !isLoopbackHost( right ) ||
+      !isLoopbackHost( left ) && isLoopbackHost( right );
+  }
+
+  function clearAssistantLocalState() {
+    localStorage.removeItem( STORAGE_KEY );
+    localStorage.removeItem( MODEL_STORAGE_KEY );
+    localStorage.removeItem( MODEL_FAMILY_STORAGE_KEY );
+  }
+
+  function syncModelPreferenceVersion() {
+    var storedVersion = localStorage.getItem( MODEL_PREF_VERSION_KEY );
+    if ( storedVersion && storedVersion !== MODEL_PREF_VERSION ) {
+      localStorage.removeItem( MODEL_STORAGE_KEY );
+      localStorage.removeItem( MODEL_FAMILY_STORAGE_KEY );
+    }
+    localStorage.setItem( MODEL_PREF_VERSION_KEY, MODEL_PREF_VERSION );
+  }
+
+  function syncHostScopedState() {
+    var currentHost = window.location.host;
+    var storedHost = localStorage.getItem( HOST_STORAGE_KEY );
+    var canonicalHost = getCanonicalHost();
+
+    if ( storedHost && !isEquivalentPrivateHost( storedHost, currentHost ) ) {
+      clearAssistantLocalState();
+    }
+
+    if ( canonicalHost && !isEquivalentPrivateHost( currentHost, canonicalHost ) ) {
+      clearAssistantLocalState();
+      localStorage.setItem( HOST_STORAGE_KEY, canonicalHost );
+      window.location.replace(
+        window.location.protocol + '//' + canonicalHost + window.location.pathname + window.location.search + window.location.hash
+      );
+      return false;
+    }
+
+    localStorage.setItem( HOST_STORAGE_KEY, currentHost );
+    return true;
+  }
+
+  function normalizeSourceUrl( url ) {
+    var safe = sanitizeUrl( url );
+    if ( !safe ) {
+      return null;
+    }
+    try {
+      var parsed = new URL( safe, window.location.origin );
+      if (
+        parsed.hostname === 'host.docker.internal' ||
+        parsed.hostname === '192.168.1.2' ||
+        parsed.hostname === '127.0.0.1' ||
+        parsed.hostname === 'localhost'
+      ) {
+        parsed.protocol = window.location.protocol;
+        parsed.host = window.location.host;
+      }
+      return parsed.toString();
+    } catch ( error ) {
+      return safe;
+    }
+  }
+
+  function renderInlineMarkdown( source ) {
+    var placeholders = [];
+    var text = String( source || '' );
+
+    text = text.replace( /`([^`]+)`/g, function ( match, code ) {
+      var replacement = '<code>' + escapeHtml( code ) + '</code>';
+      var token = '\u0000' + placeholders.length + '\u0000';
+      placeholders.push( replacement );
+      return token;
+    } );
+
+    text = escapeHtml( text );
+
+    text = text.replace( /\[([^\]]+)\]\(([^)]+)\)/g, function ( match, label, url ) {
+      var safeUrl = sanitizeUrl( url );
+      if ( !safeUrl ) {
+        return label;
+      }
+      return '<a href="' + escapeAttr( safeUrl ) + '" target="_blank" rel="noopener">' + label + '</a>';
+    } );
+
+    text = text.replace( /\*\*([^*]+)\*\*/g, '<strong>$1</strong>' );
+    text = text.replace( /\*([^*]+)\*/g, '<em>$1</em>' );
+
+    text = text.replace( /\u0000(\d+)\u0000/g, function ( match, index ) {
+      return placeholders[ Number( index ) ] || '';
+    } );
+
+    return text;
+  }
+
+  function splitPipeRow( line ) {
+    var normalized = line.trim();
+    if ( normalized.charAt( 0 ) === '|' ) {
+      normalized = normalized.slice( 1 );
+    }
+    if ( normalized.charAt( normalized.length - 1 ) === '|' ) {
+      normalized = normalized.slice( 0, -1 );
+    }
+    return normalized.split( '|' ).map( function ( cell ) {
+      return cell.trim();
     } );
   }
 
-  function renderResult( container, result, apiBase ) {
-    container.innerHTML = '';
-    if ( !result ) {
-      container.appendChild( createEl( 'div', { className: 'labassistant-empty', html: '<strong>结果区待命。</strong><span>这里会显示回答、证据、待确认草稿和后续追问建议。</span>' } ) );
-      return;
+  function isTableSeparator( line ) {
+    return /^\s*\|?[\s:-]+(?:\|[\s:-]+)+\|?\s*$/.test( line || '' );
+  }
+
+  function renderMarkdownFallback( source ) {
+    var lines = String( source || '' ).replace( /\r\n?/g, '\n' ).split( '\n' );
+    var html = [];
+    var index = 0;
+
+    function flushParagraph( buffer ) {
+      if ( !buffer.length ) {
+        return;
+      }
+      html.push( '<p>' + renderInlineMarkdown( buffer.join( ' ' ).trim() ) + '</p>' );
+      buffer.length = 0;
     }
 
-    var answer = createEl( 'div', { className: 'labassistant-answer' } );
-    answer.appendChild( createEl( 'div', { className: 'labassistant-answer-card' }, [
-      createEl( 'small', { text: 'Answer' } ),
-      createEl( 'h3', { text: '结论摘要' } ),
-      createEl( 'p', { text: result.answer || '当前没有可展示的回答。' } )
-    ] ) );
+    while ( index < lines.length ) {
+      var line = lines[ index ];
 
-    if ( result.unresolved_gaps && result.unresolved_gaps.length ) {
-      var gapList = createEl( 'div', { className: 'labassistant-gap-list' } );
-      result.unresolved_gaps.forEach( function ( gap ) {
-        gapList.appendChild( createEl( 'div', { className: 'labassistant-gap-card' }, [
-          createEl( 'strong', { text: gap } )
-        ] ) );
-      } );
-      answer.appendChild( gapList );
+      if ( !line.trim() ) {
+        index += 1;
+        continue;
+      }
+
+      if ( /^```/.test( line ) ) {
+        var language = line.replace( /^```/, '' ).trim();
+        var code = [];
+        index += 1;
+        while ( index < lines.length && !/^```/.test( lines[ index ] ) ) {
+          code.push( lines[ index ] );
+          index += 1;
+        }
+        if ( index < lines.length && /^```/.test( lines[ index ] ) ) {
+          index += 1;
+        }
+        html.push(
+          '<pre><code' +
+          ( language ? ' class="language-' + escapeAttr( language ) + '"' : '' ) +
+          '>' + escapeHtml( code.join( '\n' ) ) + '</code></pre>'
+        );
+        continue;
+      }
+
+      if ( /^#{1,6}\s+/.test( line ) ) {
+        var depth = line.match( /^#+/ )[ 0 ].length;
+        var headingText = line.replace( /^#{1,6}\s+/, '' ).trim();
+        html.push( '<h' + depth + '>' + renderInlineMarkdown( headingText ) + '</h' + depth + '>' );
+        index += 1;
+        continue;
+      }
+
+      if ( line.indexOf( '|' ) !== -1 && index + 1 < lines.length && isTableSeparator( lines[ index + 1 ] ) ) {
+        var headerCells = splitPipeRow( line );
+        var bodyRows = [];
+        index += 2;
+        while ( index < lines.length && lines[ index ].indexOf( '|' ) !== -1 && lines[ index ].trim() ) {
+          bodyRows.push( splitPipeRow( lines[ index ] ) );
+          index += 1;
+        }
+        html.push( '<table><thead><tr>' + headerCells.map( function ( cell ) {
+          return '<th>' + renderInlineMarkdown( cell ) + '</th>';
+        } ).join( '' ) + '</tr></thead><tbody>' + bodyRows.map( function ( row ) {
+          return '<tr>' + row.map( function ( cell ) {
+            return '<td>' + renderInlineMarkdown( cell ) + '</td>';
+          } ).join( '' ) + '</tr>';
+        } ).join( '' ) + '</tbody></table>' );
+        continue;
+      }
+
+      if ( /^>\s?/.test( line ) ) {
+        var quote = [];
+        while ( index < lines.length && /^>\s?/.test( lines[ index ] ) ) {
+          quote.push( lines[ index ].replace( /^>\s?/, '' ) );
+          index += 1;
+        }
+        html.push( '<blockquote>' + renderMarkdownFallback( quote.join( '\n' ) ) + '</blockquote>' );
+        continue;
+      }
+
+      if ( /^\s*[-*]\s+/.test( line ) ) {
+        var unordered = [];
+        while ( index < lines.length && /^\s*[-*]\s+/.test( lines[ index ] ) ) {
+          unordered.push( lines[ index ].replace( /^\s*[-*]\s+/, '' ) );
+          index += 1;
+        }
+        html.push( '<ul>' + unordered.map( function ( item ) {
+          return '<li>' + renderInlineMarkdown( item ) + '</li>';
+        } ).join( '' ) + '</ul>' );
+        continue;
+      }
+
+      if ( /^\s*\d+\.\s+/.test( line ) ) {
+        var ordered = [];
+        while ( index < lines.length && /^\s*\d+\.\s+/.test( lines[ index ] ) ) {
+          ordered.push( lines[ index ].replace( /^\s*\d+\.\s+/, '' ) );
+          index += 1;
+        }
+        html.push( '<ol>' + ordered.map( function ( item ) {
+          return '<li>' + renderInlineMarkdown( item ) + '</li>';
+        } ).join( '' ) + '</ol>' );
+        continue;
+      }
+
+      var paragraph = [];
+      while (
+        index < lines.length &&
+        lines[ index ].trim() &&
+        !/^```/.test( lines[ index ] ) &&
+        !/^#{1,6}\s+/.test( lines[ index ] ) &&
+        !/^>\s?/.test( lines[ index ] ) &&
+        !/^\s*[-*]\s+/.test( lines[ index ] ) &&
+        !/^\s*\d+\.\s+/.test( lines[ index ] ) &&
+        !( lines[ index ].indexOf( '|' ) !== -1 && index + 1 < lines.length && isTableSeparator( lines[ index + 1 ] ) )
+      ) {
+        paragraph.push( lines[ index ] );
+        index += 1;
+      }
+      flushParagraph( paragraph );
     }
 
-    if ( result.sources && result.sources.length ) {
-      var sourceCard = createEl( 'div', { className: 'labassistant-source-card' }, [
-        createEl( 'small', { text: 'Evidence' } ),
-        createEl( 'h3', { text: '来源与命中条目' } )
-      ] );
-      var sourceList = createEl( 'div', { className: 'labassistant-source-list' } );
-      result.sources.forEach( function ( source ) {
-        var item = createEl( 'div', {}, [
-          source.url
-            ? createEl( 'a', { href: source.url, target: '_blank', rel: 'noopener', text: source.title || source.source_id || '来源' } )
-            : createEl( 'strong', { text: source.title || source.source_id || '来源' } ),
-          createEl( 'span', {
-            className: 'labassistant-source-meta',
-            text: [ source.source_type, source.snippet ].filter( Boolean ).join( ' · ' )
-          } )
-        ] );
-        sourceList.appendChild( item );
-      } );
-      sourceCard.appendChild( sourceList );
-      answer.appendChild( sourceCard );
+    return html.join( '' ) || '<p></p>';
+  }
+
+  function sanitizeRenderedMarkdown( html ) {
+    var safeHtml = String( html || '' );
+    var container;
+
+    if ( !( window.DOMPurify && typeof window.DOMPurify.sanitize === 'function' ) ) {
+      return null;
     }
 
-    if ( result.suggested_followups && result.suggested_followups.length ) {
-      var followCard = createEl( 'div', { className: 'labassistant-source-card' }, [
-        createEl( 'small', { text: 'Next' } ),
-        createEl( 'h3', { text: '继续追问建议' } )
-      ] );
-      var followList = createEl( 'div', { className: 'labassistant-followup-list' } );
-      result.suggested_followups.forEach( function ( item ) {
-        followList.appendChild( createEl( 'button', {
-          type: 'button',
-          className: 'labassistant-chip',
-          text: item
+    safeHtml = window.DOMPurify.sanitize( safeHtml, {
+      USE_PROFILES: { html: true }
+    } );
+
+    container = document.createElement( 'div' );
+    container.innerHTML = safeHtml;
+
+    Array.from( container.querySelectorAll( 'a[href]' ) ).forEach( function ( anchor ) {
+      var normalized = normalizeSourceUrl( anchor.getAttribute( 'href' ) );
+      if ( normalized ) {
+        anchor.setAttribute( 'href', normalized );
+        anchor.setAttribute( 'target', '_blank' );
+        anchor.setAttribute( 'rel', 'noopener' );
+      } else {
+        anchor.removeAttribute( 'href' );
+      }
+    } );
+
+    return container.innerHTML || '<p></p>';
+  }
+
+  function renderMarkdown( source ) {
+    var markdown = String( source || '' );
+
+    if ( window.marked && typeof window.marked.parse === 'function' ) {
+      try {
+        var sanitizedHtml = sanitizeRenderedMarkdown( window.marked.parse( markdown, {
+          breaks: true,
+          gfm: true,
+          headerIds: false,
+          mangle: false
         } ) );
-      } );
-      followCard.appendChild( followList );
-      answer.appendChild( followCard );
+        if ( sanitizedHtml ) {
+          return sanitizedHtml;
+        }
+      } catch ( error ) {
+        console.warn( 'LabAssistant markdown renderer fell back to lightweight parser.', error );
+      }
     }
 
-    if ( result.draft_preview ) {
-      var draftCard = createEl( 'div', { className: 'labassistant-draft-card' }, [
-        createEl( 'small', { text: 'Draft Preview' } ),
-        createEl( 'h3', { text: result.draft_preview.title || '草稿预览' } ),
-        createEl( 'div', { className: 'labassistant-callout', text: '这只是预览。点击提交后，系统才会创建站内草稿页。' } ),
-        createEl( 'div', { className: 'labassistant-code', text: result.draft_preview.content || '' } )
-      ] );
-      var draftActions = createEl( 'div', { className: 'labassistant-draft-actions' } );
-      var commitButton = createEl( 'button', {
-        type: 'button',
-        className: 'labassistant-button',
-        text: '提交到草稿页'
-      } );
-      commitButton.addEventListener( 'click', function () {
-        commitButton.disabled = true;
-        fetch( apiBase + '/draft/commit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'same-origin',
-          body: JSON.stringify( {
-            preview_id: result.draft_preview.preview_id
-          } )
-        } ).then( function ( response ) {
-          return response.json().then( function ( body ) {
-            if ( !response.ok ) {
-              throw new Error( body.detail || '提交失败' );
-            }
-            alert( '已写入：' + body.page_title );
-          } );
-        } ).catch( function ( error ) {
-          alert( error.message || '提交失败' );
-        } ).finally( function () {
-          commitButton.disabled = false;
-        } );
-      } );
-      draftActions.appendChild( commitButton );
-      draftCard.appendChild( draftActions );
-      answer.appendChild( draftCard );
-    }
-
-    container.appendChild( answer );
+    return renderMarkdownFallback( markdown );
   }
 
-  function mountApp() {
-    var root = document.getElementById( 'labassistant-root' );
-    if ( !root || !window.mw ) {
-      return;
+  function normalizeCodeLanguage( value ) {
+    var normalized = String( value || '' )
+      .trim()
+      .toLowerCase()
+      .replace( /^language-/, '' )
+      .replace( /^lang-/, '' );
+    var aliases = {
+      js: 'javascript',
+      ts: 'typescript',
+      py: 'python',
+      sh: 'bash',
+      shell: 'bash',
+      zsh: 'bash',
+      console: 'bash',
+      yml: 'yaml',
+      md: 'markdown',
+      plaintext: 'text',
+      text: 'text'
+    };
+    return aliases[ normalized ] || normalized;
+  }
+
+  function formatCodeLanguageLabel( value ) {
+    var normalized = normalizeCodeLanguage( value );
+    var labels = {
+      bash: 'Bash',
+      javascript: 'JavaScript',
+      json: 'JSON',
+      markdown: 'Markdown',
+      php: 'PHP',
+      python: 'Python',
+      sql: 'SQL',
+      text: '文本',
+      typescript: 'TypeScript',
+      yaml: 'YAML'
+    };
+    return labels[ normalized ] || ( normalized ? normalized.toUpperCase() : '文本' );
+  }
+
+  function detectCodeLanguage( code ) {
+    var classList = Array.from( code.classList || [] );
+    var languageClass = classList.find( function ( className ) {
+      return className.indexOf( 'language-' ) === 0 || className.indexOf( 'lang-' ) === 0;
+    } );
+    return normalizeCodeLanguage( languageClass || '' );
+  }
+
+  function getHighlightClient() {
+    if ( window.hljs ) {
+      return window.hljs;
+    }
+    if ( typeof hljs !== 'undefined' ) {
+      return hljs;
+    }
+    return null;
+  }
+
+  function enhanceMarkdownContainers( container ) {
+    Array.from( container.querySelectorAll( '.labassistant-markdown' ) ).forEach( function ( markdownNode ) {
+      Array.from( markdownNode.querySelectorAll( 'pre > code' ) ).forEach( function ( code ) {
+        var pre = code.parentNode;
+        var providedLanguage = detectCodeLanguage( code );
+        var rawText = code.textContent || '';
+        var displayLanguage = providedLanguage || 'text';
+        var highlightClient = getHighlightClient();
+
+        if ( highlightClient && typeof highlightClient.highlightElement === 'function' ) {
+          try {
+            if ( providedLanguage && typeof highlightClient.getLanguage === 'function' && highlightClient.getLanguage( providedLanguage ) ) {
+              code.classList.add( 'language-' + providedLanguage );
+              highlightClient.highlightElement( code );
+              displayLanguage = providedLanguage;
+            } else if ( rawText.trim() && typeof highlightClient.highlightAuto === 'function' ) {
+              var autoResult = highlightClient.highlightAuto( rawText );
+              code.innerHTML = autoResult.value;
+              code.classList.add( 'hljs' );
+              displayLanguage = normalizeCodeLanguage( autoResult.language ) || 'text';
+            }
+          } catch ( error ) {
+            console.warn( 'LabAssistant code highlighting fell back to plain text.', error );
+          }
+        }
+
+        var wrapper = createEl( 'div', { className: 'labassistant-code-block' } );
+        var header = createEl( 'div', { className: 'labassistant-code-header' } );
+        var languageBadge = createEl( 'span', {
+          className: 'labassistant-code-language',
+          text: formatCodeLanguageLabel( displayLanguage )
+        } );
+        var copyButton = createEl( 'button', {
+          type: 'button',
+          className: 'labassistant-code-copy',
+          text: '复制'
+        } );
+
+        copyButton.addEventListener( 'click', function () {
+          var resetLabel = function () {
+            window.setTimeout( function () {
+              copyButton.textContent = '复制';
+            }, 1200 );
+          };
+          if ( navigator.clipboard && typeof navigator.clipboard.writeText === 'function' ) {
+            navigator.clipboard.writeText( rawText ).then( function () {
+              copyButton.textContent = '已复制';
+              resetLabel();
+            } ).catch( function () {
+              copyButton.textContent = '复制失败';
+              resetLabel();
+            } );
+            return;
+          }
+          copyButton.textContent = '请手动复制';
+          resetLabel();
+        } );
+
+        header.appendChild( languageBadge );
+        header.appendChild( copyButton );
+        pre.parentNode.insertBefore( wrapper, pre );
+        wrapper.appendChild( header );
+        wrapper.appendChild( pre );
+      } );
+    } );
+  }
+
+  function shortSessionId( value ) {
+    if ( !value ) {
+      return '新会话';
+    }
+    return value.slice( 0, 8 );
+  }
+
+  function turnToResult( turn ) {
+    if ( !turn ) {
+      return null;
+    }
+    return {
+      session_id: turn.session_id || null,
+      turn_id: turn.turn_id || null,
+      task_type: turn.task_type,
+      answer: turn.answer || '',
+      step_stream: turn.step_stream || [],
+      sources: turn.sources || [],
+      confidence: turn.confidence,
+      unresolved_gaps: turn.unresolved_gaps || [],
+      suggested_followups: turn.suggested_followups || [],
+      action_trace: turn.action_trace || [],
+      draft_preview: turn.draft_preview || null,
+      write_preview: turn.write_preview || null,
+      write_result: turn.write_result || null,
+      model_info: turn.model_info || null
+    };
+  }
+
+  function upsertStep( steps, step ) {
+    var next = ( steps || [] ).slice();
+    var index = next.findIndex( function ( item ) {
+      return item.stage === step.stage;
+    } );
+    if ( index >= 0 ) {
+      next[ index ] = step;
+    } else {
+      next.push( step );
+    }
+    return next;
+  }
+
+  function parseEventBlock( block ) {
+    var lines = block.split( /\r?\n/ );
+    var eventName = 'message';
+    var dataLines = [];
+    lines.forEach( function ( line ) {
+      if ( line.indexOf( 'event:' ) === 0 ) {
+        eventName = line.slice( 6 ).trim();
+      } else if ( line.indexOf( 'data:' ) === 0 ) {
+        dataLines.push( line.slice( 5 ).trim() );
+      }
+    } );
+    if ( !dataLines.length ) {
+      return null;
+    }
+    try {
+      return {
+        event: eventName,
+        data: JSON.parse( dataLines.join( '\n' ) )
+      };
+    } catch ( error ) {
+      return {
+        event: 'error',
+        data: { detail: '无法解析 SSE 数据。' }
+      };
+    }
+  }
+
+  function streamChat( apiBase, payload, onEvent ) {
+    return fetch( apiBase + '/chat/stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify( payload )
+    } ).then( function ( response ) {
+      if ( !response.ok || !response.body ) {
+        return response.text().then( function ( body ) {
+          throw new Error( body || '流式请求失败' );
+        } );
+      }
+      var reader = response.body.getReader();
+      var decoder = new TextDecoder();
+      var buffer = '';
+
+      function pump() {
+        return reader.read().then( function ( result ) {
+          if ( result.done ) {
+            if ( buffer.trim() ) {
+              var finalEvent = parseEventBlock( buffer.trim() );
+              if ( finalEvent ) {
+                onEvent( finalEvent );
+              }
+            }
+            return;
+          }
+          buffer += decoder.decode( result.value, { stream: true } );
+          var parts = buffer.split( /\n\n/ );
+          buffer = parts.pop() || '';
+          parts.forEach( function ( part ) {
+            var parsed = parseEventBlock( part.trim() );
+            if ( parsed ) {
+              onEvent( parsed );
+            }
+          } );
+          return pump();
+        } );
+      }
+
+      return pump();
+    } );
+  }
+
+  function loadSession( apiBase, sessionId ) {
+    return fetch( apiBase + '/session/' + encodeURIComponent( sessionId ), {
+      credentials: 'same-origin'
+    } ).then( function ( response ) {
+      return response.json().then( function ( body ) {
+        if ( !response.ok ) {
+          throw new Error( body.detail || '会话读取失败' );
+        }
+        return body;
+      } );
+    } );
+  }
+
+  function loadModelCatalog( apiBase, includeAll ) {
+    var suffix = includeAll ? '?include_all=true' : '';
+    return fetch( apiBase + '/models/catalog' + suffix, {
+      credentials: 'same-origin'
+    } ).then( function ( response ) {
+      return response.json().then( function ( body ) {
+        if ( !response.ok ) {
+          throw new Error( body.detail || '模型目录读取失败' );
+        }
+        return body;
+      } );
+    } );
+  }
+
+  function updateSessionModel( apiBase, sessionId, payload ) {
+    return fetch( apiBase + '/session/' + encodeURIComponent( sessionId ) + '/model', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify( payload )
+    } ).then( function ( response ) {
+      return response.json().then( function ( body ) {
+        if ( !response.ok ) {
+          throw new Error( body.detail || '模型切换失败' );
+        }
+        return body;
+      } );
+    } );
+  }
+
+  function uploadAttachment( apiBase, file ) {
+    var formData = new FormData();
+    formData.append( 'file', file );
+    return fetch( apiBase + '/attachments', {
+      method: 'POST',
+      body: formData,
+      credentials: 'same-origin'
+    } ).then( function ( response ) {
+      return response.json().then( function ( body ) {
+        if ( !response.ok ) {
+          throw new Error( body.detail || '附件上传失败' );
+        }
+        return body;
+      } );
+    } );
+  }
+
+  function deleteAttachment( apiBase, attachmentId ) {
+    return fetch( apiBase + '/attachments/' + encodeURIComponent( attachmentId ), {
+      method: 'DELETE',
+      credentials: 'same-origin'
+    } ).then( function ( response ) {
+      return response.json().then( function ( body ) {
+        if ( !response.ok ) {
+          throw new Error( body.detail || '附件删除失败' );
+        }
+        return body;
+      } );
+    } );
+  }
+
+  function getControlType( control ) {
+    if ( !control ) {
+      return 'text';
+    }
+    if ( control.tagName === 'TEXTAREA' ) {
+      return 'textarea';
+    }
+    if ( control.tagName === 'SELECT' ) {
+      return control.multiple ? 'multiselect' : 'select';
+    }
+    if ( control.getAttribute( 'role' ) === 'searchbox' ) {
+      return 'tokens';
+    }
+    return 'text';
+  }
+
+  function findPageFormRoot() {
+    return document.querySelector( '#pfForm, form[action*="Special:FormEdit"], form[action*="action=formedit"]' );
+  }
+
+  function extractPageFormFieldLabel( control ) {
+    var label = '';
+    var probe = control.closest( 'dd, li, div, td, p' );
+
+    if ( control.labels && control.labels.length ) {
+      label = control.labels[ 0 ].textContent || '';
+    }
+    while ( !label && probe ) {
+      probe = probe.previousElementSibling;
+      if ( !probe ) {
+        break;
+      }
+      if ( /^(DT|LABEL|TH)$/.test( probe.tagName ) ) {
+        label = probe.textContent || '';
+        break;
+      }
+    }
+    if ( !label ) {
+      label = control.getAttribute( 'aria-label' ) || control.getAttribute( 'placeholder' ) || control.name || control.id || '';
+    }
+    if ( control.name && control.name.indexOf( '[' ) !== -1 ) {
+      label = control.name.replace( /^[^\[]+\[/, '' ).replace( /\](?:\[\])?$/, '' );
+    }
+    label = label.replace( /^搜索/, '' ).replace( /\s+/g, ' ' ).trim();
+    return label;
+  }
+
+  function collectPageFormFields() {
+    var root = findPageFormRoot();
+    var seen = {};
+    if ( !root ) {
+      return [];
+    }
+    return Array.from( root.querySelectorAll( 'input, textarea, select' ) ).map( function ( control ) {
+      var type = ( control.type || '' ).toLowerCase();
+      var key;
+      var label;
+      var controlType;
+      if ( type === 'hidden' || type === 'submit' || type === 'button' || type === 'checkbox' || type === 'radio' ) {
+        return null;
+      }
+      key = control.name || control.id;
+      label = extractPageFormFieldLabel( control );
+      controlType = getControlType( control );
+      if ( !key || !label ) {
+        return null;
+      }
+      if ( seen[ key ] ) {
+        return null;
+      }
+      seen[ key ] = true;
+      return {
+        key: key,
+        label: label,
+        controlType: controlType,
+        element: control
+      };
+    } ).filter( Boolean );
+  }
+
+  function dispatchTextEntry( element, value ) {
+    element.focus();
+    element.value = value;
+    element.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+    element.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+  }
+
+  function dispatchMultiSelectEntry( element, values ) {
+    var normalizedValues;
+    var selectedValues;
+
+    if ( !element || element.tagName !== 'SELECT' || !element.multiple ) {
+      return false;
     }
 
-    var config = mw.config.get( 'wgLabAssistant' ) || {};
-    var apiBase = config.apiBase || '/tools/assistant/api';
+    normalizedValues = ( Array.isArray( values ) ? values : [] )
+      .map( function ( value ) {
+        return String( value || '' ).trim();
+      } )
+      .filter( Boolean );
+    selectedValues = [];
 
-    var app = createEl( 'div', { className: 'labassistant-app' } );
-    app.appendChild( createHero( config ) );
-
-    var questionInput = createEl( 'textarea', {
-      placeholder: '例如：请比较 TNSA 和 RPA 的主导驱动场，并结合本组 TPS / RCF 读谱说明如何区分。'
+    Array.from( element.options || [] ).forEach( function ( option ) {
+      option.selected = false;
     } );
+
+    normalizedValues.forEach( function ( value ) {
+      var option = Array.from( element.options || [] ).find( function ( candidate ) {
+        return String( candidate.value || '' ).trim() === value ||
+          String( candidate.text || '' ).trim() === value;
+      } );
+      if ( !option ) {
+        option = new Option( value, value, true, true );
+        element.appendChild( option );
+      }
+      option.selected = true;
+      selectedValues.push( option.value );
+    } );
+
+    element.value = selectedValues.length ? selectedValues[ 0 ] : '';
+    element.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+    element.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+    if ( window.jQuery ) {
+      window.jQuery( element ).trigger( 'change' );
+    }
+    return true;
+  }
+
+  function dispatchTokenEntry( element, values ) {
+    if ( dispatchMultiSelectEntry( element, values ) ) {
+      return true;
+    }
+    return values.every( function ( value ) {
+      element.focus();
+      element.value = value;
+      element.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+      element.dispatchEvent( new KeyboardEvent( 'keydown', { bubbles: true, key: 'Enter' } ) );
+      element.dispatchEvent( new KeyboardEvent( 'keypress', { bubbles: true, key: 'Enter' } ) );
+      element.dispatchEvent( new KeyboardEvent( 'keyup', { bubbles: true, key: 'Enter' } ) );
+      return true;
+    } );
+  }
+
+  function applyPageFormMatch(match) {
+    var element = match && match.field && match.field.element;
+    if ( !element ) {
+      return false;
+    }
+    if ( match.controlType === 'tokens' || match.controlType === 'multiselect' ) {
+      return dispatchTokenEntry( element, Array.isArray( match.value ) ? match.value : [ String( match.value || '' ) ] );
+    }
+    if ( match.controlType === 'select' ) {
+      element.value = String( match.value || '' );
+      element.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+      element.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+      return true;
+    }
+    dispatchTextEntry( element, String( match.value || '' ) );
+    return true;
+  }
+
+  function buildFormSuggestionMap(result) {
+    var editorUtils = getEditorUtils();
+    if ( result.write_preview && result.write_preview.structured_fields ) {
+      return result.write_preview.structured_fields;
+    }
+    if ( result.draft_preview && result.draft_preview.structured_fields ) {
+      return result.draft_preview.structured_fields;
+    }
+    if ( editorUtils && editorUtils.parseStructuredFieldSuggestions ) {
+      return editorUtils.parseStructuredFieldSuggestions(
+        result.answer ||
+        ( result.write_preview && result.write_preview.preview_text ) ||
+        ( result.draft_preview && result.draft_preview.content ) ||
+        ''
+      );
+    }
+    return {};
+  }
+
+  function buildFormMissingFields(result) {
+    var editorUtils = getEditorUtils();
+    if ( editorUtils && editorUtils.parseMissingFields ) {
+      return editorUtils.parseMissingFields(
+        result.answer ||
+        ( result.write_preview && result.write_preview.preview_text ) ||
+        ( result.draft_preview && result.draft_preview.content ) ||
+        ''
+      );
+    }
+    return [];
+  }
+
+  function buildDraftHandoffPayload(config, result, content) {
+    return {
+      title: config.defaultContextTitle || config.currentTitle || '',
+      source_mode: config.editorMode || 'default',
+      content_type: result.draft_preview ? 'draft_preview' : 'answer',
+      content: content,
+      created_at: new Date().toISOString()
+    };
+  }
+
+  function navigateToSourceEdit(config, content, result) {
+    var payload = buildDraftHandoffPayload( config, result, content );
+    var title = config.defaultContextTitle || config.currentTitle || '';
+    var key = getDraftHandoffKey( title, window.location.host );
+    sessionStorage.setItem( key, JSON.stringify( payload ) );
+    var targetUrl = new URL( mw.util.getUrl( title ), window.location.origin );
+    targetUrl.searchParams.set( 'action', 'edit' );
+    window.location.assign( targetUrl.toString() );
+  }
+
+  function consumeDraftHandoff(title) {
+    var key = getDraftHandoffKey( title, window.location.host );
+    var raw = sessionStorage.getItem( key );
+    if ( !raw ) {
+      return null;
+    }
+    sessionStorage.removeItem( key );
+    try {
+      return JSON.parse( raw );
+    } catch ( error ) {
+      return null;
+    }
+  }
+
+  function createWorkspace( config, options ) {
+    var apiBase = config.apiBase || '/tools/assistant/api';
+    var variant = options.variant || 'drawer';
+    var editorUtils = getEditorUtils();
+    var editorMode = editorUtils && editorUtils.detectEditorMode ? editorUtils.detectEditorMode( config ) : ( config.editorMode || 'default' );
+    var editorTextarea = document.getElementById( 'wpTextbox1' );
+    var pageFormFields = editorMode === 'pageforms_edit' ? collectPageFormFields() : [];
+    var consumedDraftHandoff = editorMode === 'source_edit' ? consumeDraftHandoff( config.defaultContextTitle || config.currentTitle || '' ) : null;
+    var state = {
+      sessionId: localStorage.getItem( STORAGE_KEY ) || null,
+      selectedModel: localStorage.getItem( MODEL_STORAGE_KEY ) || null,
+      selectedFamily: localStorage.getItem( MODEL_FAMILY_STORAGE_KEY ) || null,
+      showAllModels: false,
+      modelCatalog: null,
+      turns: [],
+      attachments: [],
+      pendingQuestion: '',
+      currentResult: null,
+      showSettings: false,
+      drawerPopoverOpen: false,
+      uploadMenuOpen: false,
+      renderTimer: null,
+      sourceEditNotice: consumedDraftHandoff ? '已从上一页带入待填草稿，页面尚未保存。' : ''
+    };
+
+    var root = createEl( 'div', {
+      className: 'labassistant-workspace is-' + variant
+    } );
+    var transcript = createEl( 'div', {
+      className: 'labassistant-transcript',
+      'aria-live': 'polite'
+    } );
+    var sessionBadge = createEl( 'span', { className: 'labassistant-pill', text: '会话：新会话' } );
+    var contextBadge = variant === 'drawer' ? null : createEl( 'span', {
+      className: 'labassistant-pill labassistant-pill-soft',
+      text: '上下文：未绑定页面'
+    } );
+    var contextSummary = createEl( 'div', {
+      className: 'labassistant-context-display',
+      text: '自动跟随当前页面'
+    } );
+    var composerContextHint = createEl( 'div', {
+      className: 'labassistant-context-hint',
+      text: '当前页：自动识别'
+    } );
+    var attachmentRow = createEl( 'div', {
+      className: 'labassistant-attachment-row'
+    } );
+    var modelBadge = createEl( 'span', { className: 'labassistant-pill labassistant-pill-soft', text: '模型：载入中' } );
+
+    var modeSelect = createEl( 'select' );
+    var detailSelect = createEl( 'select' );
+    var contextInput = createEl( 'input', {
+      type: 'text',
+      placeholder: '可选：Theory:RPA / Shot:2026-03-14-Run01-Shot001',
+      value: config.defaultContextTitle || ''
+    } );
+    var familySelect = createEl( 'select' );
+    var modelSelect = createEl( 'select' );
+    var compactModelSelect = createEl( 'select', {
+      className: 'labassistant-compact-model-select',
+      'aria-label': '切换模型'
+    } );
+    var showAllToggle = createEl( 'input', { type: 'checkbox' } );
+    var questionInput = createEl( 'textarea', {
+      className: 'labassistant-question-input',
+      placeholder: '例如：把当前页整理成词条草案；把这页整理成周实验日志条目。',
+      rows: '3',
+      'aria-label': '输入问题'
+    } );
+    var imageUploadInput = createEl( 'input', {
+      type: 'file',
+      accept: 'image/png,image/jpeg,image/webp',
+      hidden: 'hidden'
+    } );
+    var documentUploadInput = createEl( 'input', {
+      type: 'file',
+      accept: '.pdf,.docx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown',
+      hidden: 'hidden'
+    } );
+    var plusButton = createEl( 'button', {
+      type: 'button',
+      className: 'labassistant-plus-button',
+      text: '+',
+      'aria-label': '添加附件'
+    } );
+    var uploadImageButton = createEl( 'button', {
+      type: 'button',
+      className: 'labassistant-upload-action',
+      text: '上传图片'
+    } );
+    var uploadDocumentButton = createEl( 'button', {
+      type: 'button',
+      className: 'labassistant-upload-action',
+      text: '上传文档'
+    } );
+    var uploadMenu = createEl( 'div', {
+      className: 'labassistant-upload-menu',
+      hidden: 'hidden'
+    }, [
+      uploadImageButton,
+      uploadDocumentButton
+    ] );
+    var sendButton = createEl( 'button', {
+      type: 'button',
+      className: 'labassistant-send-button',
+      text: '发送'
+    } );
+    var resetButton = createEl( 'button', {
+      type: 'button',
+      className: 'labassistant-toolbar-button',
+      text: '新会话'
+    } );
+    var settingsButton = createEl( 'button', {
+      type: 'button',
+      className: 'labassistant-toolbar-button',
+      text: '选项'
+    } );
+    var closeButton = options.onClose ? createEl( 'button', {
+      type: 'button',
+      className: 'labassistant-toolbar-button',
+      text: '收起'
+    } ) : null;
+
     if ( config.seedQuestion ) {
       questionInput.value = config.seedQuestion;
     }
-    var modeSelect = createEl( 'select', {}, [
-      createEl( 'option', { value: 'qa', text: '问答' } ),
-      createEl( 'option', { value: 'compare', text: '对照' } ),
-      createEl( 'option', { value: 'draft', text: '草稿生成' } )
-    ] );
-    var detailSelect = createEl( 'select', {}, [
-      createEl( 'option', { value: 'intro', text: '入门' } ),
-      createEl( 'option', { value: 'intermediate', text: '进阶' } ),
-      createEl( 'option', { value: 'research', text: '研究' } )
-    ] );
-    var contextInput = createEl( 'input', {
-      type: 'text',
-      value: config.currentTitle || '',
-      placeholder: '可选：Theory:RPA / Shot:2026-03-14-Run01-Shot001'
+
+    ( config.modes || [ 'qa', 'compare', 'draft' ] ).forEach( function ( mode ) {
+      var labelMap = { qa: '问答', compare: '对照', draft: '草稿生成' };
+      modeSelect.appendChild( createEl( 'option', {
+        value: mode,
+        text: labelMap[ mode ] || mode
+      } ) );
     } );
 
-    var stepContainer = createEl( 'div', { className: 'labassistant-steps' } );
-    var resultContainer = createEl( 'div' );
-    renderStepStream( stepContainer, [] );
-    renderResult( resultContainer, null, apiBase );
+    ( config.detailLevels || [ 'intro', 'intermediate', 'research' ] ).forEach( function ( level ) {
+      var labelMap = { intro: '入门', intermediate: '进阶', research: '研究' };
+      detailSelect.appendChild( createEl( 'option', {
+        value: level,
+        text: labelMap[ level ] || level
+      } ) );
+    } );
 
-    var submitButton = createEl( 'button', { type: 'button', className: 'labassistant-button', text: '启动助手循环' } );
-    var resetButton = createEl( 'button', { type: 'button', className: 'labassistant-button-secondary', text: '清空当前会话' } );
+    modeSelect.value = 'qa';
 
-    submitButton.addEventListener( 'click', function () {
+    function buildSettingsGrid( showFamilySelect ) {
+      var fields = [];
+      fields.push( createEl( 'label', {}, [ createEl( 'span', { text: '解释层级' } ), detailSelect ] ) );
+      fields.push( createEl( 'label', { className: 'labassistant-settings-wide' }, [
+        createEl( 'span', { text: '当前上下文页' } ),
+        contextSummary || contextInput
+      ] ) );
+      if ( showFamilySelect ) {
+        fields.push( createEl( 'label', {}, [ createEl( 'span', { text: '模型家族' } ), familySelect ] ) );
+      }
+      fields.push( createEl( 'label', {}, [ createEl( 'span', { text: '当前模型' } ), modelSelect ] ) );
+      fields.push( createEl( 'label', { className: 'labassistant-settings-inline' }, [
+        createEl( 'span', { text: '显示更多模型' } ),
+        showAllToggle
+      ] ) );
+      return createEl( 'div', {
+        className: showFamilySelect ? 'labassistant-settings-grid' : 'labassistant-settings-grid is-popover'
+      }, fields );
+    }
+
+    var settingsPanel = variant === 'special' ? createEl( 'section', {
+      className: 'labassistant-settings-panel'
+    }, [
+      buildSettingsGrid( true )
+    ] ) : createEl( 'section', {
+      className: 'labassistant-settings-panel',
+      hidden: 'hidden'
+    } );
+
+    var drawerSettingsPopover = variant === 'drawer' ? createEl( 'section', {
+      className: 'labassistant-settings-popover',
+      hidden: 'hidden'
+    }, [
+      createEl( 'div', { className: 'labassistant-settings-popover-copy' }, [
+        createEl( 'strong', { text: '对话选项' } ),
+        createEl( 'span', {
+          className: 'labassistant-status-note',
+          text: '默认围绕当前页整理内容；这里只保留少量高级设置。'
+        } )
+      ] ),
+      buildSettingsGrid( false )
+    ] ) : null;
+
+    var headerCopy = variant === 'drawer' ? createEl( 'div', {
+      className: 'labassistant-header-copy is-compact'
+    }, [
+      createEl( 'h2', { text: '知识助手' } )
+    ] ) : createEl( 'div', { className: 'labassistant-header-copy' }, [
+      createEl( 'span', { className: 'labassistant-header-kicker', text: 'Advanced Workspace' } ),
+      createEl( 'h2', { text: '知识助手' } ),
+      createEl( 'div', { className: 'labassistant-badge-row' }, [
+        sessionBadge,
+        contextBadge,
+        modelBadge
+      ] )
+    ] );
+
+    var toolbarActions = createEl( 'div', { className: 'labassistant-toolbar-actions' }, (
+      variant === 'drawer' ? [
+        settingsButton,
+        resetButton,
+        closeButton
+      ] : [
+        settingsButton,
+        resetButton,
+        closeButton
+      ]
+    ).filter( Boolean ) );
+
+    var headerTools = variant === 'drawer' ? createEl( 'div', {
+      className: 'labassistant-toolbar-stack'
+    }, [
+      toolbarActions,
+      drawerSettingsPopover
+    ].filter( Boolean ) ) : toolbarActions;
+
+    var header = createEl( 'header', { className: 'labassistant-header' }, [
+      headerCopy,
+      headerTools
+    ] );
+
+    var composerChildren = [
+      composerContextHint,
+      attachmentRow,
+      createEl( 'div', { className: 'labassistant-composer-shell' }, [
+        questionInput,
+        createEl( 'div', { className: 'labassistant-composer-row' }, [
+          createEl( 'div', { className: 'labassistant-plus-stack' }, [
+            plusButton,
+            uploadMenu,
+            imageUploadInput,
+            documentUploadInput
+          ] ),
+          createEl( 'div', { className: 'labassistant-composer-row-spacer' } ),
+          compactModelSelect,
+          sendButton
+        ] )
+      ] )
+    ];
+
+    if ( variant === 'special' ) {
+      composerChildren.push( createEl( 'div', { className: 'labassistant-composer-meta' }, [
+        createEl( 'span', {
+          className: 'labassistant-status-note',
+          text: '更适合整理当前页、shot 和周实验日志草稿。'
+        } )
+      ] ) );
+    }
+
+    var composer = createEl( 'div', { className: 'labassistant-composer' }, composerChildren );
+
+    function resizeQuestionInput() {
+      questionInput.style.height = '0px';
+      var nextHeight = Math.min( Math.max( questionInput.scrollHeight, 90 ), 210 );
+      questionInput.style.height = nextHeight + 'px';
+      questionInput.style.overflowY = questionInput.scrollHeight > nextHeight ? 'auto' : 'hidden';
+    }
+
+    function refreshLayoutState() {
+      if ( variant === 'special' ) {
+        settingsPanel.hidden = !state.showSettings;
+        settingsPanel.style.display = state.showSettings ? 'grid' : 'none';
+      } else {
+        settingsPanel.hidden = true;
+        settingsPanel.style.display = 'none';
+        if ( drawerSettingsPopover ) {
+          drawerSettingsPopover.hidden = !state.drawerPopoverOpen;
+          drawerSettingsPopover.style.display = state.drawerPopoverOpen ? 'grid' : 'none';
+        }
+        if ( settingsButton ) {
+          settingsButton.classList.toggle( 'is-active', state.drawerPopoverOpen );
+        }
+      }
+      if ( uploadMenu ) {
+        uploadMenu.hidden = !state.uploadMenuOpen;
+        uploadMenu.style.display = state.uploadMenuOpen ? 'grid' : 'none';
+      }
+    }
+
+    function buildTranscriptItems() {
+      var items = [];
+      state.turns.forEach( function ( turn ) {
+        items.push( { role: 'user', text: turn.question || '' } );
+        items.push( { role: 'assistant', result: turnToResult( turn ), isPending: false } );
+      } );
+      if ( state.pendingQuestion ) {
+        items.push( { role: 'user', text: state.pendingQuestion, isPending: true } );
+        items.push( { role: 'assistant', result: state.currentResult || { answer: '' }, isPending: true } );
+      }
+      return items;
+    }
+
+    function scrollTranscriptToBottom() {
+      requestAnimationFrame( function () {
+        transcript.scrollTop = transcript.scrollHeight;
+      } );
+    }
+
+    function findGroup( family ) {
+      var groups = ( state.modelCatalog && state.modelCatalog.groups ) || [];
+      return groups.find( function ( item ) {
+        return item.id === family;
+      } ) || null;
+    }
+
+    function inferFamily( model ) {
+      if ( !model ) {
+        return state.selectedFamily || 'gpt';
+      }
+      if ( model.indexOf( 'claude-' ) === 0 ) {
+        return 'claude';
+      }
+      if ( model.indexOf( 'gemini-' ) === 0 ) {
+        return 'gemini';
+      }
+      return 'gpt';
+    }
+
+    function findSelectedModelItem() {
+      var group = findGroup( state.selectedFamily );
+      if ( !group ) {
+        return null;
+      }
+      return ( group.items || [] ).find( function ( item ) {
+        return item.id === state.selectedModel;
+      } ) || null;
+    }
+
+    function persistModelSelection() {
+      if ( state.selectedModel ) {
+        localStorage.setItem( MODEL_STORAGE_KEY, state.selectedModel );
+      }
+      if ( state.selectedFamily ) {
+        localStorage.setItem( MODEL_FAMILY_STORAGE_KEY, state.selectedFamily );
+      }
+    }
+
+    function refreshSessionBadge() {
+      sessionBadge.textContent = '会话：' + shortSessionId( state.sessionId );
+    }
+
+    function refreshContextBadge() {
+      var contextTitle = contextInput.value.trim();
+      if ( contextBadge ) {
+        contextBadge.textContent = contextTitle ? ( '上下文：' + contextTitle ) : '上下文：未绑定页面';
+      }
+      composerContextHint.textContent = contextTitle ? ( '当前页：' + contextTitle ) : '当前页：自动识别';
+      if ( contextSummary ) {
+        contextSummary.textContent = contextTitle || '自动跟随当前页面';
+        contextSummary.title = contextTitle || '';
+      }
+      if ( !state.turns.length && !state.pendingQuestion ) {
+        renderTranscript();
+      }
+    }
+
+    function refreshModelBadge( info ) {
+      var selected;
+      if ( info && info.resolved_model ) {
+        modelBadge.textContent = '模型：' + info.resolved_model + ( info.fallback_applied ? '（已降级）' : '' );
+        if ( compactModelSelect ) {
+          compactModelSelect.value = info.requested_model || info.resolved_model;
+        }
+        return;
+      }
+      selected = findSelectedModelItem();
+      modelBadge.textContent = '模型：' + ( selected ? selected.id : '未选择' );
+      if ( compactModelSelect ) {
+        compactModelSelect.value = selected ? selected.id : '';
+      }
+    }
+
+    function setDrawerPopoverOpen( nextState ) {
+      if ( variant !== 'drawer' ) {
+        return;
+      }
+      state.drawerPopoverOpen = nextState;
+      if ( nextState ) {
+        state.uploadMenuOpen = false;
+      }
+      refreshLayoutState();
+    }
+
+    function setUploadMenuOpen( nextState ) {
+      state.uploadMenuOpen = nextState;
+      if ( nextState ) {
+        state.drawerPopoverOpen = false;
+      }
+      refreshLayoutState();
+    }
+
+    function syncSelectedModelFromInfo( info ) {
+      if ( !info || !info.requested_model ) {
+        return;
+      }
+      state.selectedFamily = inferFamily( info.requested_model );
+      state.selectedModel = info.requested_model;
+      persistModelSelection();
+    }
+
+    function refreshModelSelectors() {
+      familySelect.innerHTML = '';
+      modelSelect.innerHTML = '';
+      compactModelSelect.innerHTML = '';
+      if ( !state.modelCatalog || !state.modelCatalog.groups ) {
+        refreshModelBadge();
+        return;
+      }
+      state.modelCatalog.groups.forEach( function ( group ) {
+        familySelect.appendChild( createEl( 'option', {
+          value: group.id,
+          text: group.label
+        } ) );
+      } );
+      if ( !state.selectedFamily ) {
+        state.selectedFamily = state.modelCatalog.groups[ 0 ] ? state.modelCatalog.groups[ 0 ].id : 'gpt';
+      }
+      familySelect.value = state.selectedFamily;
+      var activeGroup = findGroup( state.selectedFamily );
+      if ( !activeGroup ) {
+        refreshModelBadge();
+        return;
+      }
+      state.modelCatalog.groups.forEach( function ( group ) {
+        ( group.items || [] ).forEach( function ( item ) {
+          compactModelSelect.appendChild( createEl( 'option', {
+            value: item.id,
+            text: group.label + ' · ' + item.label
+          } ) );
+        } );
+      } );
+      activeGroup.items.forEach( function ( item ) {
+        modelSelect.appendChild( createEl( 'option', {
+          value: item.id,
+          text: item.recommended ? ( item.label + ' · 推荐' ) : item.label
+        } ) );
+      } );
+      if ( !state.selectedModel || !( activeGroup.items || [] ).some( function ( item ) {
+        return item.id === state.selectedModel;
+      } ) ) {
+        state.selectedModel = activeGroup.items[ 0 ] ? activeGroup.items[ 0 ].id : null;
+      }
+      modelSelect.value = state.selectedModel || '';
+      showAllToggle.checked = state.showAllModels;
+      persistModelSelection();
+      refreshModelBadge();
+    }
+
+    function renderAttachments() {
+      clearNode( attachmentRow );
+      if ( !state.attachments.length ) {
+        attachmentRow.hidden = true;
+        attachmentRow.style.display = 'none';
+        return;
+      }
+      attachmentRow.hidden = false;
+      attachmentRow.style.display = 'flex';
+      state.attachments.forEach( function ( item ) {
+        var chip = createEl( 'div', {
+          className: 'labassistant-attachment-chip' + ( item.status === 'error' ? ' is-error' : '' )
+        } );
+        chip.appendChild( createEl( 'span', {
+          className: 'labassistant-attachment-kind',
+          text: item.kind === 'image' ? '图片' : '文档'
+        } ) );
+        chip.appendChild( createEl( 'span', {
+          className: 'labassistant-attachment-name',
+          text: item.name
+        } ) );
+        if ( item.status === 'uploading' ) {
+          chip.appendChild( createEl( 'span', {
+            className: 'labassistant-attachment-status',
+            text: '上传中'
+          } ) );
+        } else if ( item.status === 'error' ) {
+          chip.appendChild( createEl( 'span', {
+            className: 'labassistant-attachment-status',
+            text: '失败'
+          } ) );
+        }
+        var removeButton = createEl( 'button', {
+          type: 'button',
+          className: 'labassistant-attachment-remove',
+          text: '×',
+          'aria-label': '移除附件'
+        } );
+        removeButton.disabled = item.status === 'uploading';
+        removeButton.addEventListener( 'click', function () {
+          if ( item.id ) {
+            deleteAttachment( apiBase, item.id ).catch( function () {} );
+          }
+          state.attachments = state.attachments.filter( function ( entry ) {
+            return entry.clientId !== item.clientId;
+          } );
+          renderAttachments();
+        } );
+        chip.appendChild( removeButton );
+        attachmentRow.appendChild( chip );
+      } );
+    }
+
+    function maybePatchSessionModel() {
+      var selected = findSelectedModelItem();
+      if ( !state.sessionId || !selected ) {
+        refreshModelBadge();
+        return;
+      }
+      updateSessionModel( apiBase, state.sessionId, {
+        generation_provider: selected.provider,
+        generation_model: selected.id
+      } ).then( function ( body ) {
+        if ( body.model_info ) {
+          syncSelectedModelFromInfo( body.model_info );
+          refreshModelSelectors();
+          refreshModelBadge( body.model_info );
+        }
+      } ).catch( function ( error ) {
+        console.warn( error );
+        modelBadge.textContent = '模型：切换失败';
+      } );
+    }
+
+    function handleFilesSelected( files ) {
+      Array.from( files || [] ).forEach( function ( file ) {
+        var clientId = 'local-' + Date.now() + '-' + Math.random().toString( 16 ).slice( 2 );
+        state.attachments.push( {
+          clientId: clientId,
+          id: null,
+          kind: file.type && file.type.indexOf( 'image/' ) === 0 ? 'image' : 'document',
+          name: file.name,
+          mime_type: file.type || 'application/octet-stream',
+          size_bytes: file.size || 0,
+          status: 'uploading'
+        } );
+        renderAttachments();
+        uploadAttachment( apiBase, file ).then( function ( body ) {
+          state.attachments = state.attachments.map( function ( item ) {
+            if ( item.clientId !== clientId ) {
+              return item;
+            }
+            return {
+              clientId: clientId,
+              id: body.id,
+              kind: body.kind,
+              name: body.name,
+              mime_type: body.mime_type,
+              size_bytes: body.size_bytes,
+              status: 'ready'
+            };
+          } );
+          renderAttachments();
+        } ).catch( function ( error ) {
+          state.attachments = state.attachments.map( function ( item ) {
+            if ( item.clientId !== clientId ) {
+              return item;
+            }
+            item.status = 'error';
+            item.error = error.message || '上传失败';
+            return item;
+          } );
+          renderAttachments();
+        } );
+      } );
+    }
+
+    function appendTurnFromResponse( payload ) {
+      state.turns.push( {
+        session_id: payload.session_id || state.sessionId,
+        turn_id: payload.turn_id,
+        question: state.pendingQuestion,
+        answer: payload.answer,
+        mode: payload.mode || 'qa',
+        task_type: payload.task_type,
+        confidence: payload.confidence,
+        step_stream: payload.step_stream || [],
+        sources: payload.sources || [],
+        unresolved_gaps: payload.unresolved_gaps || [],
+        suggested_followups: payload.suggested_followups || [],
+        action_trace: payload.action_trace || [],
+        draft_preview: payload.draft_preview || null,
+        write_preview: payload.write_preview || null,
+        write_result: payload.write_result || null,
+        model_info: payload.model_info || null
+      } );
+      state.pendingQuestion = '';
+      state.currentResult = null;
+    }
+
+    function renderSources( result ) {
+      var list = createEl( 'div', { className: 'labassistant-evidence-list' } );
+      ( result.sources || [] ).forEach( function ( source ) {
+        var title = source.title || source.source_id || '来源';
+        var url = normalizeSourceUrl( source.url );
+        var head = createEl( 'div', { className: 'labassistant-evidence-head' }, [
+          url
+            ? createEl( 'a', { href: url, target: '_blank', rel: 'noopener', text: title } )
+            : createEl( 'strong', { text: title } )
+        ] );
+        if ( source.source_type ) {
+          head.appendChild( createEl( 'span', {
+            className: 'labassistant-source-chip',
+            text: source.source_type
+          } ) );
+        }
+        list.appendChild( createEl( 'article', { className: 'labassistant-evidence-item' }, [
+          head,
+          createEl( 'span', {
+            className: 'labassistant-evidence-meta',
+            text: source.snippet || ''
+          } )
+        ] ) );
+      } );
+      return list;
+    }
+
+    function renderSteps( result ) {
+      var list = createEl( 'div', { className: 'labassistant-step-list' } );
+      ( result.step_stream || [] ).forEach( function ( step ) {
+        list.appendChild( createEl( 'div', { className: 'labassistant-step-item is-' + ( step.status || 'waiting' ) }, [
+          createEl( 'span', { className: 'labassistant-step-dot', 'aria-hidden': 'true' } ),
+          createEl( 'div', { className: 'labassistant-step-copy' }, [
+            createEl( 'strong', { text: step.title || step.stage || '步骤' } ),
+            createEl( 'span', { className: 'labassistant-status-note', text: [ step.status, step.detail ].filter( Boolean ).join( ' · ' ) } )
+          ] )
+        ] ) );
+      } );
+      return list;
+    }
+
+    function renderActions( result ) {
+      var list = createEl( 'div', { className: 'labassistant-step-list' } );
+      ( result.action_trace || [] ).forEach( function ( action ) {
+        list.appendChild( createEl( 'div', { className: 'labassistant-step-item is-action' }, [
+          createEl( 'span', { className: 'labassistant-step-dot', 'aria-hidden': 'true' } ),
+          createEl( 'div', { className: 'labassistant-step-copy' }, [
+            createEl( 'strong', { text: action.action || '动作' } ),
+            createEl( 'span', { className: 'labassistant-status-note', text: [ action.status, action.summary ].filter( Boolean ).join( ' · ' ) } )
+          ] )
+        ] ) );
+      } );
+      return list;
+    }
+
+    function getPageFormMatches( result ) {
+      var suggestions;
+      if ( editorMode !== 'pageforms_edit' || !config.formContext || !pageFormFields.length || !editorUtils || !editorUtils.matchStructuredFieldsToInventory ) {
+        return [];
+      }
+      suggestions = buildFormSuggestionMap( result );
+      return editorUtils.matchStructuredFieldsToInventory(
+        config.formContext.formName || '',
+        suggestions,
+        pageFormFields
+      ).map( function ( match ) {
+        var field = pageFormFields.find( function ( item ) {
+          return item.key === match.fieldKey;
+        } );
+        match.field = field || null;
+        return match;
+      } );
+    }
+
+    function renderPageFormFillCard( result, rerender ) {
+      var matches = getPageFormMatches( result );
+      var missingFields = buildFormMissingFields( result );
+      var fillAllButton;
+      if ( !matches.length && !missingFields.length ) {
+        return null;
+      }
+
+      var card = createEl( 'div', { className: 'labassistant-inline-card labassistant-form-fill-card' } );
+
+      card.appendChild( createEl( 'h4', { text: '表单字段建议' } ) );
+      card.appendChild( createEl( 'div', {
+        className: 'labassistant-status-note',
+        text: matches.length ?
+          ( '已匹配 ' + matches.length + ' 个字段；只填可安全匹配的控件。' ) :
+          '当前没有可安全自动填入的字段。'
+      } ) );
+
+      if ( matches.length ) {
+        fillAllButton = createEl( 'button', {
+          type: 'button',
+          className: 'labassistant-inline-button',
+          text: '一键填入全部已匹配字段'
+        } );
+        fillAllButton.addEventListener( 'click', function () {
+          var appliedCount = 0;
+          matches.forEach( function ( match ) {
+            if ( applyPageFormMatch( match ) ) {
+              appliedCount += 1;
+            }
+          } );
+          result.form_fill_notice = appliedCount ? ( '已填入 ' + appliedCount + ' 个表单字段，表单尚未提交。' ) : '没有可填入的字段。';
+          rerender();
+        } );
+        card.appendChild( fillAllButton );
+      }
+
+      matches.forEach( function ( match ) {
+        var item = createEl( 'div', { className: 'labassistant-form-fill-item' } );
+        var valueText = Array.isArray( match.value ) ? match.value.join( '；' ) : match.value;
+        var fillButton = createEl( 'button', {
+          type: 'button',
+          className: 'labassistant-inline-button labassistant-inline-button-secondary',
+          text: '填入此字段'
+        } );
+        fillButton.addEventListener( 'click', function () {
+          if ( applyPageFormMatch( match ) ) {
+            result.form_fill_notice = '已填入字段：' + match.fieldLabel + '；表单尚未提交。';
+            rerender();
+          }
+        } );
+
+        item.appendChild( createEl( 'div', { className: 'labassistant-form-fill-copy' }, [
+          createEl( 'strong', { text: match.fieldLabel } ),
+          createEl( 'span', { className: 'labassistant-status-note', text: valueText } )
+        ] ) );
+        item.appendChild( fillButton );
+        card.appendChild( item );
+      } );
+
+      if ( missingFields.length ) {
+        var missingSection = createEl( 'section', { className: 'labassistant-form-missing' }, [
+          createEl( 'div', { className: 'labassistant-form-missing-head' }, [
+            createEl( 'strong', { text: '缺失字段' } ),
+            createEl( 'span', {
+              className: 'labassistant-status-note',
+              text: '这些字段暂不自动填入。'
+            } )
+          ] ),
+          createEl( 'div', { className: 'labassistant-form-missing-list' },
+            missingFields.map( function ( fieldName ) {
+              return createEl( 'span', {
+                className: 'labassistant-form-missing-chip',
+                text: fieldName
+              } );
+            } )
+          )
+        ] );
+        card.appendChild( missingSection );
+      }
+
+      if ( result.form_fill_notice ) {
+        card.appendChild( createEl( 'div', {
+          className: 'labassistant-callout',
+          text: result.form_fill_notice
+        } ) );
+      }
+
+      return card;
+    }
+
+    function renderVisualEditorHandoffCard( result, rerender ) {
+      var content = '';
+      if ( editorMode !== 'visual_editor' ) {
+        return null;
+      }
+      content = ( result.draft_preview && result.draft_preview.content ) ||
+        ( result.write_preview && result.write_preview.preview_text ) ||
+        result.answer || '';
+      if ( !content ) {
+        return null;
+      }
+      var card = createEl( 'div', { className: 'labassistant-inline-card' } );
+      var handoffButton = createEl( 'button', {
+        type: 'button',
+        className: 'labassistant-inline-button',
+        text: '切到源码编辑并填入草稿'
+      } );
+      handoffButton.addEventListener( 'click', function () {
+        navigateToSourceEdit( config, content, result );
+      } );
+      card.appendChild( createEl( 'h4', { text: '源码编辑联动' } ) );
+      card.appendChild( createEl( 'div', {
+        className: 'labassistant-status-note',
+        text: '将切到源码编辑页并预填草稿；不会自动保存页面。'
+      } ) );
+      card.appendChild( handoffButton );
+      return card;
+    }
+
+    function fillEditorWithText( result, content, rerender ) {
+      if ( !editorTextarea || !content ) {
+        return false;
+      }
+      if ( editorTextarea.value.trim() && !window.confirm( '这会替换当前编辑框内容，但不会自动保存页面。继续吗？' ) ) {
+        return false;
+      }
+      editorTextarea.value = content;
+      editorTextarea.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+      editorTextarea.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+      editorTextarea.focus();
+      editorTextarea.scrollTop = 0;
+      if ( result ) {
+        result.editor_fill_notice = '已填入当前编辑框，页面尚未保存。';
+      }
+      if ( rerender ) {
+        rerender();
+      }
+      return true;
+    }
+
+    function renderCommitCard( result, rerender ) {
+      var card = createEl( 'div', { className: 'labassistant-inline-card' } );
+
+      if ( result.draft_preview ) {
+        card.appendChild( createEl( 'h4', { text: result.draft_preview.title || '页面草稿' } ) );
+        card.appendChild( createEl( 'div', {
+          className: 'labassistant-markdown',
+          html: renderMarkdown( result.draft_preview.content || '' )
+        } ) );
+        if ( editorMode === 'visual_editor' ) {
+          var handoffDraftButton = createEl( 'button', {
+            type: 'button',
+            className: 'labassistant-inline-button',
+            text: '切到源码编辑并填入草稿'
+          } );
+          handoffDraftButton.addEventListener( 'click', function () {
+            navigateToSourceEdit( config, result.draft_preview.content || '', result );
+          } );
+          card.appendChild( handoffDraftButton );
+        }
+        if ( editorTextarea ) {
+          var fillDraftButton = createEl( 'button', {
+            type: 'button',
+            className: 'labassistant-inline-button labassistant-inline-button-secondary',
+            text: '填入编辑框'
+          } );
+          fillDraftButton.addEventListener( 'click', function () {
+            fillEditorWithText( result, result.draft_preview.content || '', rerender );
+          } );
+          card.appendChild( fillDraftButton );
+        }
+        var commitDraftButton = createEl( 'button', {
+          type: 'button',
+          className: 'labassistant-inline-button',
+          text: '确认写入草稿页'
+        } );
+        commitDraftButton.addEventListener( 'click', function () {
+          commitDraftButton.disabled = true;
+          fetch( apiBase + '/draft/commit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify( {
+              preview_id: result.draft_preview.preview_id
+            } )
+          } ).then( function ( response ) {
+            return response.json().then( function ( body ) {
+              if ( !response.ok ) {
+                throw new Error( body.detail || '提交失败' );
+              }
+              result.draft_commit_result = body;
+              rerender();
+            } );
+          } ).catch( function ( error ) {
+            alert( error.message || '提交失败' );
+          } ).finally( function () {
+            commitDraftButton.disabled = false;
+          } );
+        } );
+        card.appendChild( commitDraftButton );
+        if ( result.draft_commit_result ) {
+          card.appendChild( createEl( 'div', {
+            className: 'labassistant-callout',
+            text: '已写入草稿页：' + result.draft_commit_result.page_title
+          } ) );
+        }
+        if ( result.editor_fill_notice ) {
+          card.appendChild( createEl( 'div', {
+            className: 'labassistant-callout',
+            text: result.editor_fill_notice
+          } ) );
+        }
+      }
+
+      if ( result.write_preview ) {
+        card.appendChild( createEl( 'h4', { text: result.write_preview.target_page || '整理结果' } ) );
+        card.appendChild( createEl( 'div', {
+          className: 'labassistant-status-note',
+          text: [ result.write_preview.action_type, result.write_preview.operation ].filter( Boolean ).join( ' · ' )
+        } ) );
+        card.appendChild( createEl( 'div', {
+          className: 'labassistant-markdown',
+          html: renderMarkdown( result.write_preview.preview_text || '' )
+        } ) );
+        if ( editorMode === 'visual_editor' ) {
+          var handoffWriteButton = createEl( 'button', {
+            type: 'button',
+            className: 'labassistant-inline-button',
+            text: '切到源码编辑并填入草稿'
+          } );
+          handoffWriteButton.addEventListener( 'click', function () {
+            navigateToSourceEdit( config, result.write_preview.preview_text || '', result );
+          } );
+          card.appendChild( handoffWriteButton );
+        }
+        if ( editorTextarea ) {
+          var fillWriteButton = createEl( 'button', {
+            type: 'button',
+            className: 'labassistant-inline-button labassistant-inline-button-secondary',
+            text: '填入编辑框'
+          } );
+          fillWriteButton.addEventListener( 'click', function () {
+            fillEditorWithText( result, result.write_preview.preview_text || '', rerender );
+          } );
+          card.appendChild( fillWriteButton );
+        }
+        if ( result.write_preview.missing_fields && result.write_preview.missing_fields.length ) {
+          card.appendChild( createEl( 'div', {
+            className: 'labassistant-callout',
+            text: '仍缺字段：' + result.write_preview.missing_fields.join( '、' )
+          } ) );
+        }
+        if ( result.write_result ) {
+          card.appendChild( createEl( 'div', {
+            className: 'labassistant-callout',
+            text: ( result.write_result.detail || '白名单直写已执行。' ) + ' 页面：' + ( result.write_result.page_title || '' )
+          } ) );
+        } else if ( result.write_preview.preview_id && !( result.write_preview.missing_fields && result.write_preview.missing_fields.length ) ) {
+          var commitWriteButton = createEl( 'button', {
+            type: 'button',
+            className: 'labassistant-inline-button',
+            text: '确认提交'
+          } );
+          commitWriteButton.addEventListener( 'click', function () {
+            commitWriteButton.disabled = true;
+            fetch( apiBase + '/write/commit', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'same-origin',
+              body: JSON.stringify( {
+                preview_id: result.write_preview.preview_id
+              } )
+            } ).then( function ( response ) {
+              return response.json().then( function ( body ) {
+                if ( !response.ok ) {
+                  throw new Error( body.detail || '写入失败' );
+                }
+                result.write_result = body;
+                rerender();
+              } );
+            } ).catch( function ( error ) {
+              alert( error.message || '写入失败' );
+            } ).finally( function () {
+              commitWriteButton.disabled = false;
+            } );
+          } );
+          card.appendChild( commitWriteButton );
+        }
+        if ( result.editor_fill_notice ) {
+          card.appendChild( createEl( 'div', {
+            className: 'labassistant-callout',
+            text: result.editor_fill_notice
+          } ) );
+        }
+      }
+
+      var pageFormCard = renderPageFormFillCard( result, rerender );
+      if ( pageFormCard ) {
+        card.appendChild( pageFormCard );
+      }
+      var veCard = renderVisualEditorHandoffCard( result, rerender );
+      if ( veCard ) {
+        card.appendChild( veCard );
+      }
+
+      return card;
+    }
+
+    function buildStarterActions() {
+      var contextTitle = contextInput.value.trim() || config.currentTitle || '当前页';
+      var isShotPage = /^Shot:/i.test( contextTitle );
+      var formName = config.formContext && config.formContext.formName ? config.formContext.formName : '当前表单';
+      var pageFormPrompts = {
+        '术语条目': [
+          '请根据当前页面整理一版术语条目字段建议；未知字段留空，不要写待补充或未知，最后单独列缺失字段。',
+          '请把当前页面压缩成适合术语条目的字段建议；只填能确认的字段，其余留空并列缺失字段。',
+          '请先指出术语条目仍缺哪些关键信息，再给出可填入字段；未知字段留空。'
+        ],
+        '设备条目': [
+          '请根据当前页面整理一版设备条目字段建议；未知字段留空，不要写待补充或未知，最后单独列缺失字段。',
+          '请把当前页面提炼成设备名称、系统归属、关键参数、用途、运行页和来源；只填能确认的字段。',
+          '请先指出设备条目仍缺哪些关键信息，再给出可填入字段；未知字段留空。'
+        ],
+        '诊断条目': [
+          '请根据当前页面整理一版诊断条目字段建议；未知字段留空，不要写待补充或未知，最后单独列缺失字段。',
+          '请把当前页面提炼成诊断名称、测量对象、主要输出、易错点、工具入口和来源；只填能确认的字段。',
+          '请先指出诊断条目仍缺哪些关键信息，再给出可填入字段；未知字段留空。'
+        ],
+        '文献导读': [
+          '请根据当前页面整理一版文献导读字段建议；未知字段留空，不要写待补充、未知、无或表单上下文，最后单独列缺失字段。',
+          '请把当前页面提炼成标题、作者、年份、DOI、摘要、相关页面和来源；只填能确认的字段，其余留空。',
+          '请先指出文献导读仍缺哪些关键信息，再给出可填入字段；未知字段留空。'
+        ]
+      };
+      var prompts = editorMode === 'pageforms_edit' ? ( pageFormPrompts[ formName ] || [
+        '请根据当前表单生成结构化字段建议，只输出字段名和值。',
+        '请把当前页面整理成适合当前表单的字段建议。',
+        '请先列出当前表单仍缺哪些关键字段，再给出可填入建议。'
+      ] ) : editorMode === 'visual_editor' ? [
+        '请把当前页面整理成可发布的页面草稿，我稍后会切到源码编辑填入。',
+        '请把当前页面改写成新人可读的知识页草稿，并保留标题结构。',
+        '请先给出一版可直接填入源码编辑器的草稿。'
+      ] : isShotPage ? [
+        '把当前页面整理成 shot 记录草稿',
+        '把当前页面整理成周实验日志条目',
+        '提炼当前页面的复盘摘要和待补字段'
+      ] : editorTextarea ? [
+        '请把当前页面整理成可直接填入编辑框的页面草稿，并保留 wiki 标题结构',
+        '请把当前页面改写成新人可读版本，适合直接覆盖编辑框',
+        '请补出当前页面仍缺的结构，并生成一版可编辑草稿'
+      ] : [
+        '把当前页面整理成术语条目草案',
+        '把当前页面整理成新人可读的知识页草稿',
+        '提炼当前页面的重点和仍缺信息'
+      ];
+      var actions = createEl( 'div', { className: 'labassistant-empty-actions' } );
+      prompts.forEach( function ( text ) {
+        var button = createEl( 'button', {
+          type: 'button',
+          className: 'labassistant-followup-button',
+          text: text
+        } );
+        button.addEventListener( 'click', function () {
+          questionInput.value = text;
+          resizeQuestionInput();
+          refreshComposerState();
+          questionInput.focus();
+        } );
+        actions.appendChild( button );
+      } );
+      return actions;
+    }
+
+    function buildInspectorSections( result, isPending ) {
+      var sections = [];
+
+      if ( result.sources && result.sources.length ) {
+        sections.push( {
+          id: 'evidence',
+          label: '证据',
+          count: result.sources.length,
+          render: function () {
+            return renderSources( result );
+          }
+        } );
+      }
+      if ( result.step_stream && result.step_stream.length && ( variant === 'special' || isPending || ( result.unresolved_gaps && result.unresolved_gaps.length ) ) ) {
+        sections.push( {
+          id: 'process',
+          label: '过程',
+          count: result.step_stream.length,
+          render: function () {
+            return renderSteps( result );
+          }
+        } );
+      }
+      if ( variant === 'special' && result.action_trace && result.action_trace.length ) {
+        sections.push( {
+          id: 'action',
+          label: '动作',
+          count: result.action_trace.length,
+          render: function () {
+            return renderActions( result );
+          }
+        } );
+      }
+      if ( result.draft_preview || result.write_preview || result.write_result ) {
+        sections.push( {
+          id: 'write',
+          label: variant === 'drawer' ? '草稿' : '写入',
+          count: result.write_result ? 1 : 0,
+          render: function () {
+            return renderCommitCard( result, function () {
+              scheduleTranscriptRender( true );
+            } );
+          }
+        } );
+      }
+
+      if ( !sections.length ) {
+        return null;
+      }
+
+      if ( isPending && sections.some( function ( section ) {
+        return section.id === 'process';
+      } ) ) {
+        return {
+          sections: sections,
+          defaultSectionId: 'process'
+        };
+      }
+
+      if ( sections.some( function ( section ) {
+        return section.id === 'evidence';
+      } ) ) {
+        return {
+          sections: sections,
+          defaultSectionId: 'evidence'
+        };
+      }
+
+      return {
+        sections: sections,
+        defaultSectionId: sections[ 0 ].id
+      };
+    }
+
+    function renderInspector( result, isPending ) {
+      var spec = buildInspectorSections( result, isPending );
+      if ( !spec ) {
+        return null;
+      }
+
+      var inspector = createEl( 'section', { className: 'labassistant-inspector' } );
+      var tablist = createEl( 'div', {
+        className: 'labassistant-inspector-tabs',
+        role: 'tablist',
+        'aria-label': '消息详情'
+      } );
+      var panel = createEl( 'div', { className: 'labassistant-inspector-panel' } );
+      var activeId = spec.defaultSectionId;
+
+      function updatePanel() {
+        clearNode( panel );
+        spec.sections.forEach( function ( section ) {
+          section.button.classList.toggle( 'is-active', section.id === activeId );
+          section.button.setAttribute( 'aria-selected', section.id === activeId ? 'true' : 'false' );
+          if ( section.id === activeId ) {
+            panel.appendChild( section.render() );
+          }
+        } );
+      }
+
+      spec.sections.forEach( function ( section ) {
+        var label = section.label + ( section.count ? ' ' + section.count : '' );
+        var button = createEl( 'button', {
+          type: 'button',
+          className: 'labassistant-inspector-tab',
+          role: 'tab',
+          text: label
+        } );
+        button.addEventListener( 'click', function () {
+          activeId = section.id;
+          updatePanel();
+        } );
+        section.button = button;
+        tablist.appendChild( button );
+      } );
+
+      inspector.appendChild( tablist );
+      inspector.appendChild( panel );
+      updatePanel();
+
+      if ( variant === 'drawer' ) {
+        var summaryText = spec.sections.map( function ( section ) {
+          return section.label + ( section.count ? ' ' + section.count : '' );
+        } ).join( ' · ' );
+        var toggle = createEl( 'button', {
+          type: 'button',
+          className: 'labassistant-inspector-toggle',
+          text: ( isPending ? '正在整理：' : '查看详情：' ) + summaryText
+        } );
+        var body = createEl( 'div', { className: 'labassistant-inspector-body' }, [
+          tablist,
+          panel
+        ] );
+        var isOpen = !!isPending;
+
+        function updateVisibility() {
+          toggle.setAttribute( 'aria-expanded', isOpen ? 'true' : 'false' );
+          body.hidden = !isOpen;
+          body.style.display = isOpen ? 'grid' : 'none';
+          inspector.classList.toggle( 'is-collapsed', !isOpen );
+        }
+
+        toggle.addEventListener( 'click', function () {
+          isOpen = !isOpen;
+          updateVisibility();
+        } );
+
+        clearNode( inspector );
+        inspector.appendChild( toggle );
+        inspector.appendChild( body );
+        updateVisibility();
+      }
+
+      return inspector;
+    }
+
+    function renderAssistantBubble( result, isPending ) {
+      var bubble = createEl( 'article', { className: 'labassistant-message assistant' } );
+      var metaText = [];
+      if ( variant !== 'drawer' && result.model_info && result.model_info.resolved_model ) {
+        metaText.push( result.model_info.provider );
+        metaText.push( result.model_info.resolved_model );
+      }
+      if ( isPending ) {
+        metaText.push( variant === 'drawer' ? '正在整理' : '响应中' );
+      }
+      bubble.appendChild( createEl( 'div', { className: 'labassistant-message-meta', text: metaText.join( ' · ' ) || ( variant === 'drawer' ? '助手' : '知识助手' ) } ) );
+
+      var answerHtml = result.answer ? renderMarkdown( result.answer ) : '<p class="labassistant-thinking">正在思考…</p>';
+      bubble.appendChild( createEl( 'div', { className: 'labassistant-markdown', html: answerHtml } ) );
+
+      if ( editorTextarea && !isPending && result.answer && !( result.draft_preview || result.write_preview ) ) {
+        var fillAnswerButton = createEl( 'button', {
+          type: 'button',
+          className: 'labassistant-inline-button labassistant-inline-button-secondary',
+          text: '把这版回答填入编辑框'
+        } );
+        fillAnswerButton.addEventListener( 'click', function () {
+          fillEditorWithText( result, result.answer || '', function () {
+            scheduleTranscriptRender( true );
+          } );
+        } );
+        bubble.appendChild( fillAnswerButton );
+      }
+
+      if ( result.unresolved_gaps && result.unresolved_gaps.length ) {
+        bubble.appendChild( createEl( 'div', {
+          className: 'labassistant-callout',
+          text: '待补证据：' + result.unresolved_gaps.join( '；' )
+        } ) );
+      }
+
+      if ( result.editor_fill_notice ) {
+        bubble.appendChild( createEl( 'div', {
+          className: 'labassistant-callout',
+          text: result.editor_fill_notice
+        } ) );
+      }
+
+      if ( editorMode === 'pageforms_edit' && !( result.draft_preview || result.write_preview ) ) {
+        var formFillCard = renderPageFormFillCard( result, function () {
+          scheduleTranscriptRender( true );
+        } );
+        if ( formFillCard ) {
+          bubble.appendChild( formFillCard );
+        }
+      }
+
+      if ( editorMode === 'visual_editor' && !( result.draft_preview || result.write_preview ) ) {
+        var handoffCard = renderVisualEditorHandoffCard( result, function () {
+          scheduleTranscriptRender( true );
+        } );
+        if ( handoffCard ) {
+          bubble.appendChild( handoffCard );
+        }
+      }
+
+      var inspector = renderInspector( result, isPending );
+      if ( inspector ) {
+        bubble.appendChild( inspector );
+      }
+
+      if ( result.suggested_followups && result.suggested_followups.length ) {
+        var followups = createEl( 'div', { className: 'labassistant-followups' } );
+        result.suggested_followups.forEach( function ( item ) {
+          var button = createEl( 'button', {
+            type: 'button',
+            className: 'labassistant-followup-button',
+            text: item
+          } );
+          button.addEventListener( 'click', function () {
+            questionInput.value = item;
+            resizeQuestionInput();
+            refreshComposerState();
+            questionInput.focus();
+          } );
+          followups.appendChild( button );
+        } );
+        bubble.appendChild( followups );
+      }
+
+      return bubble;
+    }
+
+    function scheduleTranscriptRender( immediate ) {
+      if ( immediate ) {
+        if ( state.renderTimer ) {
+          clearTimeout( state.renderTimer );
+          state.renderTimer = null;
+        }
+        renderTranscript();
+        return;
+      }
+      if ( state.renderTimer ) {
+        return;
+      }
+      state.renderTimer = window.setTimeout( function () {
+        state.renderTimer = null;
+        renderTranscript();
+      }, 64 );
+    }
+
+    function renderTranscript() {
+      clearNode( transcript );
+      var items = buildTranscriptItems();
+      if ( !items.length ) {
+        var emptyState = createEl( 'div', { className: 'labassistant-empty-state' }, [
+          createEl( 'strong', { text: editorMode === 'pageforms_edit' ? '先让助手生成一版可直接填入表单的字段建议。' : editorMode === 'visual_editor' ? '先让助手生成草稿，再切到源码编辑预填。' : editorTextarea ? '先让助手整理一版可直接填入编辑框的草稿。' : '先让助手帮你整理当前页。' } ),
+          createEl( 'span', {
+            text: editorMode === 'pageforms_edit' ?
+              '它会先给出结构化字段建议，你确认后再填表；不会自动提交。' :
+              editorMode === 'visual_editor' ?
+              '它会先生成草稿，再由你切到源码编辑填入；不会直接修改可视化编辑器。' :
+              editorTextarea ?
+              '它会先基于当前页生成可编辑草稿，你确认后再自己保存页面。' :
+              '它更适合把词条、shot、周实验日志和知识页先整理成草稿，再由你确认。'
+          } ),
+          buildStarterActions()
+        ] );
+        if ( state.sourceEditNotice ) {
+          emptyState.appendChild( createEl( 'div', {
+            className: 'labassistant-callout',
+            text: state.sourceEditNotice
+          } ) );
+        }
+        transcript.appendChild( emptyState );
+        return;
+      }
+
+      items.forEach( function ( item ) {
+        if ( item.role === 'user' ) {
+          transcript.appendChild( createEl( 'article', { className: 'labassistant-message user' }, [
+            createEl( 'div', { className: 'labassistant-message-meta', text: '你' } ),
+            createEl( 'div', {
+              className: 'labassistant-markdown',
+              html: renderMarkdown( item.text )
+            } )
+          ] ) );
+          return;
+        }
+        transcript.appendChild( renderAssistantBubble( item.result || {}, item.isPending ) );
+      } );
+      enhanceMarkdownContainers( transcript );
+      scrollTranscriptToBottom();
+    }
+
+    function refreshComposerState() {
+      sendButton.disabled = !questionInput.value.trim();
+    }
+
+    function applyDonePayload( body ) {
+      state.currentResult = body;
+      if ( body.model_info ) {
+        syncSelectedModelFromInfo( body.model_info );
+        refreshModelSelectors();
+        refreshModelBadge( body.model_info );
+      }
+      appendTurnFromResponse( body );
+      renderTranscript();
+    }
+
+    function submitQuestion() {
+      if ( state.attachments.some( function ( item ) { return item.status === 'uploading'; } ) ) {
+        alert( '附件仍在上传中，请稍等完成后再发送。' );
+        return;
+      }
+      var readyAttachments = state.attachments.filter( function ( item ) {
+        return item.status === 'ready' && item.id;
+      } ).map( function ( item ) {
+        return {
+          id: item.id,
+          kind: item.kind,
+          name: item.name,
+          mime_type: item.mime_type,
+          size_bytes: item.size_bytes
+        };
+      } );
       var payload = {
         question: questionInput.value.trim(),
-        mode: modeSelect.value,
+        mode: 'qa',
         detail_level: detailSelect.value,
-        context_pages: contextInput.value ? [ contextInput.value ] : []
+        context_pages: contextInput.value.trim() ? [ contextInput.value.trim() ] : [],
+        attachments: readyAttachments
       };
+      if ( state.selectedModel ) {
+        payload.generation_model = state.selectedModel;
+      }
+      if ( findSelectedModelItem() ) {
+        payload.generation_provider = findSelectedModelItem().provider;
+      }
+      if ( state.sessionId ) {
+        payload.session_id = state.sessionId;
+      }
       if ( !payload.question ) {
         alert( '请输入问题。' );
         return;
       }
-      submitButton.disabled = true;
-      renderStepStream( stepContainer, [
-        { title: '准备请求', status: 'running', detail: '正在提交给 assistant_api。' }
-      ] );
-      fetch( apiBase + '/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify( payload )
-      } ).then( function ( response ) {
-        return response.json().then( function ( body ) {
-          if ( !response.ok ) {
-            throw new Error( body.detail || '请求失败' );
+
+      if ( variant === 'drawer' ) {
+        setDrawerPopoverOpen( false );
+      }
+      setUploadMenuOpen( false );
+
+      state.pendingQuestion = payload.question;
+      state.currentResult = {
+        answer: '',
+        sources: [],
+        unresolved_gaps: [],
+        suggested_followups: [],
+        action_trace: [],
+        step_stream: [ {
+          title: '准备请求',
+          stage: 'prepare',
+          status: 'running',
+          detail: '正在建立流式连接。'
+        } ]
+      };
+      state.attachments = [];
+      questionInput.value = '';
+      resizeQuestionInput();
+      refreshComposerState();
+      renderAttachments();
+      renderTranscript();
+
+      streamChat( apiBase, payload, function ( event ) {
+        var body = event.data || {};
+        if ( event.event === 'session_started' ) {
+          state.sessionId = body.session_id || state.sessionId;
+          if ( body.model_info ) {
+            syncSelectedModelFromInfo( body.model_info );
+            refreshModelSelectors();
+            refreshModelBadge( body.model_info );
           }
-          return body;
-        } );
-      } ).then( function ( body ) {
-        renderStepStream( stepContainer, body.step_stream || [] );
-        renderResult( resultContainer, body, apiBase );
+          if ( state.sessionId ) {
+            localStorage.setItem( STORAGE_KEY, state.sessionId );
+          }
+          refreshSessionBadge();
+          return;
+        }
+        if ( event.event === 'step' ) {
+          state.currentResult.step_stream = upsertStep( state.currentResult.step_stream || [], body );
+          scheduleTranscriptRender( true );
+          return;
+        }
+        if ( event.event === 'token' ) {
+          state.currentResult.answer = ( state.currentResult.answer || '' ) + ( body.delta || '' );
+          scheduleTranscriptRender( false );
+          return;
+        }
+        if ( event.event === 'sources' ) {
+          state.currentResult.sources = body.sources || [];
+          scheduleTranscriptRender( true );
+          return;
+        }
+        if ( event.event === 'action_trace' ) {
+          state.currentResult.action_trace = body.items || [];
+          scheduleTranscriptRender( true );
+          return;
+        }
+        if ( event.event === 'draft_preview' ) {
+          state.currentResult.draft_preview = body;
+          scheduleTranscriptRender( true );
+          return;
+        }
+        if ( event.event === 'write_preview' ) {
+          state.currentResult.write_preview = body;
+          scheduleTranscriptRender( true );
+          return;
+        }
+        if ( event.event === 'write_result' ) {
+          state.currentResult.write_result = body;
+          scheduleTranscriptRender( true );
+          return;
+        }
+        if ( event.event === 'done' ) {
+          applyDonePayload( body );
+          return;
+        }
+        if ( event.event === 'error' ) {
+          state.currentResult.answer = state.currentResult.answer || '当前请求没有完成。';
+          state.currentResult.unresolved_gaps = [ body.detail || '未知错误' ];
+          state.currentResult.step_stream = upsertStep( state.currentResult.step_stream || [], {
+            stage: 'error',
+            title: '助手循环中断',
+            status: 'waiting',
+            detail: body.detail || '未知错误'
+          } );
+          renderTranscript();
+        }
       } ).catch( function ( error ) {
-        renderStepStream( stepContainer, [
-          { title: '助手循环中断', status: 'waiting', detail: error.message || '未知错误' }
-        ] );
-        renderResult( resultContainer, {
-          answer: '当前请求没有完成。请先检查 assistant_api 是否已启动，以及当前问题是否超出已接入的数据源。',
-          unresolved_gaps: [ error.message || '未知错误' ]
-        }, apiBase );
+        state.currentResult.answer = state.currentResult.answer || '当前请求没有完成。';
+        state.currentResult.unresolved_gaps = [ error.message || '未知错误' ];
+        state.currentResult.step_stream = upsertStep( state.currentResult.step_stream || [], {
+          stage: 'error',
+          title: '助手循环中断',
+          status: 'waiting',
+          detail: error.message || '未知错误'
+        } );
+        renderTranscript();
       } ).finally( function () {
-        submitButton.disabled = false;
+        sendButton.disabled = false;
+      } );
+    }
+
+    function resetConversation() {
+      state.sessionId = null;
+      state.turns = [];
+      state.pendingQuestion = '';
+      state.currentResult = null;
+      if ( state.renderTimer ) {
+        clearTimeout( state.renderTimer );
+        state.renderTimer = null;
+      }
+      state.drawerPopoverOpen = false;
+      state.uploadMenuOpen = false;
+      state.attachments = [];
+      questionInput.value = '';
+      resizeQuestionInput();
+      refreshComposerState();
+      clearAssistantLocalState();
+      localStorage.setItem( HOST_STORAGE_KEY, window.location.host );
+      refreshSessionBadge();
+      refreshContextBadge();
+      refreshModelBadge();
+      refreshLayoutState();
+      renderAttachments();
+      renderTranscript();
+    }
+
+    questionInput.addEventListener( 'keydown', function ( event ) {
+      if ( event.key === 'Enter' && !event.shiftKey ) {
+        event.preventDefault();
+        submitQuestion();
+      }
+    } );
+    questionInput.addEventListener( 'input', function () {
+      resizeQuestionInput();
+      refreshComposerState();
+    } );
+    sendButton.addEventListener( 'click', submitQuestion );
+    resetButton.addEventListener( 'click', resetConversation );
+    settingsButton.addEventListener( 'click', function () {
+      if ( variant === 'drawer' ) {
+        setDrawerPopoverOpen( !state.drawerPopoverOpen );
+        return;
+      }
+      state.showSettings = !state.showSettings;
+      refreshLayoutState();
+    } );
+    plusButton.addEventListener( 'click', function () {
+      setUploadMenuOpen( !state.uploadMenuOpen );
+    } );
+    uploadImageButton.addEventListener( 'click', function () {
+      imageUploadInput.click();
+    } );
+    uploadDocumentButton.addEventListener( 'click', function () {
+      documentUploadInput.click();
+    } );
+    imageUploadInput.addEventListener( 'change', function () {
+      handleFilesSelected( imageUploadInput.files );
+      imageUploadInput.value = '';
+      setUploadMenuOpen( false );
+    } );
+    documentUploadInput.addEventListener( 'change', function () {
+      handleFilesSelected( documentUploadInput.files );
+      documentUploadInput.value = '';
+      setUploadMenuOpen( false );
+    } );
+    contextInput.addEventListener( 'input', refreshContextBadge );
+    familySelect.addEventListener( 'change', function () {
+      state.selectedFamily = familySelect.value;
+      state.selectedModel = null;
+      refreshModelSelectors();
+      maybePatchSessionModel();
+    } );
+    modelSelect.addEventListener( 'change', function () {
+      state.selectedModel = modelSelect.value;
+      persistModelSelection();
+      refreshModelBadge();
+      maybePatchSessionModel();
+    } );
+    compactModelSelect.addEventListener( 'change', function () {
+      state.selectedModel = compactModelSelect.value;
+      state.selectedFamily = inferFamily( state.selectedModel );
+      persistModelSelection();
+      refreshModelSelectors();
+      maybePatchSessionModel();
+    } );
+    showAllToggle.addEventListener( 'change', function () {
+      state.showAllModels = showAllToggle.checked;
+      loadModelCatalog( apiBase, state.showAllModels ).then( function ( body ) {
+        state.modelCatalog = body;
+        refreshModelSelectors();
+      } ).catch( function ( error ) {
+        console.warn( error );
+        modelBadge.textContent = '模型：目录读取失败';
       } );
     } );
-
-    resetButton.addEventListener( 'click', function () {
-      questionInput.value = '';
-      renderStepStream( stepContainer, [] );
-      renderResult( resultContainer, null, apiBase );
+    if ( closeButton ) {
+      closeButton.addEventListener( 'click', function () {
+        options.onClose();
+      } );
+    }
+    document.addEventListener( 'click', function ( event ) {
+      if ( drawerSettingsPopover && state.drawerPopoverOpen ) {
+        if ( drawerSettingsPopover.contains( event.target ) || settingsButton.contains( event.target ) ) {
+          return;
+        }
+        setDrawerPopoverOpen( false );
+      }
+      if ( state.uploadMenuOpen ) {
+        if ( uploadMenu.contains( event.target ) || plusButton.contains( event.target ) ) {
+          return;
+        }
+        setUploadMenuOpen( false );
+      }
+    } );
+    document.addEventListener( 'keydown', function ( event ) {
+      if ( event.key === 'Escape' ) {
+        if ( state.drawerPopoverOpen ) {
+          setDrawerPopoverOpen( false );
+        }
+        if ( state.uploadMenuOpen ) {
+          setUploadMenuOpen( false );
+        }
+      }
     } );
 
-    var leftPanel = createEl( 'section', { className: 'labassistant-panel' }, [
-      createEl( 'small', { text: 'Loop Input' } ),
-      createEl( 'h2', { text: '提问与解释模式' } ),
-      createEl( 'form', { className: 'labassistant-form' }, [
-        createEl( 'label', {}, [
-          createEl( 'span', { text: '问题' } ),
-          questionInput
+    var mainColumn = createEl( 'div', { className: 'labassistant-main-column' }, [
+      header,
+      settingsPanel,
+      transcript,
+      composer
+    ] );
+
+    if ( variant === 'special' ) {
+      var infoPanel = createEl( 'aside', { className: 'labassistant-special-aside' }, [
+        createEl( 'section', { className: 'labassistant-aside-card' }, [
+          createEl( 'small', { text: 'Workspace' } ),
+          createEl( 'h3', { text: '高级工作台' } ),
+          createEl( 'p', { text: '这里保留完整会话、模型选择和当前页面上下文设置，适合重度使用和调试。' } )
         ] ),
-        createEl( 'div', { className: 'labassistant-form-row' }, [
-          createEl( 'label', {}, [
-            createEl( 'span', { text: '模式' } ),
-            modeSelect
-          ] ),
-          createEl( 'label', {}, [
-            createEl( 'span', { text: '解释层级' } ),
-            detailSelect
-          ] ),
-          createEl( 'label', {}, [
-            createEl( 'span', { text: '关联页面' } ),
-            contextInput
-          ] )
-        ] ),
-        createEl( 'div', { className: 'labassistant-toolbar' }, [
-          createEl( 'span', { className: 'labassistant-status-note', text: '内部会先查站内页面、Cargo 和术语，再视证据情况扩到文献、外部学术来源与分析工具。' } ),
-          createEl( 'div', { className: 'labassistant-button-row' }, [ submitButton, resetButton ] )
+        createEl( 'section', { className: 'labassistant-aside-card' }, [
+          createEl( 'small', { text: 'Context' } ),
+          createEl( 'h3', { text: '当前页面' } ),
+          createEl( 'p', { text: config.currentTitle || '无' } )
         ] )
-      ] )
-    ] );
+      ] );
+      root.appendChild( createEl( 'div', { className: 'labassistant-special-layout' }, [
+        mainColumn,
+        infoPanel
+      ] ) );
+    } else {
+      root.appendChild( mainColumn );
+    }
 
-    var rightPanel = createEl( 'div', { className: 'labassistant-answer' }, [
-      createEl( 'section', { className: 'labassistant-panel' }, [
-        createEl( 'small', { text: 'Step Stream' } ),
-        createEl( 'h2', { text: '可视化步骤流' } ),
-        stepContainer
-      ] ),
-      createEl( 'section', { className: 'labassistant-panel' }, [
-        createEl( 'small', { text: 'Result' } ),
-        createEl( 'h2', { text: '回答、证据与草稿' } ),
-        resultContainer
-      ] )
-    ] );
+    refreshLayoutState();
+    refreshSessionBadge();
+    refreshContextBadge();
+    renderAttachments();
+    renderTranscript();
+    resizeQuestionInput();
+    refreshComposerState();
 
-    app.appendChild( createEl( 'div', { className: 'labassistant-grid' }, [ leftPanel, rightPanel ] ) );
-    root.appendChild( app );
+    if ( consumedDraftHandoff && consumedDraftHandoff.content ) {
+      if ( fillEditorWithText( null, consumedDraftHandoff.content, null ) ) {
+        state.sourceEditNotice = '已从可视化编辑页带入草稿，页面尚未保存。';
+        renderTranscript();
+      }
+    }
+
+    loadModelCatalog( apiBase, false ).then( function ( body ) {
+      state.modelCatalog = body;
+      if ( !state.selectedModel ) {
+        state.selectedModel = body.default_model;
+      }
+      if ( !state.selectedFamily ) {
+        state.selectedFamily = inferFamily( state.selectedModel || body.default_model );
+      }
+      refreshModelSelectors();
+    } ).catch( function ( error ) {
+      console.warn( error );
+      modelBadge.textContent = '模型：目录读取失败';
+    } );
+
+    if ( state.sessionId ) {
+      loadSession( apiBase, state.sessionId ).then( function ( body ) {
+        state.turns = body.turns || [];
+        if ( body.model_info ) {
+          syncSelectedModelFromInfo( body.model_info );
+          refreshModelSelectors();
+          refreshModelBadge( body.model_info );
+        }
+        renderTranscript();
+      } ).catch( function () {
+        state.sessionId = null;
+        clearAssistantLocalState();
+        localStorage.setItem( HOST_STORAGE_KEY, window.location.host );
+        refreshSessionBadge();
+      } );
+    }
+
+    return {
+      root: root,
+      setQuestion: function ( text ) {
+        questionInput.value = text || '';
+        resizeQuestionInput();
+        refreshComposerState();
+        questionInput.focus();
+      }
+    };
   }
 
-  if ( document.readyState === 'loading' ) {
-    document.addEventListener( 'DOMContentLoaded', mountApp );
-  } else {
-    mountApp();
+  function createDrawer( config ) {
+    if ( !syncHostScopedState() ) {
+      return null;
+    }
+    syncModelPreferenceVersion();
+
+    var root = document.getElementById( DRAWER_ROOT_ID );
+    if ( root ) {
+      return root.__labassistantController;
+    }
+
+    var backdrop = createEl( 'div', { className: 'labassistant-drawer-backdrop', hidden: 'hidden' } );
+    var container = createEl( 'div', {
+      id: DRAWER_ROOT_ID,
+      className: 'labassistant-drawer-shell',
+      hidden: 'hidden'
+    } );
+
+    function close() {
+      backdrop.hidden = true;
+      container.hidden = true;
+      document.body.classList.remove( 'labassistant-drawer-open' );
+    }
+
+    function open() {
+      backdrop.hidden = false;
+      container.hidden = false;
+      document.body.classList.add( 'labassistant-drawer-open' );
+    }
+
+    backdrop.addEventListener( 'click', close );
+    document.addEventListener( 'keydown', function ( event ) {
+      if ( event.key === 'Escape' && !container.hidden ) {
+        close();
+      }
+    } );
+
+    var workspace = createWorkspace( config, {
+      variant: 'drawer',
+      onClose: close
+    } );
+    container.appendChild( workspace.root );
+    document.body.appendChild( backdrop );
+    document.body.appendChild( container );
+
+    var controller = {
+      open: open,
+      close: close,
+      setQuestion: function ( text ) {
+        workspace.setQuestion( text );
+      }
+    };
+    container.__labassistantController = controller;
+    return controller;
   }
+
+  function mountSpecial( root, config ) {
+    if ( !syncHostScopedState() ) {
+      return;
+    }
+    syncModelPreferenceVersion();
+    if ( root.dataset.labassistantMounted === 'true' ) {
+      return;
+    }
+    clearNode( root );
+    var workspace = createWorkspace( config, { variant: 'special' } );
+    root.appendChild( workspace.root );
+    root.dataset.labassistantMounted = 'true';
+  }
+
+  mw.labassistantUI = {
+    mountDrawer: function ( container, config ) {
+      var controller = createDrawer( config );
+      if ( !controller ) {
+        return {
+          open: function () {},
+          close: function () {}
+        };
+      }
+      return controller;
+    },
+    mountSpecial: mountSpecial
+  };
 }() );
-

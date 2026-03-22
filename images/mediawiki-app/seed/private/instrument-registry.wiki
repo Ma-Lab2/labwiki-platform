@@ -1,20 +1,22 @@
 <!-- LABWIKI_MANAGED_PAGE:PRIVATE_INSTRUMENT_REGISTRY -->
 = 仪器台账 =
 
-== 仪器列表 ==
-{| class="wikitable"
-! 仪器
-! 位置
-! 负责人
-! 状态
-! 最近维护
-|-
-| 
-| 
-| 
-| 
-| 
-|}
+本页现在优先展示 `Cargo` 中的结构化设备条目，不再只保留一张手填空表。
+
+== 快速入口 ==
+* [[设备条目索引]]
+* [[Form:设备条目]]
+* [[Laser:激光系统总览]]
+* [[TargetArea:靶场总览]]
+* [[Control:控制与运行总览]]
+
+== 当前结构化设备 ==
+{{#cargo_query:
+tables=lab_devices
+|fields=Page=页面,device_name=设备名称,system_group=系统归属,key_parameters=关键参数,purpose=用途
+|format=table
+|limit=200
+}}
 
 == 维护记录 ==
 * 在这里追加维护、报修和校准记录入口

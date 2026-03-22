@@ -3,6 +3,8 @@
 ## Project Structure & Module Organization
 This repository is currently plan-first: [`plan.md`](/mnt/c/Songtan/课题组wiki/plan.md) is the source of truth for the MediaWiki deployment design. The planned implementation is a Docker Compose stack with top-level files such as `compose.yaml`, `compose.override.yaml`, `.env.example`, and `README.md`. Keep runtime image code under `images/mediawiki-app/`, operational config under `ops/` (`caddy/`, `db-init/`, `scripts/`), persistent wiki state under `state/` and `uploads/`, and backups under `backups/`. Treat `secrets/` and `state/*/LocalSettings.php` as local-only, never versioned assets.
 
+For implementation-oriented navigation, prefer `docs/agent/README.md` before drilling into subsystem code. That document set is the current maintenance map for coding agents.
+
 ## Build, Test, and Development Commands
 Use Docker Compose as the primary workflow:
 

@@ -22,12 +22,14 @@ def prepare_draft_preview(
     question: str,
     answer: str,
     source_titles: list[str],
+    conversation_history: list[dict[str, str]] | None = None,
 ) -> dict[str, object]:
     draft = llm.draft_from_answer(
         question=question,
         answer=answer,
         source_titles=source_titles,
         draft_prefix=settings.draft_prefix,
+        conversation_history=conversation_history or [],
     )
     title = _sanitize_title(draft["title"])
     target_page = f"{settings.draft_prefix}/{title}"
@@ -49,6 +51,7 @@ def create_draft_preview(
     question: str,
     answer: str,
     source_titles: list[str],
+    conversation_history: list[dict[str, str]] | None = None,
 ) -> DraftPreview:
     prepared = prepare_draft_preview(
         settings,
@@ -56,6 +59,7 @@ def create_draft_preview(
         question=question,
         answer=answer,
         source_titles=source_titles,
+        conversation_history=conversation_history or [],
     )
     return save_draft_preview(
         db,

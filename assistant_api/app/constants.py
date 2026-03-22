@@ -22,13 +22,16 @@ class TaskType(str, Enum):
     LEARNING_PATH = "learning_path"
     TOOL_WORKFLOW = "tool_workflow"
     DRAFT = "draft"
+    WRITE_ACTION = "write_action"
 
 
 class SourceType(str, Enum):
+    ATTACHMENT = "attachment"
     CARGO = "cargo"
     WIKI = "wiki"
     ZOTERO = "zotero"
     OPENALEX = "openalex"
+    WEB = "web"
     TOOL = "tool"
     CONTEXT = "context"
 
@@ -44,4 +47,4 @@ READ_ONLY_TOOL_ACTIONS: dict[ToolName, set[str]] = {
 }
 
 
-STRUCTURED_SOURCE_TYPES = {SourceType.CARGO.value, SourceType.WIKI.value, SourceType.ZOTERO.value}
+STRUCTURED_SOURCE_TYPES = {SourceType.CARGO.value, SourceType.WIKI.value}

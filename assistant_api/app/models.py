@@ -7,6 +7,11 @@ from pgvector.sqlalchemy import Vector
 from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
+from .config import get_settings
+
+
+EMBEDDING_DIMENSIONS = get_settings().embedding_dimensions
+
 
 class Base(DeclarativeBase):
     pass
@@ -18,6 +23,9 @@ class AssistantSession(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     user_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     current_page: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    generation_provider: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    generation_model: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    generation_fallback_model: Mapped[str | None] = mapped_column(String(255), nullable=True)
     last_stage: Mapped[str | None] = mapped_column(String(64), nullable=True)
     step_count: Mapped[int] = mapped_column(Integer, default=0)
     confidence: Mapped[float | None] = mapped_column(nullable=True)
@@ -37,7 +45,12 @@ class AssistantTurn(Base):
     task_type: Mapped[str] = mapped_column(String(64), default="concept")
     answer: Mapped[str | None] = mapped_column(Text, nullable=True)
     step_stream: Mapped[list | dict | None] = mapped_column(JSON, nullable=True)
+    action_trace: Mapped[list | dict | None] = mapped_column(JSON, nullable=True)
     sources: Mapped[list | dict | None] = mapped_column(JSON, nullable=True)
+    draft_preview: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    write_preview: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    write_result: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    model_info: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     unresolved_gaps: Mapped[list | dict | None] = mapped_column(JSON, nullable=True)
     suggested_followups: Mapped[list | dict | None] = mapped_column(JSON, nullable=True)
     confidence: Mapped[float | None] = mapped_column(nullable=True)
@@ -73,7 +86,7 @@ class DocumentChunk(Base):
     heading: Mapped[str | None] = mapped_column(String(255), nullable=True)
     content: Mapped[str] = mapped_column(Text)
     snippet: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    embedding: Mapped[list[float] | None] = mapped_column(Vector(1536), nullable=True)
+    embedding: Mapped[list[float] | None] = mapped_column(Vector(EMBEDDING_DIMENSIONS), nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     document: Mapped["Document"] = relationship(back_populates="chunks")
 
@@ -113,4 +126,3 @@ class AuditLog(Base):
     action_type: Mapped[str] = mapped_column(String(64), index=True)
     payload: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-

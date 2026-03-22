@@ -21,6 +21,18 @@ def init_database() -> None:
     except Exception:
         pass
     Base.metadata.create_all(bind=engine)
+    try:
+        with engine.begin() as connection:
+            connection.execute(text("ALTER TABLE assistant_sessions ADD COLUMN IF NOT EXISTS generation_provider VARCHAR(64)"))
+            connection.execute(text("ALTER TABLE assistant_sessions ADD COLUMN IF NOT EXISTS generation_model VARCHAR(255)"))
+            connection.execute(text("ALTER TABLE assistant_sessions ADD COLUMN IF NOT EXISTS generation_fallback_model VARCHAR(255)"))
+            connection.execute(text("ALTER TABLE assistant_turns ADD COLUMN IF NOT EXISTS action_trace JSON"))
+            connection.execute(text("ALTER TABLE assistant_turns ADD COLUMN IF NOT EXISTS draft_preview JSON"))
+            connection.execute(text("ALTER TABLE assistant_turns ADD COLUMN IF NOT EXISTS write_preview JSON"))
+            connection.execute(text("ALTER TABLE assistant_turns ADD COLUMN IF NOT EXISTS write_result JSON"))
+            connection.execute(text("ALTER TABLE assistant_turns ADD COLUMN IF NOT EXISTS model_info JSON"))
+    except Exception:
+        pass
 
 
 @contextmanager
