@@ -28,6 +28,31 @@ class MediaWikiClient:
         self.csrf_token: str | None = None
         self.logged_in = False
 
+    def _reset_auth_state(self) -> None:
+        self.client.cookies.clear()
+        self.csrf_token = None
+        self.logged_in = False
+
+    @staticmethod
+    def _error_code(payload: dict[str, Any]) -> str:
+        error = payload.get("error") if isinstance(payload, dict) else None
+        if not isinstance(error, dict):
+            return ""
+        return str(error.get("code") or "").strip().lower()
+
+    def _perform_csrf_action(self, operation) -> dict[str, Any]:
+        self.login()
+        if not self.csrf_token:
+            raise RuntimeError("CSRF token not available")
+        payload = operation()
+        if self._error_code(payload) == "badtoken":
+            self._reset_auth_state()
+            self.login()
+            if not self.csrf_token:
+                raise RuntimeError("CSRF token not available")
+            payload = operation()
+        return payload
+
     def _request_headers(self) -> dict[str, str] | None:
         if not self.settings.wiki_api_host_header:
             return None
@@ -153,13 +178,50 @@ class MediaWikiClient:
         return data.get("cargoquery", [])
 
     def edit_page(self, title: str, text: str, summary: str) -> dict[str, Any]:
-        self.login()
-        if not self.csrf_token:
-            raise RuntimeError("CSRF token not available")
-        return self._post({
+        payload = self._perform_csrf_action(lambda: self._post({
             "action": "edit",
             "title": title,
             "text": text,
             "summary": summary,
             "token": self.csrf_token,
-        })
+        }))
+        if self._error_code(payload):
+            raise RuntimeError(f"MediaWiki edit failed: {payload}")
+        return payload
+
+    def upload_file(
+        self,
+        filename: str,
+        content: bytes,
+        comment: str,
+        *,
+        content_type: str | None = None,
+    ) -> dict[str, Any]:
+        def _send() -> dict[str, Any]:
+            response = self.client.post(
+                self.settings.wiki_api_url,
+                data={
+                    "format": "json",
+                    "action": "upload",
+                    "filename": filename,
+                    "comment": comment,
+                    "ignorewarnings": 1,
+                    "token": self.csrf_token,
+                },
+                files={
+                    "file": (
+                        filename,
+                        content,
+                        content_type or "application/octet-stream",
+                    )
+                },
+                headers=self._request_headers(),
+            )
+            response.raise_for_status()
+            return response.json()
+
+        payload = self._perform_csrf_action(_send)
+        result = payload.get("upload", {}).get("result")
+        if result != "Success":
+            raise RuntimeError(f"MediaWiki upload failed: {payload}")
+        return payload

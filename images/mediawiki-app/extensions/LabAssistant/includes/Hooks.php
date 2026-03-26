@@ -17,6 +17,7 @@ class Hooks {
 			return;
 		}
 
+		$assetEpoch = (string)( $GLOBALS['wgLabAssistantAssetEpoch'] ?? '2026-03-25-pdf-ingest-1' );
 		$out->addModules( [ 'ext.labassistant.shell' ] );
 		$out->addJsConfigVars(
 			'wgLabAssistant',
@@ -26,6 +27,20 @@ class Hooks {
 				RequestContext::getMain()->getRequest(),
 				'drawer'
 			)
+		);
+		$out->addJsConfigVars( 'wgLabAssistantAssetEpoch', $assetEpoch );
+		$out->addInlineScript( self::buildAssetEpochBootstrap( $assetEpoch ) );
+	}
+
+	private static function buildAssetEpochBootstrap( string $assetEpoch ): string {
+		$storeKey = 'MediaWikiModuleStore:' . ( $GLOBALS['wgDBname'] ?? 'labwiki' );
+		$epochKey = 'labassistant-asset-epoch::' . ( $GLOBALS['wgDBname'] ?? 'labwiki' );
+
+		return sprintf(
+			'(function(){try{if(!window.localStorage){return;}var epoch=%s;var epochKey=%s;var storeKey=%s;var previousEpoch=localStorage.getItem(epochKey);if(previousEpoch===epoch){return;}localStorage.removeItem(storeKey);localStorage.setItem(epochKey,epoch);}catch(e){}}());',
+			json_encode( $assetEpoch, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ),
+			json_encode( $epochKey, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ),
+			json_encode( $storeKey, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES )
 		);
 	}
 }

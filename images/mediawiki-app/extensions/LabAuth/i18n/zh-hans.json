@@ -1,0 +1,13 @@
+{
+  "@metadata": {
+    "authors": [
+      "OpenAI Codex"
+    ]
+  },
+  "labauth-desc": "为私有 Wiki 提供实验室登录、自助注册审核和账户管理后台。",
+  "labauth-login": "实验室登录",
+  "labauth-signup": "学生注册",
+  "labauth-admin": "账户管理后台",
+  "right-manage-lab-accounts": "管理学生注册申请和实验室账户",
+  "action-manage-lab-accounts": "管理实验室账户"
+}

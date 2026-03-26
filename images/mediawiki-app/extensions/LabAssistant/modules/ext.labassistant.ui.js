@@ -7,9 +7,35 @@
   var MODEL_PREF_VERSION = '2026-03-20-drawer-chat-1';
   var DRAWER_ROOT_ID = 'labassistant-drawer-root';
   var DRAFT_HANDOFF_FALLBACK_PREFIX = 'labassistant-draft-handoff::';
+  var SUBMISSION_GUIDANCE_FALLBACK_PREFIX = 'labassistant-submission-guidance::';
 
   function getEditorUtils() {
     return window.LabAssistantEditorUtils || ( window.mw && mw.labassistantEditorUtils ) || null;
+  }
+
+  function getShellUtils() {
+    return window.LabAssistantShellUtils || ( window.mw && mw.labassistantShellUtils ) || null;
+  }
+
+  function getAttachmentUtils() {
+    return window.LabAssistantAttachmentUtils || ( window.mw && mw.labassistantAttachmentUtils ) || null;
+  }
+
+  function getSessionExportUtils() {
+    return window.LabAssistantSessionExportUtils || ( window.mw && mw.labassistantSessionExportUtils ) || null;
+  }
+
+  function getPdfIngestUtils() {
+    return window.LabAssistantPdfIngestUtils || ( window.mw && mw.labassistantPdfIngestUtils ) || null;
+  }
+
+  function dispatchPdfReaderOpen( detail ) {
+    if ( typeof window === 'undefined' || typeof window.CustomEvent !== 'function' ) {
+      return;
+    }
+    window.dispatchEvent( new CustomEvent( 'labassistant:open-pdf-reader', {
+      detail: detail || {}
+    } ) );
   }
 
   function getDraftHandoffKey( title, host ) {
@@ -18,6 +44,14 @@
       return editorUtils.buildDraftHandoffStorageKey( title, host );
     }
     return DRAFT_HANDOFF_FALLBACK_PREFIX + String( host || '' ) + '::' + String( title || '' );
+  }
+
+  function getSubmissionGuidanceKey( title, host ) {
+    var editorUtils = getEditorUtils();
+    if ( editorUtils && editorUtils.buildSubmissionGuidanceStorageKey ) {
+      return editorUtils.buildSubmissionGuidanceStorageKey( title, host );
+    }
+    return SUBMISSION_GUIDANCE_FALLBACK_PREFIX + String( host || '' ) + '::' + String( title || '' );
   }
 
   function createEl( tag, attrs, children ) {
@@ -554,9 +588,16 @@
       suggested_followups: turn.suggested_followups || [],
       action_trace: turn.action_trace || [],
       draft_preview: turn.draft_preview || null,
+      draft_commit_result: turn.draft_commit_result || null,
       write_preview: turn.write_preview || null,
       write_result: turn.write_result || null,
-      model_info: turn.model_info || null
+      result_fill: turn.result_fill || null,
+      pdf_ingest_review: turn.pdf_ingest_review || null,
+      pdf_control_preview: turn.pdf_control_preview || null,
+      pdf_control_commit_result: turn.pdf_control_commit_result || null,
+      model_info: turn.model_info || null,
+      form_fill_notice: turn.form_fill_notice || '',
+      editor_fill_notice: turn.editor_fill_notice || ''
     };
   }
 
@@ -657,6 +698,23 @@
     } );
   }
 
+  function loadSessionHistory( apiBase, userName ) {
+    var url = apiBase + '/sessions';
+    if ( userName ) {
+      url += '?user_name=' + encodeURIComponent( userName );
+    }
+    return fetch( url, {
+      credentials: 'same-origin'
+    } ).then( function ( response ) {
+      return response.json().then( function ( body ) {
+        if ( !response.ok ) {
+          throw new Error( body.detail || '历史会话读取失败' );
+        }
+        return body;
+      } );
+    } );
+  }
+
   function loadModelCatalog( apiBase, includeAll ) {
     var suffix = includeAll ? '?include_all=true' : '';
     return fetch( apiBase + '/models/catalog' + suffix, {
@@ -681,6 +739,119 @@
       return response.json().then( function ( body ) {
         if ( !response.ok ) {
           throw new Error( body.detail || '模型切换失败' );
+        }
+        return body;
+      } );
+    } );
+  }
+
+  function parseDownloadFilename( headerValue ) {
+    var match;
+    if ( !headerValue ) {
+      return '';
+    }
+    match = /filename\*=UTF-8''([^;]+)/i.exec( headerValue );
+    if ( match && match[ 1 ] ) {
+      try {
+        return decodeURIComponent( match[ 1 ] );
+      } catch ( error ) {
+        return match[ 1 ];
+      }
+    }
+    match = /filename="?([^\";]+)"?/i.exec( headerValue );
+    return match && match[ 1 ] ? match[ 1 ] : '';
+  }
+
+  function downloadSessionMarkdown( apiBase, sessionItem, userName ) {
+    var exportUtils = getSessionExportUtils();
+    var url = apiBase + '/session/' + encodeURIComponent( sessionItem.session_id ) + '/export.md';
+    if ( userName ) {
+      url += '?user_name=' + encodeURIComponent( userName );
+    }
+    return fetch( url, {
+      credentials: 'same-origin'
+    } ).then( function ( response ) {
+      if ( !response.ok ) {
+        return response.text().then( function ( body ) {
+          try {
+            var parsed = JSON.parse( body || '{}' );
+            throw new Error( parsed.detail || 'Markdown 导出失败' );
+          } catch ( error ) {
+            if ( error && error.message && error.message !== 'Unexpected end of JSON input' ) {
+              throw error;
+            }
+            throw new Error( body || 'Markdown 导出失败' );
+          }
+        } );
+      }
+      return response.blob().then( function ( blob ) {
+        var filename = parseDownloadFilename( response.headers.get( 'content-disposition' ) ) ||
+          ( exportUtils && exportUtils.buildSessionExportFileName ?
+            exportUtils.buildSessionExportFileName( sessionItem ) :
+            'labassistant-session.md' );
+        var objectUrl = URL.createObjectURL( blob );
+        var anchor = createEl( 'a', {
+          href: objectUrl,
+          download: filename
+        } );
+        document.body.appendChild( anchor );
+        anchor.click();
+        anchor.remove();
+        setTimeout( function () {
+          URL.revokeObjectURL( objectUrl );
+        }, 0 );
+        return filename;
+      } );
+    } );
+  }
+
+  function requestPdfDraftPreview( apiBase, payload ) {
+    return fetch( apiBase + '/pdf/draft/preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify( payload )
+    } ).then( function ( response ) {
+      return response.json().then( function ( body ) {
+        if ( !response.ok ) {
+          throw new Error( body.detail || 'PDF 草稿预览生成失败' );
+        }
+        return body;
+      } );
+    } );
+  }
+
+  function requestPdfControlPreview( apiBase, payload ) {
+    return fetch( apiBase + '/pdf/control/preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify( payload )
+    } ).then( function ( response ) {
+      return response.json().then( function ( body ) {
+        if ( !response.ok ) {
+          throw new Error( body.detail || 'Control 正式写入预览生成失败' );
+        }
+        var ingestUtils = getPdfIngestUtils();
+        return ingestUtils && ingestUtils.normalizePdfControlPreview ?
+          ingestUtils.normalizePdfControlPreview( body ) :
+          body;
+      } );
+    } );
+  }
+
+  function commitPdfControlPreview( apiBase, previewId ) {
+    return fetch( apiBase + '/pdf/control/commit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify( {
+        preview_id: previewId
+      } )
+    } ).then( function ( response ) {
+      return response.json().then( function ( body ) {
+        if ( !response.ok ) {
+          throw new Error( body.detail || 'Control 正式写入失败' );
         }
         return body;
       } );
@@ -881,6 +1052,9 @@
 
   function buildFormSuggestionMap(result) {
     var editorUtils = getEditorUtils();
+    if ( result.result_fill && result.result_fill.field_suggestions ) {
+      return result.result_fill.field_suggestions;
+    }
     if ( result.write_preview && result.write_preview.structured_fields ) {
       return result.write_preview.structured_fields;
     }
@@ -899,16 +1073,87 @@
   }
 
   function buildFormMissingFields(result) {
+    return buildFormMissingDetails( result ).map( function ( entry ) {
+      return entry.label;
+    } );
+  }
+
+  function buildFormMissingDetails(result) {
     var editorUtils = getEditorUtils();
+    if ( result.result_fill && Array.isArray( result.result_fill.missing_items ) ) {
+      if ( editorUtils && editorUtils.normalizeMissingItemEntries ) {
+        return editorUtils.normalizeMissingItemEntries( result.result_fill.missing_items );
+      }
+      if ( editorUtils && editorUtils.normalizeFieldLabels ) {
+        return editorUtils.normalizeFieldLabels( result.result_fill.missing_items ).map( function ( label ) {
+          return { label: label, reason: '', evidence: [] };
+        } );
+      }
+      return result.result_fill.missing_items.map( function ( label ) {
+        return { label: label, reason: '', evidence: [] };
+      } );
+    }
     if ( editorUtils && editorUtils.parseMissingFields ) {
-      return editorUtils.parseMissingFields(
+      var parsedMissingFields = editorUtils.parseMissingFields(
         result.answer ||
         ( result.write_preview && result.write_preview.preview_text ) ||
         ( result.draft_preview && result.draft_preview.content ) ||
         ''
       );
+      if ( editorUtils.normalizeMissingItemEntries ) {
+        return editorUtils.normalizeMissingItemEntries( parsedMissingFields );
+      }
+      if ( editorUtils.normalizeFieldLabels ) {
+        return editorUtils.normalizeFieldLabels( parsedMissingFields ).map( function ( label ) {
+          return { label: label, reason: '', evidence: [] };
+        } );
+      }
+      return parsedMissingFields.map( function ( label ) {
+        return { label: label, reason: '', evidence: [] };
+      } );
     }
     return [];
+  }
+
+  function extractEmbeddedShotTitle( value ) {
+    var match = String( value || '' ).match( /(Shot:[^/]+)$/i );
+    return match ? match[ 1 ] : '';
+  }
+
+  function extractEmbeddedFormName( value ) {
+    var editorUtils = getEditorUtils();
+    if ( editorUtils && editorUtils.extractFormNameFromTitle ) {
+      return editorUtils.extractFormNameFromTitle( value );
+    }
+    var match = String( value || '' ).match( /编辑表格\/([^/]+)/ );
+    return match ? match[ 1 ] : '';
+  }
+
+  function resolveEffectiveContextTitle( rawContextTitle, config ) {
+    var explicit = String( rawContextTitle || '' ).trim();
+    var defaultTitle = String( ( config && config.defaultContextTitle ) || '' ).trim();
+    var currentTitle = String( ( config && config.currentTitle ) || '' ).trim();
+    if ( explicit ) {
+      return explicit;
+    }
+    if ( defaultTitle ) {
+      return defaultTitle;
+    }
+    if ( /^Shot:/i.test( currentTitle ) ) {
+      return currentTitle;
+    }
+    return extractEmbeddedShotTitle( currentTitle ) || currentTitle;
+  }
+
+  function inferWorkflowHint( question, contextTitle, attachments ) {
+    var title = String( contextTitle || '' );
+    var hasImage = ( attachments || [] ).some( function ( item ) {
+      return item.kind === 'image' || String( item.mime_type || '' ).indexOf( 'image/' ) === 0;
+    } );
+    if ( !/^Shot:/i.test( title ) || !hasImage ) {
+      return null;
+    }
+    return 'shot_result_fill';
   }
 
   function buildDraftHandoffPayload(config, result, content) {
@@ -946,10 +1191,21 @@
   }
 
   function createWorkspace( config, options ) {
-    var apiBase = config.apiBase || '/tools/assistant/api';
-    var variant = options.variant || 'drawer';
+    var attachmentUtils = getAttachmentUtils();
+    var apiBase = attachmentUtils && attachmentUtils.resolveApiBase ?
+      attachmentUtils.resolveApiBase( config.apiBase || '/tools/assistant/api', window.location ) :
+      ( config.apiBase || '/tools/assistant/api' );
+    var variant = options.variant || 'plugin';
+    var shellUtils = getShellUtils();
+    var compactWorkspace = shellUtils && shellUtils.isCompactWorkspaceVariant ?
+      shellUtils.isCompactWorkspaceVariant( variant ) :
+      ( variant === 'drawer' || variant === 'plugin' || variant === 'mobile-sheet' );
     var editorUtils = getEditorUtils();
     var editorMode = editorUtils && editorUtils.detectEditorMode ? editorUtils.detectEditorMode( config ) : ( config.editorMode || 'default' );
+    if ( editorMode === 'default' && findPageFormRoot() ) {
+      editorMode = 'pageforms_edit';
+    }
+    var resolvedFormName = ( config.formContext && config.formContext.formName ) || extractEmbeddedFormName( config.currentTitle ) || '';
     var editorTextarea = document.getElementById( 'wpTextbox1' );
     var pageFormFields = editorMode === 'pageforms_edit' ? collectPageFormFields() : [];
     var consumedDraftHandoff = editorMode === 'source_edit' ? consumeDraftHandoff( config.defaultContextTitle || config.currentTitle || '' ) : null;
@@ -964,11 +1220,42 @@
       pendingQuestion: '',
       currentResult: null,
       showSettings: false,
+      historyOpen: false,
+      historySessions: [],
+      historyLoaded: false,
+      historyLoading: false,
+      historyQuery: '',
+      historyError: '',
+      historyNotice: '',
+      historyExportingSessionId: '',
       drawerPopoverOpen: false,
       uploadMenuOpen: false,
       renderTimer: null,
       sourceEditNotice: consumedDraftHandoff ? '已从上一页带入待填草稿，页面尚未保存。' : ''
     };
+
+    function getPageFormRuntimeContext() {
+      if ( editorUtils && editorUtils.resolvePageFormRuntimeContext ) {
+        var runtimeContext = editorUtils.resolvePageFormRuntimeContext( {
+          editorMode: editorMode,
+          resolvedFormName: resolvedFormName,
+          pageFormFields: pageFormFields,
+          currentTitle: config.currentTitle,
+          formContext: config.formContext,
+          hasPageFormRoot: !!findPageFormRoot(),
+          collectPageFormFields: collectPageFormFields
+        } );
+        editorMode = runtimeContext.editorMode;
+        resolvedFormName = runtimeContext.resolvedFormName;
+        pageFormFields = runtimeContext.pageFormFields;
+      }
+
+      return {
+        editorMode: editorMode,
+        resolvedFormName: resolvedFormName,
+        pageFormFields: pageFormFields
+      };
+    }
 
     var root = createEl( 'div', {
       className: 'labassistant-workspace is-' + variant
@@ -978,7 +1265,7 @@
       'aria-live': 'polite'
     } );
     var sessionBadge = createEl( 'span', { className: 'labassistant-pill', text: '会话：新会话' } );
-    var contextBadge = variant === 'drawer' ? null : createEl( 'span', {
+    var contextBadge = compactWorkspace ? null : createEl( 'span', {
       className: 'labassistant-pill labassistant-pill-soft',
       text: '上下文：未绑定页面'
     } );
@@ -1000,7 +1287,7 @@
     var contextInput = createEl( 'input', {
       type: 'text',
       placeholder: '可选：Theory:RPA / Shot:2026-03-14-Run01-Shot001',
-      value: config.defaultContextTitle || ''
+      value: config.defaultContextTitle || extractEmbeddedShotTitle( config.currentTitle ) || ''
     } );
     var familySelect = createEl( 'select' );
     var modelSelect = createEl( 'select' );
@@ -1053,6 +1340,11 @@
       className: 'labassistant-send-button',
       text: '发送'
     } );
+    var historyButton = createEl( 'button', {
+      type: 'button',
+      className: 'labassistant-toolbar-button',
+      text: '历史'
+    } );
     var resetButton = createEl( 'button', {
       type: 'button',
       className: 'labassistant-toolbar-button',
@@ -1066,7 +1358,7 @@
     var closeButton = options.onClose ? createEl( 'button', {
       type: 'button',
       className: 'labassistant-toolbar-button',
-      text: '收起'
+      text: options.closeLabel || '收起'
     } ) : null;
 
     if ( config.seedQuestion ) {
@@ -1120,7 +1412,7 @@
       hidden: 'hidden'
     } );
 
-    var drawerSettingsPopover = variant === 'drawer' ? createEl( 'section', {
+    var drawerSettingsPopover = compactWorkspace ? createEl( 'section', {
       className: 'labassistant-settings-popover',
       hidden: 'hidden'
     }, [
@@ -1133,8 +1425,35 @@
       ] ),
       buildSettingsGrid( false )
     ] ) : null;
+    var historySearchInput = createEl( 'input', {
+      type: 'search',
+      className: 'labassistant-history-search',
+      placeholder: '搜索页面、问题或会话 ID'
+    } );
+    var historyStatus = createEl( 'div', {
+      className: 'labassistant-history-status',
+      text: '暂无历史会话。'
+    } );
+    var historyList = createEl( 'div', {
+      className: 'labassistant-history-list'
+    } );
+    var historyPanel = createEl( 'section', {
+      className: 'labassistant-history-panel',
+      hidden: 'hidden'
+    }, [
+      createEl( 'div', { className: 'labassistant-history-header' }, [
+        createEl( 'strong', { text: '历史会话 / 导出' } ),
+        createEl( 'span', {
+          className: 'labassistant-status-note',
+          text: '搜索任意历史会话并导出 Markdown。'
+        } )
+      ] ),
+      historySearchInput,
+      historyStatus,
+      historyList
+    ] );
 
-    var headerCopy = variant === 'drawer' ? createEl( 'div', {
+    var headerCopy = compactWorkspace ? createEl( 'div', {
       className: 'labassistant-header-copy is-compact'
     }, [
       createEl( 'h2', { text: '知识助手' } )
@@ -1149,18 +1468,10 @@
     ] );
 
     var toolbarActions = createEl( 'div', { className: 'labassistant-toolbar-actions' }, (
-      variant === 'drawer' ? [
-        settingsButton,
-        resetButton,
-        closeButton
-      ] : [
-        settingsButton,
-        resetButton,
-        closeButton
-      ]
+      compactWorkspace ? [ historyButton, settingsButton, resetButton, closeButton ] : [ historyButton, settingsButton, resetButton, closeButton ]
     ).filter( Boolean ) );
 
-    var headerTools = variant === 'drawer' ? createEl( 'div', {
+    var headerTools = compactWorkspace ? createEl( 'div', {
       className: 'labassistant-toolbar-stack'
     }, [
       toolbarActions,
@@ -1170,6 +1481,13 @@
     var header = createEl( 'header', { className: 'labassistant-header' }, [
       headerCopy,
       headerTools
+    ] );
+    var controlStack = createEl( 'div', {
+      className: 'labassistant-control-stack',
+      hidden: 'hidden'
+    }, [
+      settingsPanel,
+      historyPanel
     ] );
 
     var composerChildren = [
@@ -1224,10 +1542,165 @@
           settingsButton.classList.toggle( 'is-active', state.drawerPopoverOpen );
         }
       }
+      historyPanel.hidden = !state.historyOpen;
+      historyPanel.style.display = state.historyOpen ? 'grid' : 'none';
+      historyButton.classList.toggle( 'is-active', state.historyOpen );
+      controlStack.hidden = !( ( variant === 'special' && state.showSettings ) || state.historyOpen );
+      controlStack.style.display = controlStack.hidden ? 'none' : 'grid';
       if ( uploadMenu ) {
         uploadMenu.hidden = !state.uploadMenuOpen;
         uploadMenu.style.display = state.uploadMenuOpen ? 'grid' : 'none';
       }
+    }
+
+    function formatHistoryTimestamp( value ) {
+      if ( !value ) {
+        return '';
+      }
+      try {
+        var date = new Date( value );
+        if ( isNaN( date.getTime() ) ) {
+          return '';
+        }
+        return date.toLocaleString( 'zh-CN', {
+          hour12: false,
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        } );
+      } catch ( error ) {
+        return '';
+      }
+    }
+
+    function buildActiveHistoryEntry() {
+      var lastTurn = state.turns.length ? state.turns[ state.turns.length - 1 ] : null;
+      if ( !state.sessionId ) {
+        return null;
+      }
+      return {
+        session_id: state.sessionId,
+        current_page: resolveEffectiveContextTitle( contextInput.value, config ) || config.currentTitle || '',
+        latest_question: state.pendingQuestion || ( lastTurn && lastTurn.question ) || '',
+        turn_count: state.turns.length + ( state.pendingQuestion ? 1 : 0 ),
+        updated_at: new Date().toISOString(),
+        synthetic: true
+      };
+    }
+
+    function getHistoryDisplayItems() {
+      var exportUtils = getSessionExportUtils();
+      var items = exportUtils && exportUtils.normalizeSessionHistoryItems ?
+        exportUtils.normalizeSessionHistoryItems( state.historySessions ) :
+        ( state.historySessions || [] ).slice();
+      var activeEntry = buildActiveHistoryEntry();
+      if ( activeEntry && !items.some( function ( item ) {
+        return item.session_id === activeEntry.session_id;
+      } ) ) {
+        items.unshift( activeEntry );
+      }
+      if ( exportUtils && exportUtils.filterSessionHistoryItems ) {
+        return exportUtils.filterSessionHistoryItems( items, state.historyQuery );
+      }
+      return items;
+    }
+
+    function renderHistoryPanel() {
+      var items = getHistoryDisplayItems();
+      if ( historySearchInput.value !== state.historyQuery ) {
+        historySearchInput.value = state.historyQuery;
+      }
+      clearNode( historyList );
+      if ( state.historyLoading ) {
+        historyStatus.textContent = '正在读取历史会话…';
+        historyStatus.className = 'labassistant-history-status';
+        return;
+      }
+      if ( state.historyError ) {
+        historyStatus.textContent = state.historyError;
+        historyStatus.className = 'labassistant-history-status is-error';
+        return;
+      }
+      if ( state.historyNotice ) {
+        historyStatus.textContent = state.historyNotice;
+        historyStatus.className = 'labassistant-history-status is-success';
+      } else if ( !items.length ) {
+        historyStatus.textContent = state.historyQuery ? '没有匹配的历史会话。' : '暂无可导出的历史会话。';
+        historyStatus.className = 'labassistant-history-status';
+      } else {
+        historyStatus.textContent = '共 ' + items.length + ' 条历史会话。';
+        historyStatus.className = 'labassistant-history-status';
+      }
+      items.forEach( function ( item ) {
+        var title = item.current_page || item.latest_question || ( '会话 ' + shortSessionId( item.session_id ) );
+        var metaParts = [];
+        var exportButton = createEl( 'button', {
+          type: 'button',
+          className: 'labassistant-toolbar-button',
+          text: state.historyExportingSessionId === item.session_id ? '导出中…' : '导出 Markdown'
+        } );
+        if ( item.turn_count ) {
+          metaParts.push( '轮次 ' + item.turn_count );
+        }
+        if ( item.updated_at ) {
+          metaParts.push( '更新 ' + formatHistoryTimestamp( item.updated_at ) );
+        }
+        if ( item.session_id === state.sessionId ) {
+          metaParts.push( '当前会话' );
+        }
+        exportButton.disabled = state.historyExportingSessionId === item.session_id;
+        exportButton.addEventListener( 'click', function () {
+          state.historyExportingSessionId = item.session_id;
+          state.historyNotice = '';
+          state.historyError = '';
+          renderHistoryPanel();
+          downloadSessionMarkdown( apiBase, item, config.userName || '' ).then( function ( filename ) {
+            state.historyNotice = '已开始下载：' + filename;
+          } ).catch( function ( error ) {
+            state.historyError = error.message || 'Markdown 导出失败';
+          } ).finally( function () {
+            state.historyExportingSessionId = '';
+            renderHistoryPanel();
+          } );
+        } );
+        historyList.appendChild( createEl( 'article', {
+          className: 'labassistant-history-item'
+        }, [
+          createEl( 'div', { className: 'labassistant-history-copy' }, [
+            createEl( 'strong', { text: title } ),
+            item.current_page && item.latest_question ? createEl( 'span', {
+              className: 'labassistant-history-subtitle',
+              text: item.latest_question
+            } ) : null,
+            createEl( 'span', {
+              className: 'labassistant-history-meta',
+              text: metaParts.join( ' · ' )
+            } )
+          ] ),
+          exportButton
+        ] ) );
+      } );
+    }
+
+    function ensureHistorySessionsLoaded() {
+      if ( state.historyLoading || state.historyLoaded ) {
+        renderHistoryPanel();
+        return Promise.resolve();
+      }
+      state.historyLoading = true;
+      state.historyError = '';
+      state.historyNotice = '';
+      renderHistoryPanel();
+      return loadSessionHistory( apiBase, config.userName || '' ).then( function ( body ) {
+        state.historySessions = body.sessions || [];
+        state.historyLoaded = true;
+      } ).catch( function ( error ) {
+        state.historyError = error.message || '历史会话读取失败';
+      } ).finally( function () {
+        state.historyLoading = false;
+        renderHistoryPanel();
+      } );
     }
 
     function buildTranscriptItems() {
@@ -1293,13 +1766,14 @@
     }
 
     function refreshContextBadge() {
-      var contextTitle = contextInput.value.trim();
+      var contextTitle = resolveEffectiveContextTitle( contextInput.value, config );
+      var explicitContext = contextInput.value.trim();
       if ( contextBadge ) {
         contextBadge.textContent = contextTitle ? ( '上下文：' + contextTitle ) : '上下文：未绑定页面';
       }
       composerContextHint.textContent = contextTitle ? ( '当前页：' + contextTitle ) : '当前页：自动识别';
       if ( contextSummary ) {
-        contextSummary.textContent = contextTitle || '自动跟随当前页面';
+        contextSummary.textContent = explicitContext || contextTitle || '自动跟随当前页面';
         contextSummary.title = contextTitle || '';
       }
       if ( !state.turns.length && !state.pendingQuestion ) {
@@ -1324,20 +1798,35 @@
     }
 
     function setDrawerPopoverOpen( nextState ) {
-      if ( variant !== 'drawer' ) {
+      if ( !compactWorkspace ) {
         return;
       }
       state.drawerPopoverOpen = nextState;
       if ( nextState ) {
         state.uploadMenuOpen = false;
+        state.historyOpen = false;
       }
       refreshLayoutState();
+    }
+
+    function setHistoryOpen( nextState ) {
+      state.historyOpen = !!nextState;
+      if ( state.historyOpen ) {
+        state.uploadMenuOpen = false;
+        if ( compactWorkspace ) {
+          state.drawerPopoverOpen = false;
+        }
+        ensureHistorySessionsLoaded();
+      }
+      refreshLayoutState();
+      renderHistoryPanel();
     }
 
     function setUploadMenuOpen( nextState ) {
       state.uploadMenuOpen = nextState;
       if ( nextState ) {
         state.drawerPopoverOpen = false;
+        state.historyOpen = false;
       }
       refreshLayoutState();
     }
@@ -1430,6 +1919,42 @@
             className: 'labassistant-attachment-status',
             text: '失败'
           } ) );
+        }
+        if (
+          item.id &&
+          item.status !== 'uploading' &&
+          String( item.mime_type || '' ).toLowerCase() === 'application/pdf'
+        ) {
+          var ingestButton = createEl( 'button', {
+            type: 'button',
+            className: 'labassistant-attachment-open',
+            text: '分析写入'
+          } );
+          ingestButton.addEventListener( 'click', function () {
+            startPdfIngestForAttachment( item );
+          } );
+          chip.appendChild( ingestButton );
+          var openButton = createEl( 'button', {
+            type: 'button',
+            className: 'labassistant-attachment-open',
+            text: '阅读'
+          } );
+          openButton.addEventListener( 'click', function () {
+            var attachmentUtils = getAttachmentUtils();
+            var url = attachmentUtils && attachmentUtils.buildAttachmentContentUrl ?
+              attachmentUtils.buildAttachmentContentUrl( apiBase, item.id, window.location ) :
+              apiBase.replace( /\/+$/, '' ) + '/attachments/' + encodeURIComponent( item.id ) + '/content';
+            dispatchPdfReaderOpen( {
+              source: {
+                type: 'assistant_attachment',
+                attachmentId: item.id,
+                url: url,
+                fileLabel: item.name,
+                pageTitle: config.currentTitle || config.defaultContextTitle || ''
+              }
+            } );
+          } );
+          chip.appendChild( openButton );
         }
         var removeButton = createEl( 'button', {
           type: 'button',
@@ -1531,12 +2056,200 @@
         suggested_followups: payload.suggested_followups || [],
         action_trace: payload.action_trace || [],
         draft_preview: payload.draft_preview || null,
+        draft_commit_result: payload.draft_commit_result || null,
         write_preview: payload.write_preview || null,
         write_result: payload.write_result || null,
-        model_info: payload.model_info || null
+        result_fill: payload.result_fill || null,
+        pdf_ingest_review: payload.pdf_ingest_review || null,
+        pdf_control_preview: payload.pdf_control_preview || null,
+        pdf_control_commit_result: payload.pdf_control_commit_result || null,
+        model_info: payload.model_info || null,
+        form_fill_notice: payload.form_fill_notice || '',
+        editor_fill_notice: payload.editor_fill_notice || ''
       } );
+      state.historyLoaded = false;
+      state.historyNotice = '';
       state.pendingQuestion = '';
       state.currentResult = null;
+    }
+
+    function persistResultNotice( result, key, value ) {
+      var normalizedValue = String( value || '' );
+      var matchedTurn;
+      if ( result ) {
+        result[ key ] = normalizedValue;
+      }
+      if (
+        state.currentResult &&
+        result &&
+        state.currentResult.turn_id &&
+        result.turn_id &&
+        state.currentResult.turn_id === result.turn_id
+      ) {
+        state.currentResult[ key ] = normalizedValue;
+      }
+      matchedTurn = state.turns.find( function ( turn ) {
+        return turn.turn_id && result && result.turn_id && turn.turn_id === result.turn_id;
+      } );
+      if ( matchedTurn ) {
+        matchedTurn[ key ] = normalizedValue;
+      }
+    }
+
+    function persistResultField( result, key, value ) {
+      var matchedTurn;
+      if ( result ) {
+        result[ key ] = value;
+      }
+      if (
+        state.currentResult &&
+        result &&
+        state.currentResult.turn_id &&
+        result.turn_id &&
+        state.currentResult.turn_id === result.turn_id
+      ) {
+        state.currentResult[ key ] = value;
+      }
+      matchedTurn = state.turns.find( function ( turn ) {
+        return turn.turn_id && result && result.turn_id && turn.turn_id === result.turn_id;
+      } );
+      if ( matchedTurn ) {
+        matchedTurn[ key ] = value;
+      }
+    }
+
+    function getNormalizedFieldLabel( value ) {
+      var currentEditorUtils = getEditorUtils();
+      if ( currentEditorUtils && currentEditorUtils.normalizeFieldName ) {
+        return currentEditorUtils.normalizeFieldName( value );
+      }
+      return String( value || '' ).trim().toLowerCase();
+    }
+
+    function persistResultFillMutation( result, mutateFn ) {
+      var matchedTurn = state.turns.find( function ( turn ) {
+        return turn.turn_id && result && result.turn_id && turn.turn_id === result.turn_id;
+      } );
+      var targets = [ result ];
+      if (
+        state.currentResult &&
+        result &&
+        state.currentResult.turn_id &&
+        result.turn_id &&
+        state.currentResult.turn_id === result.turn_id
+      ) {
+        targets.push( state.currentResult );
+      }
+      if ( matchedTurn && matchedTurn !== result && matchedTurn !== state.currentResult ) {
+        targets.push( matchedTurn );
+      }
+      targets.forEach( function ( target ) {
+        if ( target && target.result_fill ) {
+          mutateFn( target.result_fill );
+        }
+      } );
+    }
+
+    function confirmPendingMatch( result, match ) {
+      var normalizedFieldLabel = getNormalizedFieldLabel( match && match.fieldLabel );
+      persistResultFillMutation( result, function ( resultFill ) {
+        var suggestions = resultFill.field_suggestions || {};
+        var suggestion = suggestions[ match.suggestionKey ];
+        if ( suggestion && typeof suggestion === 'object' && !Array.isArray( suggestion ) ) {
+          suggestion.status = 'confirmed';
+        } else if ( typeof suggestion === 'string' && suggestion.trim() ) {
+          suggestions[ match.suggestionKey ] = {
+            value: suggestion.trim(),
+            status: 'confirmed',
+            evidence: []
+          };
+        }
+        if ( Array.isArray( resultFill.missing_items ) ) {
+          resultFill.missing_items = resultFill.missing_items.filter( function ( item ) {
+            var label = item && typeof item === 'object' && !Array.isArray( item ) ?
+              item.label || item.field || item.name :
+              item;
+            return getNormalizedFieldLabel( label ) !== normalizedFieldLabel;
+          } );
+        }
+      } );
+    }
+
+    function getLatestSubmissionGuidanceResult() {
+      if (
+        state.currentResult &&
+        (
+          buildPendingFormDetails( state.currentResult ).length ||
+          buildFormMissingFields( state.currentResult ).length ||
+          state.currentResult.form_fill_notice ||
+          state.currentResult.editor_fill_notice
+        )
+      ) {
+        return state.currentResult;
+      }
+      return state.turns.slice().reverse().find( function ( turn ) {
+        return (
+          buildPendingFormDetails( turn ).length ||
+          buildFormMissingFields( turn ).length ||
+          turn.form_fill_notice ||
+          turn.editor_fill_notice
+        );
+      } ) || null;
+    }
+
+    function buildPendingFormDetails( result ) {
+      var editorUtils = getEditorUtils();
+      var fieldSections;
+      if ( !editorUtils || !editorUtils.buildResultFillFieldSections ) {
+        return [];
+      }
+      fieldSections = editorUtils.buildResultFillFieldSections(
+        buildFormSuggestionMap( result ),
+        buildFormMissingDetails( result )
+      );
+      return ( fieldSections.pending || [] ).map( function ( entry ) {
+        return {
+          label: entry.label,
+          reason: entry.reason || '',
+          evidence: Array.isArray( entry.evidence ) ? entry.evidence.slice() : []
+        };
+      } );
+    }
+
+    function publishSubmissionGuidance() {
+      var contextTitle = resolveEffectiveContextTitle( contextInput.value, config );
+      var result = getLatestSubmissionGuidanceResult();
+      var pendingItems = result ? buildPendingFormDetails( result ) : [];
+      var missingItems = result ? buildFormMissingDetails( result ) : [];
+      var pendingNames = pendingItems.map( function ( entry ) {
+        return getNormalizedFieldLabel( entry.label );
+      } );
+      var detail = {
+        contextTitle: contextTitle,
+        editorMode: editorMode,
+        pendingItems: pendingItems,
+        missingItems: missingItems.filter( function ( entry ) {
+          return pendingNames.indexOf( getNormalizedFieldLabel( entry.label ) ) === -1;
+        } ),
+        formFillNotice: result && result.form_fill_notice ? result.form_fill_notice : '',
+        editorFillNotice: result && result.editor_fill_notice ? result.editor_fill_notice : ''
+      };
+      if ( window.sessionStorage && contextTitle ) {
+        var key = getSubmissionGuidanceKey( contextTitle, window.location.host );
+        if (
+          detail.pendingItems.length ||
+          detail.missingItems.length ||
+          detail.formFillNotice ||
+          detail.editorFillNotice
+        ) {
+          sessionStorage.setItem( key, JSON.stringify( detail ) );
+        } else {
+          sessionStorage.removeItem( key );
+        }
+      }
+      window.dispatchEvent( new CustomEvent( 'labassistant:submission-guidance', {
+        detail: detail
+      } ) );
     }
 
     function renderSources( result ) {
@@ -1595,17 +2308,24 @@
     }
 
     function getPageFormMatches( result ) {
+      var pageFormContext = getPageFormRuntimeContext();
       var suggestions;
-      if ( editorMode !== 'pageforms_edit' || !config.formContext || !pageFormFields.length || !editorUtils || !editorUtils.matchStructuredFieldsToInventory ) {
+      if (
+        pageFormContext.editorMode !== 'pageforms_edit' ||
+        !pageFormContext.resolvedFormName ||
+        !pageFormContext.pageFormFields.length ||
+        !editorUtils ||
+        !editorUtils.matchStructuredFieldsToInventory
+      ) {
         return [];
       }
       suggestions = buildFormSuggestionMap( result );
       return editorUtils.matchStructuredFieldsToInventory(
-        config.formContext.formName || '',
+        pageFormContext.resolvedFormName,
         suggestions,
-        pageFormFields
+        pageFormContext.pageFormFields
       ).map( function ( match ) {
-        var field = pageFormFields.find( function ( item ) {
+        var field = pageFormContext.pageFormFields.find( function ( item ) {
           return item.key === match.fieldKey;
         } );
         match.field = field || null;
@@ -1615,9 +2335,23 @@
 
     function renderPageFormFillCard( result, rerender ) {
       var matches = getPageFormMatches( result );
-      var missingFields = buildFormMissingFields( result );
+      var editorUtils = getEditorUtils();
+      var missingDetails = buildFormMissingDetails( result );
+      var fieldSections = editorUtils && editorUtils.buildResultFillFieldSections ?
+        editorUtils.buildResultFillFieldSections(
+          buildFormSuggestionMap( result ),
+          buildFormMissingFields( result )
+        ) :
+        { missing: buildFormMissingFields( result ) };
+      var safeMatches = matches.filter( function ( match ) {
+        return match.status !== 'pending' && match.status !== 'needs_review';
+      } );
+      var pendingMatches = matches.filter( function ( match ) {
+        return match.status === 'pending' || match.status === 'needs_review';
+      } );
+      var missingFields = fieldSections.missing || buildFormMissingFields( result );
       var fillAllButton;
-      if ( !matches.length && !missingFields.length ) {
+      if ( !safeMatches.length && !pendingMatches.length && !missingFields.length ) {
         return null;
       }
 
@@ -1626,12 +2360,19 @@
       card.appendChild( createEl( 'h4', { text: '表单字段建议' } ) );
       card.appendChild( createEl( 'div', {
         className: 'labassistant-status-note',
-        text: matches.length ?
-          ( '已匹配 ' + matches.length + ' 个字段；只填可安全匹配的控件。' ) :
-          '当前没有可安全自动填入的字段。'
+        text: safeMatches.length ?
+          (
+            '已安全匹配 ' + safeMatches.length + ' 个字段；只填可安全匹配的控件。' +
+            ( pendingMatches.length ? ( ' 另有 ' + pendingMatches.length + ' 个字段待人工确认。' ) : '' )
+          ) :
+          (
+            pendingMatches.length ?
+              '当前没有可安全自动填入的字段；已有候选值的字段需要学生先确认。' :
+              '当前没有可安全自动填入的字段。'
+          )
       } ) );
 
-      if ( matches.length ) {
+      if ( safeMatches.length ) {
         fillAllButton = createEl( 'button', {
           type: 'button',
           className: 'labassistant-inline-button',
@@ -1639,18 +2380,24 @@
         } );
         fillAllButton.addEventListener( 'click', function () {
           var appliedCount = 0;
-          matches.forEach( function ( match ) {
+          var appliedMatches = [];
+          var notice;
+          safeMatches.forEach( function ( match ) {
             if ( applyPageFormMatch( match ) ) {
               appliedCount += 1;
+              appliedMatches.push( match );
             }
           } );
-          result.form_fill_notice = appliedCount ? ( '已填入 ' + appliedCount + ' 个表单字段，表单尚未提交。' ) : '没有可填入的字段。';
+          notice = editorUtils && editorUtils.buildFormFillNotice ?
+            editorUtils.buildFormFillNotice( appliedMatches ) :
+            ( appliedCount ? ( '已填入 ' + appliedCount + ' 个表单字段，表单尚未提交。' ) : '没有可填入的字段。' );
+          persistResultNotice( result, 'form_fill_notice', notice );
           rerender();
         } );
         card.appendChild( fillAllButton );
       }
 
-      matches.forEach( function ( match ) {
+      safeMatches.forEach( function ( match ) {
         var item = createEl( 'div', { className: 'labassistant-form-fill-item' } );
         var valueText = Array.isArray( match.value ) ? match.value.join( '；' ) : match.value;
         var fillButton = createEl( 'button', {
@@ -1659,8 +2406,12 @@
           text: '填入此字段'
         } );
         fillButton.addEventListener( 'click', function () {
+          var notice;
           if ( applyPageFormMatch( match ) ) {
-            result.form_fill_notice = '已填入字段：' + match.fieldLabel + '；表单尚未提交。';
+            notice = editorUtils && editorUtils.buildFormFillNotice ?
+              editorUtils.buildFormFillNotice( [ match ] ) :
+              ( '已填入字段：' + match.fieldLabel + '；表单尚未提交。' );
+            persistResultNotice( result, 'form_fill_notice', notice );
             rerender();
           }
         } );
@@ -1669,11 +2420,80 @@
           createEl( 'strong', { text: match.fieldLabel } ),
           createEl( 'span', { className: 'labassistant-status-note', text: valueText } )
         ] ) );
+        if ( match.evidence && match.evidence.length ) {
+          item.appendChild( createEl( 'div', { className: 'labassistant-form-missing-list' },
+            match.evidence.map( function ( evidenceItem ) {
+              return createEl( 'span', {
+                className: 'labassistant-form-missing-chip',
+                text: evidenceItem
+              } );
+            } )
+          ) );
+        }
         item.appendChild( fillButton );
         card.appendChild( item );
       } );
 
+      if ( pendingMatches.length ) {
+        var pendingSection = createEl( 'section', { className: 'labassistant-form-missing' }, [
+          createEl( 'div', { className: 'labassistant-form-missing-head' }, [
+            createEl( 'strong', { text: '待确认字段' } ),
+            createEl( 'span', {
+              className: 'labassistant-status-note',
+              text: '这些字段已有候选值，但默认不自动填入。'
+            } )
+          ] )
+        ] );
+        pendingMatches.forEach( function ( match ) {
+          var confirmButton = createEl( 'button', {
+            type: 'button',
+            className: 'labassistant-inline-button labassistant-inline-button-secondary',
+            text: '确认并填入此字段'
+          } );
+          var pendingItem = createEl( 'div', { className: 'labassistant-form-fill-item' }, [
+            createEl( 'div', { className: 'labassistant-form-fill-copy' }, [
+              createEl( 'strong', { text: match.fieldLabel } ),
+              createEl( 'span', {
+                className: 'labassistant-status-note',
+                text: Array.isArray( match.value ) ? match.value.join( '；' ) : match.value
+              } ),
+              match.reason ? createEl( 'span', {
+                className: 'labassistant-status-note',
+                text: match.reason
+              } ) : null
+            ] )
+          ] );
+          if ( match.evidence && match.evidence.length ) {
+            pendingItem.appendChild( createEl( 'div', { className: 'labassistant-form-missing-list' },
+              match.evidence.map( function ( evidenceItem ) {
+                return createEl( 'span', {
+                  className: 'labassistant-form-missing-chip',
+                  text: evidenceItem
+              } );
+            } )
+          ) );
+          }
+          confirmButton.addEventListener( 'click', function () {
+            var notice;
+            if ( applyPageFormMatch( match ) ) {
+              confirmPendingMatch( result, match );
+              notice = editorUtils && editorUtils.buildFormFillNotice ?
+                editorUtils.buildFormFillNotice( [ match ] ) :
+                ( '已确认并填入字段：' + match.fieldLabel + '；表单尚未提交。' );
+              persistResultNotice( result, 'form_fill_notice', notice );
+              rerender();
+            }
+          } );
+          pendingItem.appendChild( confirmButton );
+          pendingSection.appendChild( pendingItem );
+        } );
+        card.appendChild( pendingSection );
+      }
+
       if ( missingFields.length ) {
+        var resolvedMissingDetails = missingDetails.filter( function ( entry ) {
+          return missingFields.indexOf( entry.label ) !== -1;
+        } );
         var missingSection = createEl( 'section', { className: 'labassistant-form-missing' }, [
           createEl( 'div', { className: 'labassistant-form-missing-head' }, [
             createEl( 'strong', { text: '缺失字段' } ),
@@ -1681,16 +2501,43 @@
               className: 'labassistant-status-note',
               text: '这些字段暂不自动填入。'
             } )
-          ] ),
-          createEl( 'div', { className: 'labassistant-form-missing-list' },
+          ] )
+        ] );
+        if ( resolvedMissingDetails.some( function ( entry ) {
+          return entry.reason || ( entry.evidence && entry.evidence.length );
+        } ) ) {
+          resolvedMissingDetails.forEach( function ( entry ) {
+            var missingItem = createEl( 'div', { className: 'labassistant-form-fill-item' }, [
+              createEl( 'div', { className: 'labassistant-form-fill-copy' }, [
+                createEl( 'strong', { text: entry.label } ),
+                createEl( 'span', {
+                  className: 'labassistant-status-note',
+                  text: entry.reason || '当前没有可直接回填的候选值。'
+                } )
+              ] )
+            ] );
+            if ( entry.evidence && entry.evidence.length ) {
+              missingItem.appendChild( createEl( 'div', { className: 'labassistant-form-missing-list' },
+                entry.evidence.map( function ( evidenceItem ) {
+                  return createEl( 'span', {
+                    className: 'labassistant-form-missing-chip',
+                    text: evidenceItem
+                  } );
+                } )
+              ) );
+            }
+            missingSection.appendChild( missingItem );
+          } );
+        } else {
+          missingSection.appendChild( createEl( 'div', { className: 'labassistant-form-missing-list' },
             missingFields.map( function ( fieldName ) {
               return createEl( 'span', {
                 className: 'labassistant-form-missing-chip',
                 text: fieldName
               } );
             } )
-          )
-        ] );
+          ) );
+        }
         card.appendChild( missingSection );
       }
 
@@ -1698,6 +2545,433 @@
         card.appendChild( createEl( 'div', {
           className: 'labassistant-callout',
           text: result.form_fill_notice
+        } ) );
+      }
+
+      return card;
+    }
+
+    function renderResultFillCard( result, rerender ) {
+      var payload = result && result.result_fill;
+      var editorUtils = getEditorUtils();
+      var missingDetails = buildFormMissingDetails( result );
+      var fieldSections = editorUtils && editorUtils.buildResultFillFieldSections ?
+        editorUtils.buildResultFillFieldSections(
+          payload && payload.field_suggestions ? payload.field_suggestions : {},
+          payload && payload.missing_items ? payload.missing_items : []
+        ) :
+        { confirmed: [], pending: [], missing: buildFormMissingFields( result ) };
+      var evidenceList;
+      var fillButton;
+      var missingSection;
+      if ( !payload ) {
+        return null;
+      }
+
+      function createFieldSection( title, note, entries ) {
+        var section;
+        if ( !entries.length ) {
+          return null;
+        }
+        section = createEl( 'section', { className: 'labassistant-form-missing' }, [
+          createEl( 'div', { className: 'labassistant-form-missing-head' }, [
+            createEl( 'strong', { text: title } ),
+            createEl( 'span', { className: 'labassistant-status-note', text: note } )
+          ] )
+        ] );
+        entries.forEach( function ( entry ) {
+          var fieldItem = createEl( 'div', { className: 'labassistant-form-fill-item' }, [
+            createEl( 'div', { className: 'labassistant-form-fill-copy' }, [
+              createEl( 'strong', { text: entry.label } ),
+              createEl( 'span', { className: 'labassistant-status-note', text: entry.value } ),
+              entry.reason ? createEl( 'span', {
+                className: 'labassistant-status-note',
+                text: entry.reason
+              } ) : null
+            ] )
+          ] );
+          if ( entry.evidence && entry.evidence.length ) {
+            fieldItem.appendChild( createEl( 'div', { className: 'labassistant-form-missing-list' },
+              entry.evidence.map( function ( item ) {
+                return createEl( 'span', {
+                  className: 'labassistant-form-missing-chip',
+                  text: item
+                } );
+              } )
+            ) );
+          }
+          section.appendChild( fieldItem );
+        } );
+        return section;
+      }
+
+      var card = createEl( 'div', { className: 'labassistant-inline-card labassistant-form-fill-card' } );
+      card.appendChild( createEl( 'h4', { text: payload.title || '结果回填建议' } ) );
+
+      if ( payload.evidence && payload.evidence.length ) {
+        evidenceList = createEl( 'div', { className: 'labassistant-form-missing-list' },
+          payload.evidence.map( function ( item ) {
+            return createEl( 'span', {
+              className: 'labassistant-form-missing-chip',
+              text: item
+            } );
+          } )
+        );
+        card.appendChild( createEl( 'div', { className: 'labassistant-status-note', text: '识别依据' } ) );
+        card.appendChild( evidenceList );
+      }
+
+      var confirmedSection = createFieldSection(
+        '已识别字段',
+        '这些字段有明确候选值，可直接供学生核对。',
+        fieldSections.confirmed
+      );
+      if ( confirmedSection ) {
+        card.appendChild( confirmedSection );
+      }
+
+      var pendingFieldSection = createFieldSection(
+        '待确认字段',
+        '这些字段已有候选值，但还不能视为已确认。',
+        fieldSections.pending
+      );
+      if ( pendingFieldSection ) {
+        card.appendChild( pendingFieldSection );
+      }
+
+      if ( payload.draft_text ) {
+        card.appendChild( createEl( 'div', {
+          className: 'labassistant-markdown',
+          html: renderMarkdown( payload.draft_text )
+        } ) );
+      }
+
+      if ( editorTextarea && payload.draft_text ) {
+        fillButton = createEl( 'button', {
+          type: 'button',
+          className: 'labassistant-inline-button',
+          text: '把这版结果草稿填入编辑框'
+        } );
+        fillButton.addEventListener( 'click', function () {
+          fillEditorWithText( result, payload.draft_text || '', rerender );
+        } );
+        card.appendChild( fillButton );
+      }
+
+      if ( fieldSections.missing && fieldSections.missing.length ) {
+        var resolvedMissingDetails = missingDetails.filter( function ( entry ) {
+          return fieldSections.missing.indexOf( entry.label ) !== -1;
+        } );
+        missingSection = createEl( 'section', { className: 'labassistant-form-missing' }, [
+          createEl( 'div', { className: 'labassistant-form-missing-head' }, [
+            createEl( 'strong', { text: '缺失字段' } ),
+            createEl( 'span', {
+              className: 'labassistant-status-note',
+              text: '这些字段当前还没有可用候选值。'
+            } )
+          ] )
+        ] );
+        if ( resolvedMissingDetails.some( function ( entry ) {
+          return entry.reason || ( entry.evidence && entry.evidence.length );
+        } ) ) {
+          resolvedMissingDetails.forEach( function ( entry ) {
+            var missingItem = createEl( 'div', { className: 'labassistant-form-fill-item' }, [
+              createEl( 'div', { className: 'labassistant-form-fill-copy' }, [
+                createEl( 'strong', { text: entry.label } ),
+                createEl( 'span', {
+                  className: 'labassistant-status-note',
+                  text: entry.reason || '当前没有可直接回填的候选值。'
+                } )
+              ] )
+            ] );
+            if ( entry.evidence && entry.evidence.length ) {
+              missingItem.appendChild( createEl( 'div', { className: 'labassistant-form-missing-list' },
+                entry.evidence.map( function ( evidenceItem ) {
+                  return createEl( 'span', {
+                    className: 'labassistant-form-missing-chip',
+                    text: evidenceItem
+                  } );
+                } )
+              ) );
+            }
+            missingSection.appendChild( missingItem );
+          } );
+        } else {
+          missingSection.appendChild( createEl( 'div', { className: 'labassistant-form-missing-list' },
+            fieldSections.missing.map( function ( item ) {
+              return createEl( 'span', {
+                className: 'labassistant-form-missing-chip',
+                text: item
+              } );
+            } )
+          ) );
+        }
+        card.appendChild( missingSection );
+      }
+
+      return card;
+    }
+
+    function renderPdfIngestReviewCard( result, rerender ) {
+      var review = result && result.pdf_ingest_review;
+      if ( !review ) {
+        return null;
+      }
+
+      var card = createEl( 'div', { className: 'labassistant-inline-card labassistant-form-fill-card' } );
+      var counts = [];
+      if ( review.extracted_page_count ) {
+        counts.push( '提取页数 ' + review.extracted_page_count );
+      }
+      if ( review.staged_image_count ) {
+        counts.push( '页图 ' + review.staged_image_count );
+      }
+
+      card.appendChild( createEl( 'h4', { text: review.title || 'PDF 解析与写入建议' } ) );
+      if ( review.file_name ) {
+        card.appendChild( createEl( 'div', {
+          className: 'labassistant-status-note',
+          text: review.file_name + ( counts.length ? ' · ' + counts.join( ' · ' ) : '' )
+        } ) );
+      } else if ( counts.length ) {
+        card.appendChild( createEl( 'div', {
+          className: 'labassistant-status-note',
+          text: counts.join( ' · ' )
+        } ) );
+      }
+
+      if ( review.document_summary ) {
+        card.appendChild( createEl( 'div', {
+          className: 'labassistant-markdown',
+          html: renderMarkdown( review.document_summary )
+        } ) );
+      }
+
+      if ( review.recommended_targets && review.recommended_targets.length ) {
+        var targetsSection = createEl( 'section', { className: 'labassistant-form-missing' }, [
+          createEl( 'div', { className: 'labassistant-form-missing-head' }, [
+            createEl( 'strong', { text: '建议归档区域' } ),
+            createEl( 'span', {
+              className: 'labassistant-status-note',
+              text: '先写入草稿页，正式归档区域只作为推荐。'
+            } )
+          ] )
+        ] );
+        review.recommended_targets.slice( 0, 3 ).forEach( function ( item ) {
+          var label = String( item.target_title || item.target_type || '' );
+          var scoreText = item.score || item.score === 0 ? '匹配度 ' + Math.round( Number( item.score ) * 100 ) + '%' : '';
+          targetsSection.appendChild( createEl( 'div', { className: 'labassistant-form-fill-item' }, [
+            createEl( 'div', { className: 'labassistant-form-fill-copy' }, [
+              createEl( 'strong', { text: label } ),
+              createEl( 'span', {
+                className: 'labassistant-status-note',
+                text: [ item.reason || '', scoreText ].filter( Boolean ).join( ' · ' )
+              } )
+            ] )
+          ] ) );
+        } );
+        card.appendChild( targetsSection );
+      }
+
+      if ( review.section_outline && review.section_outline.length ) {
+        var outlineSection = createEl( 'section', { className: 'labassistant-form-missing' }, [
+          createEl( 'div', { className: 'labassistant-form-missing-head' }, [
+            createEl( 'strong', { text: '提取章节' } ),
+            createEl( 'span', {
+              className: 'labassistant-status-note',
+              text: '这版会写进草稿页，方便后续拆到正式区域。'
+            } )
+          ] )
+        ] );
+        review.section_outline.slice( 0, 6 ).forEach( function ( item ) {
+          outlineSection.appendChild( createEl( 'div', { className: 'labassistant-form-fill-item' }, [
+            createEl( 'div', { className: 'labassistant-form-fill-copy' }, [
+              createEl( 'strong', { text: item.title || '未命名章节' } ),
+              createEl( 'span', {
+                className: 'labassistant-status-note',
+                text: item.content || ''
+              } )
+            ] )
+          ] ) );
+        } );
+        card.appendChild( outlineSection );
+      }
+
+      if ( review.evidence && review.evidence.length ) {
+        card.appendChild( createEl( 'div', { className: 'labassistant-form-missing-list' },
+          review.evidence.map( function ( item ) {
+            return createEl( 'span', {
+              className: 'labassistant-form-missing-chip',
+              text: item
+            } );
+          } )
+        ) );
+      }
+
+      if ( review.needs_confirmation !== false ) {
+        card.appendChild( createEl( 'div', {
+          className: 'labassistant-callout',
+          text: '确认后才会生成草稿预览并写入知识助手草稿页，不会直接改正式 Control: 或设备条目页面。'
+        } ) );
+      }
+
+      if ( !result.draft_preview ) {
+        var previewButton = createEl( 'button', {
+          type: 'button',
+          className: 'labassistant-inline-button',
+          text: '生成草稿预览'
+        } );
+        previewButton.addEventListener( 'click', function () {
+          previewButton.disabled = true;
+          requestPdfDraftPreview( apiBase, {
+            attachment_id: review.source_attachment_id,
+            session_id: result.session_id || state.sessionId || null,
+            turn_id: result.turn_id || null,
+            review: review
+          } ).then( function ( body ) {
+            persistResultField( result, 'draft_preview', body );
+            rerender();
+          } ).catch( function ( error ) {
+            alert( error.message || 'PDF 草稿预览生成失败' );
+          } ).finally( function () {
+            previewButton.disabled = false;
+          } );
+        } );
+        card.appendChild( previewButton );
+      } else {
+        card.appendChild( createEl( 'div', {
+          className: 'labassistant-callout',
+          text: '草稿预览已生成：' + ( result.draft_preview.target_page || result.draft_preview.title || '知识助手草稿页' )
+        } ) );
+        if ( !result.draft_commit_result ) {
+          var commitButton = createEl( 'button', {
+            type: 'button',
+            className: 'labassistant-inline-button',
+            text: '确认写入草稿页'
+          } );
+          commitButton.addEventListener( 'click', function () {
+            commitDraftPreview( result, rerender, commitButton, 'PDF 草稿提交失败' ).catch( function ( error ) {
+              alert( error.message || 'PDF 草稿提交失败' );
+            } );
+          } );
+          card.appendChild( commitButton );
+        }
+      }
+
+      if ( result.draft_commit_result ) {
+        card.appendChild( createEl( 'div', {
+          className: 'labassistant-callout',
+          text: '已写入草稿页：' + result.draft_commit_result.page_title
+        } ) );
+        if ( !result.pdf_control_preview ) {
+          var formalPreviewButton = createEl( 'button', {
+            type: 'button',
+            className: 'labassistant-inline-button labassistant-inline-button-secondary',
+            text: '生成 Control 正式写入预览'
+          } );
+          formalPreviewButton.addEventListener( 'click', function () {
+            formalPreviewButton.disabled = true;
+            requestPdfControlPreview( apiBase, {
+              draft_preview_id: result.draft_preview && result.draft_preview.preview_id
+            } ).then( function ( body ) {
+              persistResultField( result, 'pdf_control_preview', body );
+              rerender();
+            } ).catch( function ( error ) {
+              alert( error.message || 'Control 正式写入预览生成失败' );
+            } ).finally( function () {
+              formalPreviewButton.disabled = false;
+            } );
+          } );
+          card.appendChild( formalPreviewButton );
+        }
+      }
+
+      return card;
+    }
+
+    function renderPdfControlPreviewCard( result, rerender ) {
+      var preview = result && result.pdf_control_preview;
+      if ( !preview ) {
+        return null;
+      }
+
+      var ingestUtils = getPdfIngestUtils();
+      if ( ingestUtils && ingestUtils.normalizePdfControlPreview ) {
+        preview = ingestUtils.normalizePdfControlPreview( preview );
+      }
+      if ( !preview ) {
+        return null;
+      }
+
+      var card = createEl( 'div', { className: 'labassistant-inline-card labassistant-form-fill-card' } );
+      card.appendChild( createEl( 'h4', { text: preview.target_page || 'Control 正式写入预览' } ) );
+      card.appendChild( createEl( 'div', {
+        className: 'labassistant-status-note',
+        text: '总览挂载页：' + ( preview.overview_page || 'Control:控制与运行总览' )
+      } ) );
+      if ( preview.content ) {
+        card.appendChild( createEl( 'div', {
+          className: 'labassistant-markdown',
+          html: renderMarkdown( preview.content )
+        } ) );
+      }
+      if ( preview.overview_update ) {
+        card.appendChild( createEl( 'section', { className: 'labassistant-form-missing' }, [
+          createEl( 'div', { className: 'labassistant-form-missing-head' }, [
+            createEl( 'strong', { text: '总览页入口预览' } )
+          ] ),
+          createEl( 'div', {
+            className: 'labassistant-markdown',
+            html: renderMarkdown( preview.overview_update )
+          } )
+        ] ) );
+      }
+      if ( preview.blocked_items && preview.blocked_items.length ) {
+        var blockedSection = createEl( 'section', { className: 'labassistant-form-missing' }, [
+          createEl( 'div', { className: 'labassistant-form-missing-head' }, [
+            createEl( 'strong', { text: '已拦截的受限信息' } ),
+            createEl( 'span', {
+              className: 'labassistant-status-note',
+              text: '这些内容不会写入普通 Control: 页。'
+            } )
+          ] )
+        ] );
+        preview.blocked_items.forEach( function ( item ) {
+          blockedSection.appendChild( createEl( 'div', { className: 'labassistant-form-fill-item' }, [
+            createEl( 'div', { className: 'labassistant-form-fill-copy' }, [
+              createEl( 'strong', { text: item.label || '未命名章节' } ),
+              createEl( 'span', {
+                className: 'labassistant-status-note',
+                text: [ item.reason || '', item.content || '' ].filter( Boolean ).join( ' · ' )
+              } )
+            ] )
+          ] ) );
+        } );
+        card.appendChild( blockedSection );
+      }
+
+      if ( !result.pdf_control_commit_result ) {
+        var commitButton = createEl( 'button', {
+          type: 'button',
+          className: 'labassistant-inline-button',
+          text: '确认写入 Control 正式页'
+        } );
+        commitButton.addEventListener( 'click', function () {
+          commitButton.disabled = true;
+          commitPdfControlPreview( apiBase, preview.preview_id ).then( function ( body ) {
+            persistResultField( result, 'pdf_control_commit_result', body );
+            rerender();
+          } ).catch( function ( error ) {
+            alert( error.message || 'Control 正式写入失败' );
+          } ).finally( function () {
+            commitButton.disabled = false;
+          } );
+        } );
+        card.appendChild( commitButton );
+      } else {
+        card.appendChild( createEl( 'div', {
+          className: 'labassistant-callout',
+          text: '已写入正式页：' + result.pdf_control_commit_result.page_title + '；已更新总览页：' + result.pdf_control_commit_result.overview_page
         } ) );
       }
 
@@ -1746,12 +3020,43 @@
       editorTextarea.focus();
       editorTextarea.scrollTop = 0;
       if ( result ) {
-        result.editor_fill_notice = '已填入当前编辑框，页面尚未保存。';
+        persistResultNotice( result, 'editor_fill_notice', '已填入当前编辑框，页面尚未保存。' );
       }
       if ( rerender ) {
         rerender();
       }
       return true;
+    }
+
+    function commitDraftPreview( result, rerender, button, errorMessage ) {
+      var commitButton = button || null;
+      if ( !result || !result.draft_preview || !result.draft_preview.preview_id ) {
+        return Promise.reject( new Error( errorMessage || '草稿预览不存在。' ) );
+      }
+      if ( commitButton ) {
+        commitButton.disabled = true;
+      }
+      return fetch( apiBase + '/draft/commit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify( {
+          preview_id: result.draft_preview.preview_id
+        } )
+      } ).then( function ( response ) {
+        return response.json().then( function ( body ) {
+          if ( !response.ok ) {
+            throw new Error( body.detail || errorMessage || '提交失败' );
+          }
+          persistResultField( result, 'draft_commit_result', body );
+          rerender();
+          return body;
+        } );
+      } ).finally( function () {
+        if ( commitButton ) {
+          commitButton.disabled = false;
+        }
+      } );
     }
 
     function renderCommitCard( result, rerender ) {
@@ -1791,26 +3096,8 @@
           text: '确认写入草稿页'
         } );
         commitDraftButton.addEventListener( 'click', function () {
-          commitDraftButton.disabled = true;
-          fetch( apiBase + '/draft/commit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'same-origin',
-            body: JSON.stringify( {
-              preview_id: result.draft_preview.preview_id
-            } )
-          } ).then( function ( response ) {
-            return response.json().then( function ( body ) {
-              if ( !response.ok ) {
-                throw new Error( body.detail || '提交失败' );
-              }
-              result.draft_commit_result = body;
-              rerender();
-            } );
-          } ).catch( function ( error ) {
+          commitDraftPreview( result, rerender, commitDraftButton, '提交失败' ).catch( function ( error ) {
             alert( error.message || '提交失败' );
-          } ).finally( function () {
-            commitDraftButton.disabled = false;
           } );
         } );
         card.appendChild( commitDraftButton );
@@ -1923,9 +3210,10 @@
     }
 
     function buildStarterActions() {
-      var contextTitle = contextInput.value.trim() || config.currentTitle || '当前页';
+      var pageFormContext = getPageFormRuntimeContext();
+      var contextTitle = resolveEffectiveContextTitle( contextInput.value, config ) || '当前页';
       var isShotPage = /^Shot:/i.test( contextTitle );
-      var formName = config.formContext && config.formContext.formName ? config.formContext.formName : '当前表单';
+      var formName = pageFormContext.resolvedFormName || '当前表单';
       var pageFormPrompts = {
         '术语条目': [
           '请根据当前页面整理一版术语条目字段建议；未知字段留空，不要写待补充或未知，最后单独列缺失字段。',
@@ -1946,9 +3234,14 @@
           '请根据当前页面整理一版文献导读字段建议；未知字段留空，不要写待补充、未知、无或表单上下文，最后单独列缺失字段。',
           '请把当前页面提炼成标题、作者、年份、DOI、摘要、相关页面和来源；只填能确认的字段，其余留空。',
           '请先指出文献导读仍缺哪些关键信息，再给出可填入字段；未知字段留空。'
+        ],
+        'Shot记录': [
+          '请根据我上传的结果截图和说明，生成一版可直接回填的 Shot 记录字段建议、正文草稿和待确认项，并尽量补出处理结果文件与原始数据主目录。',
+          '请结合当前 Shot 页面和附件结果图，整理出 Shot 记录字段建议；无法确认的字段放到待确认项。',
+          '请先识别这次 Shot 的关键参数和主要观测，再生成一版可回填的记录草稿。'
         ]
       };
-      var prompts = editorMode === 'pageforms_edit' ? ( pageFormPrompts[ formName ] || [
+      var prompts = pageFormContext.editorMode === 'pageforms_edit' ? ( pageFormPrompts[ formName ] || [
         '请根据当前表单生成结构化字段建议，只输出字段名和值。',
         '请把当前页面整理成适合当前表单的字段建议。',
         '请先列出当前表单仍缺哪些关键字段，再给出可填入建议。'
@@ -2023,7 +3316,7 @@
       if ( result.draft_preview || result.write_preview || result.write_result ) {
         sections.push( {
           id: 'write',
-          label: variant === 'drawer' ? '草稿' : '写入',
+          label: compactWorkspace ? '草稿' : '写入',
           count: result.write_result ? 1 : 0,
           render: function () {
             return renderCommitCard( result, function () {
@@ -2107,7 +3400,7 @@
       inspector.appendChild( panel );
       updatePanel();
 
-      if ( variant === 'drawer' ) {
+      if ( compactWorkspace ) {
         var summaryText = spec.sections.map( function ( section ) {
           return section.label + ( section.count ? ' ' + section.count : '' );
         } ).join( ' · ' );
@@ -2145,20 +3438,42 @@
 
     function renderAssistantBubble( result, isPending ) {
       var bubble = createEl( 'article', { className: 'labassistant-message assistant' } );
+      var pageFormContext = getPageFormRuntimeContext();
       var metaText = [];
-      if ( variant !== 'drawer' && result.model_info && result.model_info.resolved_model ) {
+      if ( !compactWorkspace && result.model_info && result.model_info.resolved_model ) {
         metaText.push( result.model_info.provider );
         metaText.push( result.model_info.resolved_model );
       }
       if ( isPending ) {
-        metaText.push( variant === 'drawer' ? '正在整理' : '响应中' );
+        metaText.push( compactWorkspace ? '正在整理' : '响应中' );
       }
-      bubble.appendChild( createEl( 'div', { className: 'labassistant-message-meta', text: metaText.join( ' · ' ) || ( variant === 'drawer' ? '助手' : '知识助手' ) } ) );
+      bubble.appendChild( createEl( 'div', { className: 'labassistant-message-meta', text: metaText.join( ' · ' ) || ( compactWorkspace ? '助手' : '知识助手' ) } ) );
 
       var answerHtml = result.answer ? renderMarkdown( result.answer ) : '<p class="labassistant-thinking">正在思考…</p>';
       bubble.appendChild( createEl( 'div', { className: 'labassistant-markdown', html: answerHtml } ) );
 
-      if ( editorTextarea && !isPending && result.answer && !( result.draft_preview || result.write_preview ) ) {
+      var resultFillCard = renderResultFillCard( result, function () {
+        scheduleTranscriptRender( true );
+      } );
+      if ( resultFillCard ) {
+        bubble.appendChild( resultFillCard );
+      }
+
+      var pdfIngestCard = renderPdfIngestReviewCard( result, function () {
+        scheduleTranscriptRender( true );
+      } );
+      if ( pdfIngestCard ) {
+        bubble.appendChild( pdfIngestCard );
+      }
+
+      var pdfControlCard = renderPdfControlPreviewCard( result, function () {
+        scheduleTranscriptRender( true );
+      } );
+      if ( pdfControlCard ) {
+        bubble.appendChild( pdfControlCard );
+      }
+
+      if ( editorTextarea && !isPending && result.answer && !( result.draft_preview || result.write_preview || result.pdf_ingest_review ) ) {
         var fillAnswerButton = createEl( 'button', {
           type: 'button',
           className: 'labassistant-inline-button labassistant-inline-button-secondary',
@@ -2186,7 +3501,7 @@
         } ) );
       }
 
-      if ( editorMode === 'pageforms_edit' && !( result.draft_preview || result.write_preview ) ) {
+      if ( pageFormContext.editorMode === 'pageforms_edit' && !( result.draft_preview || result.write_preview ) ) {
         var formFillCard = renderPageFormFillCard( result, function () {
           scheduleTranscriptRender( true );
         } );
@@ -2273,6 +3588,7 @@
           } ) );
         }
         transcript.appendChild( emptyState );
+        publishSubmissionGuidance();
         return;
       }
 
@@ -2291,61 +3607,31 @@
       } );
       enhanceMarkdownContainers( transcript );
       scrollTranscriptToBottom();
+      publishSubmissionGuidance();
     }
 
     function refreshComposerState() {
       sendButton.disabled = !questionInput.value.trim();
     }
 
-    function applyDonePayload( body ) {
-      state.currentResult = body;
-      if ( body.model_info ) {
-        syncSelectedModelFromInfo( body.model_info );
-        refreshModelSelectors();
-        refreshModelBadge( body.model_info );
+    function buildPdfIngestQuestion( attachmentItem ) {
+      var contextTitle = resolveEffectiveContextTitle( contextInput.value, config ) || config.currentTitle || '';
+      var fileName = attachmentItem && attachmentItem.name ? String( attachmentItem.name ) : '当前 PDF';
+      var prompt = '请分析 PDF《' + fileName + '》，总结内容并建议最适合写入的 wiki 区域；先返回摘要、推荐归档区域和章节整理，等待我确认后再生成草稿预览。';
+      if ( contextTitle ) {
+        prompt += ' 当前页面：' + contextTitle + '。';
       }
-      appendTurnFromResponse( body );
-      renderTranscript();
+      return prompt;
     }
 
-    function submitQuestion() {
-      if ( state.attachments.some( function ( item ) { return item.status === 'uploading'; } ) ) {
-        alert( '附件仍在上传中，请稍等完成后再发送。' );
-        return;
-      }
-      var readyAttachments = state.attachments.filter( function ( item ) {
-        return item.status === 'ready' && item.id;
-      } ).map( function ( item ) {
-        return {
-          id: item.id,
-          kind: item.kind,
-          name: item.name,
-          mime_type: item.mime_type,
-          size_bytes: item.size_bytes
-        };
-      } );
-      var payload = {
-        question: questionInput.value.trim(),
-        mode: 'qa',
-        detail_level: detailSelect.value,
-        context_pages: contextInput.value.trim() ? [ contextInput.value.trim() ] : [],
-        attachments: readyAttachments
-      };
-      if ( state.selectedModel ) {
-        payload.generation_model = state.selectedModel;
-      }
-      if ( findSelectedModelItem() ) {
-        payload.generation_provider = findSelectedModelItem().provider;
-      }
-      if ( state.sessionId ) {
-        payload.session_id = state.sessionId;
-      }
-      if ( !payload.question ) {
+    function startStreamingRequest( payload, options ) {
+      var requestOptions = options || {};
+      if ( !payload || !payload.question ) {
         alert( '请输入问题。' );
         return;
       }
 
-      if ( variant === 'drawer' ) {
+      if ( compactWorkspace ) {
         setDrawerPopoverOpen( false );
       }
       setUploadMenuOpen( false );
@@ -2364,9 +3650,19 @@
           detail: '正在建立流式连接。'
         } ]
       };
-      state.attachments = [];
-      questionInput.value = '';
-      resizeQuestionInput();
+
+      if ( Array.isArray( requestOptions.consumeAttachmentClientIds ) ) {
+        state.attachments = state.attachments.filter( function ( entry ) {
+          return requestOptions.consumeAttachmentClientIds.indexOf( entry.clientId ) === -1;
+        } );
+      } else if ( requestOptions.clearAttachments !== false ) {
+        state.attachments = [];
+      }
+
+      if ( requestOptions.clearQuestion !== false ) {
+        questionInput.value = '';
+        resizeQuestionInput();
+      }
       refreshComposerState();
       renderAttachments();
       renderTranscript();
@@ -2375,6 +3671,7 @@
         var body = event.data || {};
         if ( event.event === 'session_started' ) {
           state.sessionId = body.session_id || state.sessionId;
+          state.historyLoaded = false;
           if ( body.model_info ) {
             syncSelectedModelFromInfo( body.model_info );
             refreshModelSelectors();
@@ -2421,6 +3718,16 @@
           scheduleTranscriptRender( true );
           return;
         }
+        if ( event.event === 'result_fill' ) {
+          state.currentResult.result_fill = body;
+          scheduleTranscriptRender( true );
+          return;
+        }
+        if ( event.event === 'pdf_ingest_review' ) {
+          state.currentResult.pdf_ingest_review = body;
+          scheduleTranscriptRender( true );
+          return;
+        }
         if ( event.event === 'done' ) {
           applyDonePayload( body );
           return;
@@ -2451,6 +3758,91 @@
       } );
     }
 
+    function startPdfIngestForAttachment( attachmentItem ) {
+      var selectedModel = findSelectedModelItem();
+      var contextTitle = resolveEffectiveContextTitle( contextInput.value, config ) || '';
+      if ( !attachmentItem || !attachmentItem.id || attachmentItem.status !== 'ready' ) {
+        alert( '请等待 PDF 附件上传完成后再分析。' );
+        return;
+      }
+      startStreamingRequest( {
+        question: buildPdfIngestQuestion( attachmentItem ),
+        mode: 'qa',
+        detail_level: detailSelect.value,
+        context_pages: contextTitle ? [ contextTitle ] : [],
+        attachments: [ {
+          id: attachmentItem.id,
+          kind: attachmentItem.kind,
+          name: attachmentItem.name,
+          mime_type: attachmentItem.mime_type,
+          size_bytes: attachmentItem.size_bytes
+        } ],
+        workflow_hint: 'pdf_ingest_write',
+        user_name: config.userName || null,
+        session_id: state.sessionId || undefined,
+        generation_model: state.selectedModel || undefined,
+        generation_provider: selectedModel ? selectedModel.provider : undefined
+      }, {
+        consumeAttachmentClientIds: [ attachmentItem.clientId ]
+      } );
+    }
+
+    function applyDonePayload( body ) {
+      state.currentResult = body;
+      if ( body.model_info ) {
+        syncSelectedModelFromInfo( body.model_info );
+        refreshModelSelectors();
+        refreshModelBadge( body.model_info );
+      }
+      appendTurnFromResponse( body );
+      renderTranscript();
+    }
+
+    function submitQuestion() {
+      if ( state.attachments.some( function ( item ) { return item.status === 'uploading'; } ) ) {
+        alert( '附件仍在上传中，请稍等完成后再发送。' );
+        return;
+      }
+      var readyAttachments = state.attachments.filter( function ( item ) {
+        return item.status === 'ready' && item.id;
+      } ).map( function ( item ) {
+        return {
+          id: item.id,
+          kind: item.kind,
+          name: item.name,
+          mime_type: item.mime_type,
+          size_bytes: item.size_bytes
+        };
+      } );
+      var payload = {
+        question: questionInput.value.trim(),
+        mode: 'qa',
+        detail_level: detailSelect.value,
+        context_pages: resolveEffectiveContextTitle( contextInput.value, config ) ? [ resolveEffectiveContextTitle( contextInput.value, config ) ] : [],
+        attachments: readyAttachments,
+        user_name: config.userName || null
+      };
+      payload.workflow_hint = inferWorkflowHint(
+        payload.question,
+        payload.context_pages[ 0 ] || resolveEffectiveContextTitle( contextInput.value, config ) || '',
+        readyAttachments
+      );
+      if ( state.selectedModel ) {
+        payload.generation_model = state.selectedModel;
+      }
+      if ( findSelectedModelItem() ) {
+        payload.generation_provider = findSelectedModelItem().provider;
+      }
+      if ( state.sessionId ) {
+        payload.session_id = state.sessionId;
+      }
+      if ( !payload.question ) {
+        alert( '请输入问题。' );
+        return;
+      }
+      startStreamingRequest( payload, { clearAttachments: true } );
+    }
+
     function resetConversation() {
       state.sessionId = null;
       state.turns = [];
@@ -2461,6 +3853,12 @@
         state.renderTimer = null;
       }
       state.drawerPopoverOpen = false;
+      state.historyOpen = false;
+      state.historyLoaded = false;
+      state.historySessions = [];
+      state.historyQuery = '';
+      state.historyError = '';
+      state.historyNotice = '';
       state.uploadMenuOpen = false;
       state.attachments = [];
       questionInput.value = '';
@@ -2488,13 +3886,20 @@
     } );
     sendButton.addEventListener( 'click', submitQuestion );
     resetButton.addEventListener( 'click', resetConversation );
+    historyButton.addEventListener( 'click', function () {
+      setHistoryOpen( !state.historyOpen );
+    } );
     settingsButton.addEventListener( 'click', function () {
-      if ( variant === 'drawer' ) {
+      if ( compactWorkspace ) {
         setDrawerPopoverOpen( !state.drawerPopoverOpen );
         return;
       }
       state.showSettings = !state.showSettings;
       refreshLayoutState();
+    } );
+    historySearchInput.addEventListener( 'input', function () {
+      state.historyQuery = historySearchInput.value || '';
+      renderHistoryPanel();
     } );
     plusButton.addEventListener( 'click', function () {
       setUploadMenuOpen( !state.uploadMenuOpen );
@@ -2513,6 +3918,20 @@
     documentUploadInput.addEventListener( 'change', function () {
       handleFilesSelected( documentUploadInput.files );
       documentUploadInput.value = '';
+      setUploadMenuOpen( false );
+    } );
+    questionInput.addEventListener( 'paste', function ( event ) {
+      var utils = getAttachmentUtils();
+      var pastedFiles;
+      if ( !utils || !utils.extractClipboardFiles || !event.clipboardData || !event.clipboardData.items ) {
+        return;
+      }
+      pastedFiles = utils.extractClipboardFiles( event.clipboardData.items );
+      if ( !pastedFiles.length ) {
+        return;
+      }
+      event.preventDefault();
+      handleFilesSelected( pastedFiles );
       setUploadMenuOpen( false );
     } );
     contextInput.addEventListener( 'input', refreshContextBadge );
@@ -2577,7 +3996,7 @@
 
     var mainColumn = createEl( 'div', { className: 'labassistant-main-column' }, [
       header,
-      settingsPanel,
+      controlStack,
       transcript,
       composer
     ] );
@@ -2604,6 +4023,7 @@
     }
 
     refreshLayoutState();
+    renderHistoryPanel();
     refreshSessionBadge();
     refreshContextBadge();
     renderAttachments();
@@ -2660,34 +4080,57 @@
     };
   }
 
-  function createDrawer( config ) {
+  function createPluginShell( config ) {
     if ( !syncHostScopedState() ) {
       return null;
     }
     syncModelPreferenceVersion();
+    var shellUtils = getShellUtils();
 
     var root = document.getElementById( DRAWER_ROOT_ID );
     if ( root ) {
       return root.__labassistantController;
     }
 
-    var backdrop = createEl( 'div', { className: 'labassistant-drawer-backdrop', hidden: 'hidden' } );
+    var isOpen = false;
+    var shellState = shellUtils && shellUtils.resolveShellPresentation ?
+      shellUtils.resolveShellPresentation( window.innerWidth ) :
+      { shellVariant: 'plugin', showBackdrop: false, lockBodyScroll: false };
+    var backdrop = createEl( 'div', { className: 'labassistant-plugin-backdrop', hidden: 'hidden' } );
     var container = createEl( 'div', {
       id: DRAWER_ROOT_ID,
-      className: 'labassistant-drawer-shell',
+      className: 'labassistant-plugin-shell',
       hidden: 'hidden'
     } );
 
+    function applyShellPresentation() {
+      shellState = shellUtils && shellUtils.resolveShellPresentation ?
+        shellUtils.resolveShellPresentation( window.innerWidth ) :
+        { shellVariant: 'plugin', showBackdrop: false, lockBodyScroll: false };
+      container.classList.toggle( 'is-plugin', shellState.shellVariant === 'plugin' );
+      container.classList.toggle( 'is-mobile-sheet', shellState.shellVariant === 'mobile-sheet' );
+      backdrop.classList.toggle( 'is-active', !!( isOpen && shellState.showBackdrop ) );
+      backdrop.hidden = !( isOpen && shellState.showBackdrop );
+      container.hidden = !isOpen;
+      document.body.classList.toggle(
+        'labassistant-mobile-sheet-open',
+        !!( isOpen && shellState.lockBodyScroll )
+      );
+    }
+
     function close() {
-      backdrop.hidden = true;
-      container.hidden = true;
-      document.body.classList.remove( 'labassistant-drawer-open' );
+      isOpen = false;
+      applyShellPresentation();
     }
 
     function open() {
-      backdrop.hidden = false;
-      container.hidden = false;
-      document.body.classList.add( 'labassistant-drawer-open' );
+      isOpen = true;
+      applyShellPresentation();
+    }
+
+    function toggle() {
+      isOpen = !isOpen;
+      applyShellPresentation();
     }
 
     backdrop.addEventListener( 'click', close );
@@ -2696,18 +4139,23 @@
         close();
       }
     } );
+    window.addEventListener( 'resize', applyShellPresentation );
 
     var workspace = createWorkspace( config, {
-      variant: 'drawer',
-      onClose: close
+      variant: 'plugin',
+      onClose: close,
+      closeLabel: '最小化'
     } );
     container.appendChild( workspace.root );
     document.body.appendChild( backdrop );
     document.body.appendChild( container );
+    applyShellPresentation();
 
     var controller = {
       open: open,
       close: close,
+      toggle: toggle,
+      minimize: close,
       setQuestion: function ( text ) {
         workspace.setQuestion( text );
       }
@@ -2732,11 +4180,13 @@
 
   mw.labassistantUI = {
     mountDrawer: function ( container, config ) {
-      var controller = createDrawer( config );
+      var controller = createPluginShell( config );
       if ( !controller ) {
         return {
           open: function () {},
-          close: function () {}
+          close: function () {},
+          toggle: function () {},
+          minimize: function () {}
         };
       }
       return controller;

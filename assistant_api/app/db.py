@@ -30,6 +30,8 @@ def init_database() -> None:
             connection.execute(text("ALTER TABLE assistant_turns ADD COLUMN IF NOT EXISTS draft_preview JSON"))
             connection.execute(text("ALTER TABLE assistant_turns ADD COLUMN IF NOT EXISTS write_preview JSON"))
             connection.execute(text("ALTER TABLE assistant_turns ADD COLUMN IF NOT EXISTS write_result JSON"))
+            connection.execute(text("ALTER TABLE assistant_turns ADD COLUMN IF NOT EXISTS result_fill JSON"))
+            connection.execute(text("ALTER TABLE assistant_turns ADD COLUMN IF NOT EXISTS pdf_ingest_review JSON"))
             connection.execute(text("ALTER TABLE assistant_turns ADD COLUMN IF NOT EXISTS model_info JSON"))
     except Exception:
         pass

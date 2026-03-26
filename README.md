@@ -7,6 +7,13 @@ MediaWiki Docker Compose baseline for a research group that needs two separate s
 
 The stack uses one MariaDB container, two isolated MediaWiki instances, two integrated analysis tools, and two Caddy frontends. The private site is bound to `127.0.0.1:8443` by default in the base Compose file, but the current local lab override serves the private wiki through the canonical entry `http://192.168.1.2:8443`.
 
+## For GitHub Collaborators
+
+If you are onboarding to active development rather than only deploying the stack, start with:
+
+- [docs/github-collaborator-handbook.zh-CN.md](docs/github-collaborator-handbook.zh-CN.md)
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+
 ## For Coding Agents
 
 If you are changing implementation details rather than deploying the stack, start with:
@@ -106,6 +113,7 @@ docker compose -f compose.yaml up -d
 ```bash
 docker compose -f compose.yaml ps
 bash ops/scripts/smoke-test.sh
+bash ops/scripts/playwright-private-pdf-reader-check.sh
 ```
 
 For local dry runs, opt in to the override file explicitly:
@@ -432,6 +440,7 @@ Useful options:
 bash ops/scripts/validate-assistant.sh --profile full --commit-draft
 bash ops/scripts/reindex-assistant.sh wiki --wait --timeout 1200
 bash ops/scripts/playwright-private-session-check.sh
+bash ops/scripts/playwright-private-shot-fill-check.sh
 ```
 
 With `ASSISTANT_ENABLE_ZOTERO=false`, `/reindex/zotero` should return a `disabled` status instead of failing. When an embedding model is configured, `full` validation asserts that all wiki chunks have embeddings and that `/admin/index/stats` reports the configured vector dimension.

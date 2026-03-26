@@ -100,10 +100,14 @@ fi
 
 echo "[step] Verify assistant-related services exist"
 "${compose_cmd[@]}" ps assistant_store assistant_api assistant_worker mw_private caddy_private >/dev/null
+PRIVATE_PROXY_HOST_HEADER="$("${compose_cmd[@]}" exec -T mw_private sh -lc 'printf %s "$MW_SERVER"' | python -c 'from urllib.parse import urlparse; import sys; raw = sys.stdin.read().strip(); print(urlparse(raw).netloc if raw else "")')"
 
 if [[ "${RUN_SMOKE}" == "true" ]]; then
   echo "[step] Run smoke test"
   bash ops/scripts/smoke-test.sh
+else
+  echo "[step] Check private wiki runtime resources match repo"
+  python ops/scripts/check_mediawiki_resource_sync.py --service mw_private >/dev/null
 fi
 
 echo "[step] Run assistant validation profile: ${PROFILE}"
@@ -115,6 +119,7 @@ set +e
   -e VALIDATION_COMMIT_DRAFT="${COMMIT_DRAFT}" \
   -e VALIDATION_REINDEX_TIMEOUT="${REINDEX_TIMEOUT}" \
   -e VALIDATION_POLL_INTERVAL="${POLL_INTERVAL}" \
+  -e VALIDATION_PROXY_HOST_HEADER="${PRIVATE_PROXY_HOST_HEADER}" \
   assistant_api python - <<'PY' 2>&1 | tee "${OUTPUT_CAPTURE_FILE}" | sed '/^__VALIDATION_REPORT_JSON__=/d'
 from __future__ import annotations
 
@@ -132,6 +137,7 @@ REINDEX_TIMEOUT = int(os.getenv("VALIDATION_REINDEX_TIMEOUT", "1200"))
 POLL_INTERVAL = int(os.getenv("VALIDATION_POLL_INTERVAL", "5"))
 API_BASE = "http://127.0.0.1:8000"
 API_PROXY_BASE = "http://caddy_private/tools/assistant/api"
+PROXY_HOST_HEADER = os.getenv("VALIDATION_PROXY_HOST_HEADER", "").strip()
 EMBEDDING_MODEL = os.getenv("ASSISTANT_EMBEDDING_MODEL", "").strip()
 EMBEDDING_DIMENSIONS = int(os.getenv("ASSISTANT_EMBEDDING_DIMENSIONS", "1536"))
 DRAFT_PREFIX = os.getenv("ASSISTANT_DRAFT_PREFIX", "知识助手草稿")
@@ -181,6 +187,7 @@ def request_json_at(
     timeout: int = 180,
     attempts: int = 1,
     retry_statuses: tuple[int, ...] = (),
+    headers: dict[str, str] | None = None,
 ) -> dict:
     data = None
     if payload is not None:
@@ -190,7 +197,7 @@ def request_json_at(
         req = urllib.request.Request(
             base_url + path,
             data=data,
-            headers={"Content-Type": "application/json"},
+            headers={"Content-Type": "application/json", **(headers or {})},
             method=method,
         )
         try:
@@ -205,12 +212,19 @@ def request_json_at(
     fail(f"{method} {base_url}{path}", "request failed after retries", last_body)
 
 
-def collect_sse_events(base_url: str, path: str, payload: dict, max_events: int = 8, timeout: int = 180) -> list[dict[str, object]]:
+def collect_sse_events(
+    base_url: str,
+    path: str,
+    payload: dict,
+    max_events: int = 8,
+    timeout: int = 180,
+    headers: dict[str, str] | None = None,
+) -> list[dict[str, object]]:
     for attempt in range(1, 4):
         req = urllib.request.Request(
             base_url + path,
             data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
+            headers={"Content-Type": "application/json", **(headers or {})},
             method="POST",
         )
         try:
@@ -316,7 +330,9 @@ def pick_alternate_generation_model(catalog: dict, current_model: str | None) ->
 health = request_json("GET", "/health")
 assert_true("health", health.get("status") == "ok", health, "assistant API is healthy")
 
-proxy_health = request_json_at(API_PROXY_BASE, "GET", "/health")
+proxy_headers = {"Host": PROXY_HOST_HEADER} if PROXY_HOST_HEADER else None
+
+proxy_health = request_json_at(API_PROXY_BASE, "GET", "/health", headers=proxy_headers)
 assert_true(
     "proxy-health",
     proxy_health.get("status") == "ok",
@@ -616,6 +632,7 @@ if PROFILE in {"chat", "full"}:
         },
         max_events=6,
         timeout=300,
+        headers=proxy_headers,
     )
     proxy_event_names = [item.get("event") for item in proxy_sse_events]
     assert_true(

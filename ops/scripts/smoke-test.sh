@@ -70,6 +70,7 @@ printf '%s\n' 'foreach (["Cargo","LabAssistant"] as $name) { if (!ExtensionRegis
   'mariadb -N -uroot -p"$(cat /run/secrets/db_root_password)" labwiki_private -e "SELECT COUNT(*) FROM page WHERE page_namespace = 0 AND page_title = '\''FAQ:知识助手使用说明'\'';" | grep -qx 1'
 "${compose_cmd[@]}" exec -T assistant_api python -c "import langgraph"
 "${compose_cmd[@]}" exec -T assistant_api python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).read()"
+python ops/scripts/check_mediawiki_resource_sync.py --service mw_private >/dev/null
 
 check_http "${PUBLIC_URL}" public
 check_http "${PRIVATE_URL}" private

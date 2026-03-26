@@ -50,6 +50,8 @@ class AssistantTurn(Base):
     draft_preview: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     write_preview: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     write_result: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    result_fill: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    pdf_ingest_review: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     model_info: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     unresolved_gaps: Mapped[list | dict | None] = mapped_column(JSON, nullable=True)
     suggested_followups: Mapped[list | dict | None] = mapped_column(JSON, nullable=True)

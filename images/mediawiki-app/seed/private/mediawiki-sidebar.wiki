@@ -2,6 +2,7 @@
 * 工作台
 ** 首页|首页
 ** Special:LabAssistant|知识助手
+** Special:LabWorkbook|实验工作簿
 ** Shot:Shot日志入口|Shot 日志入口
 ** Shot:周实验日志|周实验日志
 ** SOP:主靶室打靶流程|打靶 SOP
@@ -52,6 +53,7 @@
 ** Diagnostic:TPS|TPS 分析工具
 ** Diagnostic:RCF|RCF 计算工具
 ** Data:数据管理总览|数据管理总览
+** Data:实验工作簿|实验工作簿说明
 ** Data:实验日志与数据关联|实验日志与数据关联
 ** Data:TPS分析与归档|TPS 归档规则
 ** Data:RCF计算与归档|RCF 归档规则

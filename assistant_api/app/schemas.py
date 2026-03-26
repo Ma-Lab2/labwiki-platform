@@ -39,6 +39,62 @@ class AttachmentItem(BaseModel):
     size_bytes: int
 
 
+class MissingItemPayload(BaseModel):
+    label: str
+    reason: str | None = None
+    evidence: list[str] = Field(default_factory=list)
+
+
+class PdfIngestTargetPayload(BaseModel):
+    target_type: str
+    target_title: str
+    score: float | None = None
+    reason: str | None = None
+
+
+class PdfIngestSectionPayload(BaseModel):
+    title: str
+    content: str
+
+
+class PdfIngestReviewPayload(BaseModel):
+    title: str
+    source_attachment_id: str
+    file_name: str
+    document_summary: str
+    recommended_targets: list[PdfIngestTargetPayload] = Field(default_factory=list)
+    proposed_draft_title: str
+    section_outline: list[PdfIngestSectionPayload] = Field(default_factory=list)
+    extracted_page_count: int = 0
+    staged_image_count: int = 0
+    evidence: list[str] = Field(default_factory=list)
+    needs_confirmation: bool = True
+
+
+class PdfControlBlockedItemPayload(BaseModel):
+    label: str
+    reason: str
+    content: str
+
+
+class PdfControlPreviewPayload(BaseModel):
+    preview_id: str
+    target_page: str
+    overview_page: str
+    content: str
+    overview_update: str
+    blocked_items: list[PdfControlBlockedItemPayload] = Field(default_factory=list)
+    metadata: dict[str, Any] | None = None
+
+
+class ResultFillPayload(BaseModel):
+    title: str
+    field_suggestions: dict[str, Any] = Field(default_factory=dict)
+    draft_text: str
+    missing_items: list[str | MissingItemPayload] = Field(default_factory=list)
+    evidence: list[str] = Field(default_factory=list)
+
+
 class DraftPreviewPayload(BaseModel):
     preview_id: str
     title: str
@@ -125,6 +181,7 @@ class ChatRequest(BaseModel):
     mode: AssistantMode = Field(default=AssistantMode.QA)
     detail_level: AssistantDetailLevel = Field(default=AssistantDetailLevel.INTRO)
     session_id: str | None = None
+    workflow_hint: str | None = None
     context_pages: list[str] = Field(default_factory=list)
     attachments: list[AttachmentItem] = Field(default_factory=list)
     user_name: str | None = None
@@ -146,6 +203,8 @@ class ChatResponse(BaseModel):
     draft_preview: DraftPreviewPayload | None = None
     write_preview: WritePreviewPayload | None = None
     write_result: WriteResultPayload | None = None
+    result_fill: ResultFillPayload | None = None
+    pdf_ingest_review: PdfIngestReviewPayload | None = None
     model_info: ModelInfoPayload | None = None
 
 
@@ -175,6 +234,28 @@ class DraftPreviewRequest(BaseModel):
 
 class DraftCommitRequest(BaseModel):
     preview_id: str
+
+
+class PdfDraftPreviewRequest(BaseModel):
+    attachment_id: str = Field(min_length=1)
+    session_id: str | None = None
+    turn_id: str | None = None
+    review: PdfIngestReviewPayload
+
+
+class PdfControlPreviewRequest(BaseModel):
+    draft_preview_id: str = Field(min_length=1)
+
+
+class PdfControlCommitRequest(BaseModel):
+    preview_id: str = Field(min_length=1)
+
+
+class PdfControlCommitResponse(BaseModel):
+    status: str
+    page_title: str
+    overview_page: str
+    blocked_count: int = 0
 
 
 class WritePreviewRequest(BaseModel):
@@ -280,6 +361,8 @@ class SessionTurnPayload(BaseModel):
     draft_preview: DraftPreviewPayload | None = None
     write_preview: WritePreviewPayload | None = None
     write_result: WriteResultPayload | None = None
+    result_fill: ResultFillPayload | None = None
+    pdf_ingest_review: PdfIngestReviewPayload | None = None
     model_info: ModelInfoPayload | None = None
 
 
@@ -291,6 +374,20 @@ class SessionDetailResponse(BaseModel):
     confidence: float | None = None
     model_info: ModelInfoPayload | None = None
     turns: list[SessionTurnPayload] = Field(default_factory=list)
+
+
+class SessionHistoryListItem(BaseModel):
+    session_id: str
+    current_page: str | None = None
+    user_name: str | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+    turn_count: int = 0
+    latest_question: str | None = None
+
+
+class SessionHistoryListResponse(BaseModel):
+    sessions: list[SessionHistoryListItem] = Field(default_factory=list)
 
 
 class StatsResponse(BaseModel):

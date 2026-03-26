@@ -8,6 +8,8 @@
 {{{field|年份|input type=text}}}
 ;DOI
 {{{field|DOI|input type=text}}}
+;PDF文件
+{{{field|PDF文件|input type=text|uploadable}}}
 ;摘要
 {{{field|摘要|input type=textarea|rows=6}}}
 ;相关页面
@@ -19,4 +21,3 @@
 {{{standard input|summary|default=Create assistant-backed literature guide}}}
 {{{standard input|preview}}}
 {{{standard input|save}}}
-

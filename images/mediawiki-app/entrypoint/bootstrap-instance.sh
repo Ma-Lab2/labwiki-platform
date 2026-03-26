@@ -329,6 +329,8 @@ $wgGroupPermissions['*']['read'] = false;
 $wgGroupPermissions['*']['edit'] = false;
 $wgGroupPermissions['*']['createaccount'] = false;
 wfLoadExtension( 'LabAssistant' );
+wfLoadExtension( 'LabAuth' );
+wfLoadExtension( 'LabWorkbook' );
 $wgLabAssistantApiBase = getenv( 'MW_ASSISTANT_API_BASE' ) ?: '/tools/assistant/api';
 $wgLabAssistantDraftPrefix = getenv( 'MW_ASSISTANT_DRAFT_PREFIX' ) ?: '知识助手草稿';
 EOF

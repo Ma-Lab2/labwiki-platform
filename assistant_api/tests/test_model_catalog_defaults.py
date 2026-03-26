@@ -2,9 +2,14 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from app.config import Settings
-from app.services.model_catalog import default_generation_selection
+from app.services.model_catalog import (
+    build_model_catalog,
+    default_generation_selection,
+    resolve_workflow_generation_selection,
+)
 
 
 def _settings(**overrides) -> Settings:
@@ -83,6 +88,108 @@ class ModelCatalogDefaultSelectionTests(unittest.TestCase):
 
         self.assertEqual(selection.provider, "openai_compatible")
         self.assertEqual(selection.requested_model, "gpt-5.4-mini")
+
+    @patch("app.services.model_catalog.fetch_remote_model_ids")
+    def test_pdf_ingest_promotes_mini_to_gpt_5_4_when_available(self, fetch_remote_model_ids) -> None:
+        settings = _settings(
+            generation_provider="openai_compatible",
+            anthropic_api_key=None,
+        )
+        fetch_remote_model_ids.return_value = ["gpt-5.4", "gpt-5.3-codex", "gpt-5.4-mini"]
+
+        selection = resolve_workflow_generation_selection(
+            settings,
+            requested_provider="openai_compatible",
+            requested_model="gpt-5.4-mini",
+            session_provider=None,
+            session_model=None,
+            workflow_hint="pdf_ingest_write",
+        )
+
+        self.assertEqual(selection.provider, "openai_compatible")
+        self.assertEqual(selection.requested_model, "gpt-5.4")
+        self.assertEqual(selection.fallback_chain, ["gpt-5.3-codex", "gpt-5.4-mini"])
+
+    @patch("app.services.model_catalog.fetch_remote_model_ids")
+    def test_pdf_ingest_can_fall_back_to_claude_when_gpt_is_missing(self, fetch_remote_model_ids) -> None:
+        settings = _settings(
+            generation_provider="openai_compatible",
+            anthropic_api_key=None,
+        )
+        fetch_remote_model_ids.return_value = [
+            "claude-sonnet-4-5-20250929-thinking",
+            "claude-sonnet-4-5-20250929",
+            "gpt-5.4-mini",
+        ]
+
+        selection = resolve_workflow_generation_selection(
+            settings,
+            requested_provider="openai_compatible",
+            requested_model="gpt-5.4-mini",
+            session_provider=None,
+            session_model=None,
+            workflow_hint="pdf_ingest_write",
+        )
+
+        self.assertEqual(selection.provider, "anthropic")
+        self.assertEqual(selection.requested_model, "claude-sonnet-4-5-20250929-thinking")
+
+    @patch("app.services.model_catalog.fetch_remote_model_ids")
+    def test_pdf_ingest_can_fall_back_to_gemini_when_gpt_and_claude_are_missing(self, fetch_remote_model_ids) -> None:
+        settings = _settings(
+            generation_provider="openai_compatible",
+            anthropic_api_key=None,
+        )
+        fetch_remote_model_ids.return_value = [
+            "gemini-3-flash-preview-thinking",
+            "gemini-3-flash-preview",
+            "gpt-5.4-mini",
+        ]
+
+        selection = resolve_workflow_generation_selection(
+            settings,
+            requested_provider="openai_compatible",
+            requested_model="gpt-5.4-mini",
+            session_provider=None,
+            session_model=None,
+            workflow_hint="pdf_ingest_write",
+        )
+
+        self.assertEqual(selection.provider, "openai_compatible")
+        self.assertEqual(selection.requested_model, "gemini-3-flash-preview-thinking")
+
+    @patch("app.services.model_catalog.fetch_remote_model_ids")
+    def test_pdf_ingest_keeps_non_mini_selection(self, fetch_remote_model_ids) -> None:
+        settings = _settings()
+        fetch_remote_model_ids.return_value = ["gpt-5.4", "gpt-5.3-codex", "gpt-5.4-mini"]
+
+        selection = resolve_workflow_generation_selection(
+            settings,
+            requested_provider="anthropic",
+            requested_model="claude-sonnet-4-5-20250929-thinking",
+            session_provider=None,
+            session_model=None,
+            workflow_hint="pdf_ingest_write",
+        )
+
+        self.assertEqual(selection.provider, "anthropic")
+        self.assertEqual(selection.requested_model, "claude-sonnet-4-5-20250929-thinking")
+
+    @patch("app.services.model_catalog.fetch_remote_model_ids")
+    def test_featured_gpt_catalog_prefers_full_models_before_mini(self, fetch_remote_model_ids) -> None:
+        settings = _settings(
+            generation_provider="openai_compatible",
+            anthropic_api_key=None,
+        )
+        fetch_remote_model_ids.return_value = ["gpt-5.3-codex", "gpt-5.4", "gpt-5.4-mini"]
+
+        payload = build_model_catalog(settings)
+        gpt_group = next(group for group in payload["groups"] if group["id"] == "gpt")
+
+        self.assertEqual(
+            [item["id"] for item in gpt_group["items"]],
+            ["gpt-5.4", "gpt-5.3-codex", "gpt-5.4-mini"],
+        )
 
 
 if __name__ == "__main__":

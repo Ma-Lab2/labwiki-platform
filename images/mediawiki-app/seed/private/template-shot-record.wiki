@@ -1,3 +1,4 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_TEMPLATE_SHOT_RECORD -->
 <noinclude>
 本模板供 [[Form:Shot记录]] 使用，用于生成结构化的 `Shot:` 页面。
 
@@ -8,6 +9,10 @@
     "日期": { "label": "日期", "description": "实验日期，建议 YYYY-MM-DD。", "type": "string" },
     "Run": { "label": "Run", "description": "本轮 run 编号。", "type": "string" },
     "时间": { "label": "时间", "description": "本发的实际时间。", "type": "string" },
+    "主台账No": { "label": "主台账No", "description": "实验总表中的 shot 序号。", "type": "string" },
+    "压缩后": { "label": "压缩后", "description": "原始总表中的压缩后或功率档位。", "type": "string" },
+    "反射率": { "label": "反射率", "description": "原始总表中的反射率。", "type": "string" },
+    "小靶偏振片角度": { "label": "小靶偏振片角度", "description": "原始总表中的偏振片角度。", "type": "string" },
     "实验目标": { "label": "实验目标", "description": "本发主要想验证的参数窗口或物理目标。", "type": "string" },
     "页面状态": { "label": "页面状态", "description": "草稿、已核对或已复盘。", "type": "string" },
     "能量": { "label": "能量", "description": "激光能量。", "type": "string" },
@@ -16,9 +21,17 @@
     "聚焦条件": { "label": "聚焦条件", "description": "焦斑、焦点位置等。", "type": "string" },
     "波前状态": { "label": "波前状态", "description": "波前回路、loop 状态。", "type": "string" },
     "靶类型": { "label": "靶类型", "description": "靶材类型。", "type": "string" },
+    "靶位": { "label": "靶位", "description": "实验工作簿中的靶位。", "type": "string" },
+    "靶离焦": { "label": "靶离焦", "description": "实验工作簿中的靶离焦。", "type": "string" },
     "靶厚编号": { "label": "靶厚编号", "description": "厚度、编号或批次。", "type": "string" },
     "靶位置信息": { "label": "靶位置信息", "description": "找靶或靶位备注。", "type": "string" },
     "TPS": { "label": "TPS", "description": "TPS 配置摘要。", "type": "string" },
+    "光栅": { "label": "光栅", "description": "实验工作簿中的光栅设置。", "type": "string" },
+    "PM": { "label": "PM", "description": "实验工作簿中的 PM 设置。", "type": "string" },
+    "PM离焦": { "label": "PM离焦", "description": "实验工作簿中的 PM 离焦。", "type": "string" },
+    "闪烁光纤质子能量": { "label": "闪烁光纤质子能量", "description": "实验工作簿中的闪烁光纤质子能量。", "type": "string" },
+    "TPS_H能量": { "label": "TPS_H能量", "description": "实验工作簿中的 TPS H+ 能量。", "type": "string" },
+    "TPS_C6能量": { "label": "TPS_C6能量", "description": "实验工作簿中的 TPS C6 能量。", "type": "string" },
     "TPS工具入口": { "label": "TPS工具入口", "description": "TPS 工具链接或记录入口。", "type": "string" },
     "TPS参数快照": { "label": "TPS参数快照", "description": "TPS 参数文件或说明。", "type": "string" },
     "TPS结果图": { "label": "TPS结果图", "description": "TPS 结果截图或谱线文件。", "type": "string" },
@@ -27,7 +40,18 @@
     "RCF参数快照": { "label": "RCF参数快照", "description": "RCF 输入参数文件。", "type": "string" },
     "RCF结果截图": { "label": "RCF结果截图", "description": "RCF 结果摘要截图。", "type": "string" },
     "真空": { "label": "真空", "description": "真空值或状态。", "type": "string" },
+    "315漏光": { "label": "315漏光", "description": "实验工作簿中的 315 漏光记录。", "type": "string" },
+    "靶前监测": { "label": "靶前监测", "description": "实验工作簿中的靶前监测记录。", "type": "string" },
+    "有没有膜": { "label": "有没有膜", "description": "实验工作簿中的防护膜记录。", "type": "string" },
+    "EMP振幅": { "label": "EMP振幅", "description": "实验工作簿中的 EMP 振幅。", "type": "string" },
+    "列21": { "label": "列21", "description": "原始总表中的未命名扩展列 21。", "type": "string" },
+    "列22": { "label": "列22", "description": "原始总表中的未命名扩展列 22。", "type": "string" },
+    "列23": { "label": "列23", "description": "原始总表中的未命名扩展列 23。", "type": "string" },
+    "列24": { "label": "列24", "description": "原始总表中的未命名扩展列 24。", "type": "string" },
+    "W1_mJ": { "label": "W1_mJ", "description": "实验工作簿中的 W1 [mJ]。", "type": "string" },
+    "透射率": { "label": "透射率", "description": "实验工作簿中的透射率。", "type": "string" },
     "控制平台日志编号": { "label": "控制平台日志编号", "description": "本发对应的控制日志编号。", "type": "string" },
+    "备注": { "label": "备注", "description": "主台账原始备注。", "type": "string" },
     "主要观测": { "label": "主要观测", "description": "本发最直接的实验观测。", "type": "string" },
     "候选机制判断": { "label": "候选机制判断", "description": "当前候选机制。", "type": "string" },
     "对应理论页": { "label": "对应理论页", "description": "Theory: 页面链接。", "type": "string" },
@@ -49,8 +73,33 @@
 * 日期：{{{日期|}}}
 * Run：{{{Run|}}}
 * 时间：{{{时间|}}}
+* 主台账 No：{{{主台账No|}}}
 * 实验目标：{{{实验目标|}}}
 * 页面状态：{{{页面状态|草稿}}}
+
+== 主台账事实层 ==
+* 压缩后：{{{压缩后|}}}
+* 反射率：{{{反射率|}}}
+* 小靶偏振片角度：{{{小靶偏振片角度|}}}
+* 靶位：{{{靶位|}}}
+* 靶离焦：{{{靶离焦|}}}
+* 光栅：{{{光栅|}}}
+* PM：{{{PM|}}}
+* PM离焦：{{{PM离焦|}}}
+* 闪烁光纤质子能量：{{{闪烁光纤质子能量|}}}
+* TPS H+能量：{{{TPS_H能量|}}}
+* TPS C6能量：{{{TPS_C6能量|}}}
+* 315漏光：{{{315漏光|}}}
+* 靶前监测：{{{靶前监测|}}}
+* 有没有膜：{{{有没有膜|}}}
+* EMP振幅：{{{EMP振幅|}}}
+* 列21：{{{列21|}}}
+* 列22：{{{列22|}}}
+* 列23：{{{列23|}}}
+* 列24：{{{列24|}}}
+* W1 [mJ]：{{{W1_mJ|}}}
+* 透射率：{{{透射率|}}}
+* 主台账备注：{{{备注|}}}
 
 == 激光参数 ==
 * 能量：{{{能量|}}}
@@ -61,11 +110,19 @@
 
 == 靶参数 ==
 * 靶类型：{{{靶类型|}}}
+* 靶位：{{{靶位|}}}
+* 靶离焦：{{{靶离焦|}}}
 * 厚度 / 编号：{{{靶厚编号|}}}
 * 靶位置信息：{{{靶位置信息|}}}
 
 == 诊断配置 ==
 * TPS：{{{TPS|}}}
+* 光栅：{{{光栅|}}}
+* PM：{{{PM|}}}
+* PM 离焦：{{{PM离焦|}}}
+* 闪烁光纤质子能量：{{{闪烁光纤质子能量|}}}
+* TPS H+ 能量：{{{TPS_H能量|}}}
+* TPS C6 能量：{{{TPS_C6能量|}}}
 * TPS 工具入口 / 计算记录：{{{TPS工具入口|}}}
 * TPS 参数快照：{{{TPS参数快照|}}}
 * TPS 结果图 / 截图：{{{TPS结果图|}}}
@@ -76,6 +133,10 @@
 
 == 环境与运行状态 ==
 * 真空：{{{真空|}}}
+* 315 漏光：{{{315漏光|}}}
+* 靶前监测：{{{靶前监测|}}}
+* 有没有膜：{{{有没有膜|}}}
+* EMP 振幅：{{{EMP振幅|}}}
 * 控制平台日志编号：{{{控制平台日志编号|}}}
 
 == 结果摘要 ==

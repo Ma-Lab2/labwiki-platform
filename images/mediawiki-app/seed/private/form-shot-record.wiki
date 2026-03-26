@@ -1,3 +1,4 @@
+<!-- LABWIKI_MANAGED_PAGE:PRIVATE_FORM_SHOT_RECORD -->
 {{{info|create title=新建 Shot 记录|edit title=编辑 Shot 记录}}}
 
 {{{for template|Shot记录}}}
@@ -9,6 +10,18 @@
 
 ;时间
 {{{field|时间|input type=text}}}
+
+;主台账 No
+{{{field|主台账No|input type=text}}}
+
+;压缩后
+{{{field|压缩后|input type=text}}}
+
+;反射率
+{{{field|反射率|input type=text}}}
+
+;小靶偏振片角度
+{{{field|小靶偏振片角度|input type=text}}}
 
 ;实验目标
 {{{field|实验目标|input type=text|size=80}}}
@@ -34,6 +47,12 @@
 ;靶类型
 {{{field|靶类型|input type=text}}}
 
+;靶位
+{{{field|靶位|input type=text}}}
+
+;靶离焦
+{{{field|靶离焦|input type=text}}}
+
 ;靶厚编号
 {{{field|靶厚编号|input type=text}}}
 
@@ -42,6 +61,24 @@
 
 ;TPS
 {{{field|TPS|input type=text|size=80}}}
+
+;光栅
+{{{field|光栅|input type=text}}}
+
+;PM
+{{{field|PM|input type=text}}}
+
+;PM离焦
+{{{field|PM离焦|input type=text}}}
+
+;闪烁光纤质子能量
+{{{field|闪烁光纤质子能量|input type=text}}}
+
+;TPS H+能量
+{{{field|TPS_H能量|input type=text}}}
+
+;TPS C6能量
+{{{field|TPS_C6能量|input type=text}}}
 
 ;TPS 工具入口
 {{{field|TPS工具入口|input type=text|size=100}}}
@@ -67,8 +104,41 @@
 ;真空
 {{{field|真空|input type=text}}}
 
+;315漏光
+{{{field|315漏光|input type=text}}}
+
+;靶前监测
+{{{field|靶前监测|input type=text}}}
+
+;有没有膜
+{{{field|有没有膜|input type=text}}}
+
+;EMP振幅
+{{{field|EMP振幅|input type=text}}}
+
+;列21
+{{{field|列21|input type=text}}}
+
+;列22
+{{{field|列22|input type=text}}}
+
+;列23
+{{{field|列23|input type=text}}}
+
+;列24
+{{{field|列24|input type=text}}}
+
+;W1 [mJ]
+{{{field|W1_mJ|input type=text}}}
+
+;透射率
+{{{field|透射率|input type=text}}}
+
 ;控制平台日志编号
 {{{field|控制平台日志编号|input type=text}}}
+
+;备注
+{{{field|备注|input type=textarea|rows=3|cols=100}}}
 
 ;主要观测
 {{{field|主要观测|input type=textarea|rows=4|cols=100}}}

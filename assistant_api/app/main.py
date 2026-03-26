@@ -6,9 +6,9 @@ import logging
 import time
 from pathlib import Path
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Query, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy import func, select
 
 from .clients.openalex import OpenAlexClient
@@ -29,14 +29,23 @@ from .schemas import (
     ChatRequest,
     ChatResponse,
     DraftCommitRequest,
+    PdfControlCommitRequest,
+    PdfControlCommitResponse,
+    PdfControlPreviewPayload,
+    PdfControlPreviewRequest,
+    PdfDraftPreviewRequest,
+    PdfIngestReviewPayload,
     DraftPreviewPayload,
     DraftPreviewRequest,
     IndexStatsResponse,
     JobStatusResponse,
     ModelCatalogResponse,
     PlanResponse,
+    ResultFillPayload,
     ReindexResponse,
     SessionDetailResponse,
+    SessionHistoryListItem,
+    SessionHistoryListResponse,
     SessionModelUpdateRequest,
     SessionTurnPayload,
     SourceIndexStats,
@@ -52,12 +61,19 @@ from .schemas import (
 from .services.llm import LLMClient
 from .services.capabilities import build_capability_catalog, commit_capability_action, preview_capability_action
 from .services.model_catalog import build_model_catalog, fallback_model_for, resolve_generation_selection
-from .services.drafts import create_draft_preview
+from .services.drafts import create_draft_preview, save_draft_preview
+from .services.pdf_ingest import (
+    commit_pdf_control_preview,
+    commit_pdf_ingest_draft_preview,
+    prepare_pdf_control_preview,
+    prepare_pdf_draft_preview,
+)
 from .services.orchestrator import build_plan, run_chat, run_chat_stream
 from .services.reindex import create_job
 from .services.audit import log_audit
-from .services.attachments import AttachmentStorageError, delete_attachment, store_attachment
+from .services.attachments import AttachmentStorageError, delete_attachment, load_attachment_file, store_attachment
 from .services.write_actions import commit_write_preview, create_write_preview
+from .services.session_exports import build_session_export_filename, build_session_markdown
 
 
 settings = get_settings()
@@ -242,6 +258,25 @@ def remove_attachment(attachment_id: str) -> dict[str, bool | str]:
     return {"attachment_id": attachment_id, "deleted": True}
 
 
+@app.get("/attachments/{attachment_id}/content")
+def get_attachment_content(attachment_id: str) -> FileResponse:
+    try:
+        item, blob_path = load_attachment_file(
+            attachments_dir=Path(settings.attachments_dir),
+            attachment_id=attachment_id,
+        )
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=404, detail="Attachment not found") from error
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=str(error)) from error
+
+    return FileResponse(
+        path=blob_path,
+        media_type=item.mime_type,
+        filename=item.name,
+    )
+
+
 @app.post("/actions/preview", response_model=ActionPreviewResponse)
 def action_preview(request: ActionPreviewRequest) -> ActionPreviewResponse:
     with session_scope() as db:
@@ -363,11 +398,15 @@ def draft_commit(request: DraftCommitRequest) -> dict:
         if not preview.target_page.startswith(expected_prefix):
             raise HTTPException(status_code=400, detail="Draft preview target page is outside the draft prefix")
         try:
-            wiki.edit_page(
-                preview.target_page,
-                preview.content,
-                "Create assistant draft preview",
-            )
+            metadata = preview.metadata_json or {}
+            if metadata.get("kind") == "pdf_ingest_draft":
+                commit_pdf_ingest_draft_preview(wiki=wiki, preview=preview)
+            else:
+                wiki.edit_page(
+                    preview.target_page,
+                    preview.content,
+                    "Create assistant draft preview",
+                )
             log_audit(
                 db,
                 session_id=preview.session_id,
@@ -385,6 +424,105 @@ def draft_commit(request: DraftCommitRequest) -> dict:
             )
             raise HTTPException(status_code=500, detail=str(error)) from error
         return {"status": "ok", "page_title": preview.target_page}
+
+
+@app.post("/pdf/draft/preview", response_model=DraftPreviewPayload)
+def pdf_draft_preview(request: PdfDraftPreviewRequest) -> DraftPreviewPayload:
+    with session_scope() as db:
+        try:
+            prepared = prepare_pdf_draft_preview(
+                settings=settings,
+                attachments_dir=Path(settings.attachments_dir),
+                attachment_id=request.attachment_id,
+                review=request.review.model_dump(),
+            )
+            preview = save_draft_preview(
+                db,
+                session_id=request.session_id,
+                turn_id=request.turn_id,
+                title=prepared["title"],
+                target_page=prepared["target_page"],
+                content=prepared["content"],
+                metadata_json=prepared["metadata_json"],
+            )
+            return DraftPreviewPayload(
+                preview_id=preview.id,
+                title=preview.title,
+                target_page=preview.target_page,
+                content=preview.content,
+                metadata=preview.metadata_json,
+            )
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
+        except Exception as error:
+            raise HTTPException(status_code=500, detail=str(error)) from error
+
+
+@app.post("/pdf/control/preview", response_model=PdfControlPreviewPayload)
+def pdf_control_preview(request: PdfControlPreviewRequest) -> PdfControlPreviewPayload:
+    with session_scope() as db:
+        draft_preview = db.get(DraftPreview, request.draft_preview_id)
+        if draft_preview is None:
+            raise HTTPException(status_code=404, detail="PDF draft preview not found")
+        try:
+            prepared = prepare_pdf_control_preview(
+                wiki=wiki,
+                draft_preview=draft_preview,
+            )
+            preview = save_draft_preview(
+                db,
+                session_id=draft_preview.session_id,
+                turn_id=draft_preview.turn_id,
+                title=prepared["title"],
+                target_page=prepared["target_page"],
+                content=prepared["content"],
+                metadata_json=prepared["metadata_json"],
+            )
+            return PdfControlPreviewPayload(
+                preview_id=preview.id,
+                target_page=preview.target_page,
+                overview_page=prepared["overview_page"],
+                content=preview.content,
+                overview_update=prepared["overview_update"],
+                blocked_items=prepared["blocked_items"],
+                metadata=preview.metadata_json,
+            )
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
+        except Exception as error:
+            raise HTTPException(status_code=500, detail=str(error)) from error
+
+
+@app.post("/pdf/control/commit", response_model=PdfControlCommitResponse)
+def pdf_control_commit(request: PdfControlCommitRequest) -> PdfControlCommitResponse:
+    with session_scope() as db:
+        preview = db.get(DraftPreview, request.preview_id)
+        if preview is None:
+            raise HTTPException(status_code=404, detail="PDF Control preview not found")
+        try:
+            result = commit_pdf_control_preview(
+                wiki=wiki,
+                preview=preview,
+            )
+            log_audit(
+                db,
+                session_id=preview.session_id,
+                turn_id=preview.turn_id,
+                action_type="pdf_control_commit",
+                payload=result,
+            )
+            return PdfControlCommitResponse(**result)
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
+        except Exception as error:
+            log_audit(
+                db,
+                session_id=preview.session_id,
+                turn_id=preview.turn_id,
+                action_type="pdf_control_commit_error",
+                payload={"preview_id": preview.id, "detail": str(error)},
+            )
+            raise HTTPException(status_code=500, detail=str(error)) from error
 
 
 @app.post("/write/preview", response_model=WritePreviewPayload)
@@ -573,10 +711,63 @@ def session_detail(session_id: str) -> SessionDetailResponse:
                     draft_preview=DraftPreviewPayload(**turn.draft_preview) if turn.draft_preview else None,
                     write_preview=WritePreviewPayload(**turn.write_preview) if turn.write_preview else None,
                     write_result=WriteResultPayload(**turn.write_result) if turn.write_result else None,
+                    result_fill=ResultFillPayload(**turn.result_fill) if turn.result_fill else None,
+                    pdf_ingest_review=PdfIngestReviewPayload(**turn.pdf_ingest_review) if turn.pdf_ingest_review else None,
                     model_info=turn.model_info,
                 )
                 for turn in turns
             ],
+        )
+
+
+@app.get("/sessions", response_model=SessionHistoryListResponse)
+def sessions_list(user_name: str | None = Query(default=None)) -> SessionHistoryListResponse:
+    with session_scope() as db:
+        statement = select(AssistantSession).order_by(AssistantSession.updated_at.desc(), AssistantSession.created_at.desc())
+        if user_name:
+            statement = statement.where(AssistantSession.user_name == user_name)
+        session_rows = db.execute(statement).scalars().all()
+        items: list[SessionHistoryListItem] = []
+        for session_record in session_rows:
+            turn_rows = db.execute(
+                select(AssistantTurn)
+                .where(AssistantTurn.session_id == session_record.id)
+                .order_by(AssistantTurn.created_at.asc())
+            ).scalars().all()
+            latest_question = turn_rows[-1].question if turn_rows else None
+            items.append(
+                SessionHistoryListItem(
+                    session_id=session_record.id,
+                    current_page=session_record.current_page,
+                    user_name=session_record.user_name,
+                    created_at=session_record.created_at,
+                    updated_at=session_record.updated_at,
+                    turn_count=len(turn_rows),
+                    latest_question=latest_question,
+                )
+            )
+        return SessionHistoryListResponse(sessions=items)
+
+
+@app.get("/session/{session_id}/export.md")
+def session_markdown_export(session_id: str, user_name: str | None = Query(default=None)) -> Response:
+    with session_scope() as db:
+        session_record = db.get(AssistantSession, session_id)
+        if session_record is None:
+            raise HTTPException(status_code=404, detail="Session not found")
+        if user_name and session_record.user_name and session_record.user_name != user_name:
+            raise HTTPException(status_code=404, detail="Session not found")
+        turns = db.execute(
+            select(AssistantTurn).where(AssistantTurn.session_id == session_id).order_by(AssistantTurn.created_at.asc())
+        ).scalars().all()
+        body = build_session_markdown(session_record, turns)
+        filename = build_session_export_filename(session_record)
+        return Response(
+            content=body,
+            media_type="text/markdown",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"'
+            },
         )
 
 

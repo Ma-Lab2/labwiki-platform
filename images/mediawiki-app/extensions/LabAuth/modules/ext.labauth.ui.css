@@ -1,0 +1,315 @@
+.labauth-login-shell,
+.labauth-admin-shell {
+  box-sizing: border-box;
+  margin: 0 auto;
+  max-width: 1120px;
+  padding: 32px 20px 56px;
+}
+
+.labauth-auth-card,
+.labauth-panel {
+  background: linear-gradient(180deg, #ffffff 0%, #f8faf7 100%);
+  border: 1px solid #d7e2d2;
+  border-radius: 20px;
+  box-shadow: 0 18px 40px rgba(48, 70, 36, 0.08);
+  padding: 24px;
+}
+
+.labauth-auth-card {
+  margin: 0 auto;
+  max-width: 560px;
+}
+
+.labauth-auth-header small,
+.labauth-panel small {
+  color: #54714b;
+  display: block;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.labauth-auth-header h1,
+.labauth-panel h1,
+.labauth-panel h2 {
+  color: #223019;
+  margin: 0 0 10px;
+}
+
+.labauth-auth-header p,
+.labauth-panel p,
+.labauth-meta {
+  color: #51624b;
+  line-height: 1.55;
+}
+
+.labauth-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.labauth-field {
+  display: grid;
+  gap: 8px;
+}
+
+.labauth-field label {
+  color: #223019;
+  font-weight: 600;
+}
+
+.labauth-input,
+.labauth-login-form input {
+  background: #fff;
+  border: 1px solid #c9d8c2;
+  border-radius: 12px;
+  box-sizing: border-box;
+  font-size: 15px;
+  min-height: 46px;
+  padding: 10px 14px;
+  width: 100%;
+}
+
+.labauth-login-form .mw-htmlform-field-HTMLTextField,
+.labauth-login-form .mw-htmlform-field-HTMLPasswordField {
+  margin-bottom: 14px;
+}
+
+.labauth-login-form .mw-htmlform-submit-buttons {
+  margin-top: 18px;
+}
+
+.labauth-login-form .mw-htmlform-submit-buttons button,
+.labauth-button-primary,
+.labauth-button-secondary {
+  appearance: none;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
+  min-height: 42px;
+  padding: 0 18px;
+}
+
+.labauth-login-form .mw-htmlform-submit-buttons button,
+.labauth-button-primary {
+  background: #355d2f;
+  border: 1px solid #355d2f;
+  color: #fff;
+}
+
+.labauth-button-secondary {
+  background: #fff;
+  border: 1px solid #b8c9b1;
+  color: #223019;
+}
+
+.labauth-auth-footer {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.labauth-link {
+  color: #2a5a8f;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.labauth-status,
+.labauth-banner {
+  border-radius: 14px;
+  margin-top: 18px;
+  padding: 12px 14px;
+}
+
+.labauth-status.is-success {
+  background: #edf9ec;
+  border: 1px solid #b7ddb3;
+  color: #1f5b25;
+}
+
+.labauth-status.is-error,
+.labauth-banner.is-warning {
+  background: #fff4e8;
+  border: 1px solid #efc696;
+  color: #8b4c0f;
+}
+
+.labauth-admin-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 20px;
+}
+
+.labauth-panel-wide {
+  grid-column: 1 / -1;
+}
+
+.labauth-toolbar {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.labauth-filter-group {
+  align-items: center;
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.labauth-toolbar-meta {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.labauth-search-input {
+  flex: 1 1 220px;
+  margin: 0;
+}
+
+.labauth-filter-select {
+  flex: 0 0 180px;
+  min-width: 160px;
+}
+
+.labauth-summary {
+  color: #64725f;
+  flex: 0 0 auto;
+  font-size: 13px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.labauth-summary-wrap {
+  line-height: 1.5;
+  max-width: 420px;
+  white-space: normal;
+}
+
+.labauth-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.labauth-request-card,
+.labauth-user-row {
+  background: #f7faf5;
+  border: 1px solid #d7e2d2;
+  border-radius: 16px;
+  padding: 16px;
+  transition: border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+
+.labauth-request-card.is-selected,
+.labauth-user-row.is-selected {
+  background: #f2f8ef;
+  border-color: #7da06f;
+  box-shadow: inset 0 0 0 2px rgba(53, 93, 47, 0.14);
+}
+
+.labauth-request-header {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.labauth-request-title {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.labauth-pill {
+  background: #e5efe1;
+  border-radius: 999px;
+  color: #355d2f;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  text-transform: uppercase;
+}
+
+.labauth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.labauth-selection-summary {
+  color: #355d2f;
+  font-weight: 600;
+}
+
+.labauth-selection-toggle {
+  align-items: center;
+  color: #4f6148;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 13px;
+  gap: 8px;
+}
+
+.labauth-selection-checkbox {
+  accent-color: #355d2f;
+  cursor: pointer;
+  margin: 0;
+}
+
+.labauth-empty {
+  color: #64725f;
+  padding: 8px 0;
+}
+
+.labauth-meta-note {
+  border-top: 1px dashed #d7e2d2;
+  margin-top: 10px;
+  padding-top: 10px;
+}
+
+@media (max-width: 860px) {
+  .labauth-admin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .labauth-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .labauth-filter-group {
+    align-items: stretch;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .labauth-filter-select {
+    flex-basis: auto;
+    width: 100%;
+  }
+
+  .labauth-summary {
+    text-align: left;
+    white-space: normal;
+  }
+
+  .labauth-toolbar-meta {
+    justify-content: flex-start;
+    width: 100%;
+  }
+}

@@ -28,11 +28,12 @@ class AnthropicGenerationProvider:
         self.client = Anthropic(api_key=api_key, base_url=base_url.rstrip("/"), timeout=timeout)
 
     def generate(self, prompt: PromptEnvelope) -> str:
+        content = self._build_user_content(prompt)
         message = self.client.messages.create(
             model=self.model,
             max_tokens=prompt.max_tokens or self.default_max_tokens,
             system=prompt.system_prompt,
-            messages=[{"role": "user", "content": prompt.user_prompt}],
+            messages=[{"role": "user", "content": content}],
             temperature=prompt.temperature,
             timeout=self.timeout,
         )
@@ -42,17 +43,40 @@ class AnthropicGenerationProvider:
         ).strip()
 
     def stream(self, prompt: PromptEnvelope) -> Iterator[str]:
+        content = self._build_user_content(prompt)
         with self.client.messages.stream(
             model=self.model,
             max_tokens=prompt.max_tokens or self.default_max_tokens,
             system=prompt.system_prompt,
-            messages=[{"role": "user", "content": prompt.user_prompt}],
+            messages=[{"role": "user", "content": content}],
             temperature=prompt.temperature,
             timeout=self.timeout,
         ) as stream:
             for text in stream.text_stream:
                 if text:
                     yield text
+
+    @staticmethod
+    def _build_user_content(prompt: PromptEnvelope):
+        if not prompt.user_content:
+            return prompt.user_prompt
+        blocks = []
+        for item in prompt.user_content:
+            if item.get("type") == "image":
+                blocks.append({
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": item["mime_type"],
+                        "data": item["data"],
+                    },
+                })
+            else:
+                blocks.append({
+                    "type": "text",
+                    "text": item.get("text", ""),
+                })
+        return blocks
 
 
 class _OpenAIChatGenerationProvider:
@@ -67,7 +91,7 @@ class _OpenAIChatGenerationProvider:
             model=self.model,
             messages=[
                 {"role": "system", "content": prompt.system_prompt},
-                {"role": "user", "content": prompt.user_prompt},
+                {"role": "user", "content": self._build_user_content(prompt)},
             ],
             temperature=prompt.temperature,
             max_tokens=prompt.max_tokens or self.default_max_tokens,
@@ -79,7 +103,7 @@ class _OpenAIChatGenerationProvider:
             model=self.model,
             messages=[
                 {"role": "system", "content": prompt.system_prompt},
-                {"role": "user", "content": prompt.user_prompt},
+                {"role": "user", "content": self._build_user_content(prompt)},
             ],
             temperature=prompt.temperature,
             max_tokens=prompt.max_tokens or self.default_max_tokens,
@@ -89,6 +113,26 @@ class _OpenAIChatGenerationProvider:
             delta = chunk.choices[0].delta.content or ""
             if delta:
                 yield delta
+
+    @staticmethod
+    def _build_user_content(prompt: PromptEnvelope):
+        if not prompt.user_content:
+            return prompt.user_prompt
+        blocks = []
+        for item in prompt.user_content:
+            if item.get("type") == "image":
+                blocks.append({
+                    "type": "image_url",
+                    "image_url": {
+                        "url": "data:" + item["mime_type"] + ";base64," + item["data"],
+                    },
+                })
+            else:
+                blocks.append({
+                    "type": "text",
+                    "text": item.get("text", ""),
+                })
+        return blocks
 
 
 class OpenAIGenerationProvider(_OpenAIChatGenerationProvider):

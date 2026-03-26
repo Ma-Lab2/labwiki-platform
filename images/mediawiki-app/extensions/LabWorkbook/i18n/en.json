@@ -1,0 +1,9 @@
+{
+  "@metadata": {
+    "authors": [
+      "OpenAI Codex"
+    ]
+  },
+  "labworkbook-desc": "Provides workbook-style experiment tables backed by real shot log spreadsheets.",
+  "labworkbook": "Experiment Workbook"
+}

@@ -2,10 +2,16 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+import base64
 from pathlib import Path
 
 from app.schemas import ChatRequest
-from app.services.attachments import AttachmentStorageError, store_attachment
+from app.services.attachments import (
+    AttachmentStorageError,
+    build_attachment_prompt_parts,
+    load_attachment_file,
+    store_attachment,
+)
 
 
 class ChatRequestAttachmentTests(unittest.TestCase):
@@ -54,6 +60,47 @@ class AttachmentStorageTests(unittest.TestCase):
                     content_type="application/zip",
                     content=b"zip",
                 )
+
+    def test_build_attachment_prompt_parts_includes_inline_image_payload(self) -> None:
+        png_bytes = base64.b64decode(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+k7N8AAAAASUVORK5CYII="
+        )
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            payload = store_attachment(
+                attachments_dir=Path(tmp_dir),
+                filename="shot-summary.png",
+                content_type="image/png",
+                content=png_bytes,
+            )
+
+            parts = build_attachment_prompt_parts(
+                attachments_dir=Path(tmp_dir),
+                attachments=[payload],
+            )
+
+            self.assertEqual(parts[0]["type"], "text")
+            self.assertIn("shot-summary.png", parts[0]["text"])
+            self.assertEqual(parts[1]["type"], "image")
+            self.assertEqual(parts[1]["mime_type"], "image/png")
+            self.assertTrue(parts[1]["data"])
+
+    def test_load_attachment_file_returns_metadata_and_blob_path(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            payload = store_attachment(
+                attachments_dir=Path(tmp_dir),
+                filename="paper.pdf",
+                content_type="application/pdf",
+                content=b"%PDF-test",
+            )
+
+            item, blob_path = load_attachment_file(
+                attachments_dir=Path(tmp_dir),
+                attachment_id=payload.id,
+            )
+
+            self.assertEqual(item.id, payload.id)
+            self.assertEqual(item.mime_type, "application/pdf")
+            self.assertEqual(blob_path.read_bytes(), b"%PDF-test")
 
 
 if __name__ == "__main__":

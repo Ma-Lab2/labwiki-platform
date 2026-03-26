@@ -106,5 +106,7 @@
 | compose / caddy / 容器入口 | `docker compose config`, `bash ops/scripts/smoke-test.sh` |
 | assistant API / worker / 检索 / draft | `bash ops/scripts/validate-assistant.sh --profile contract` |
 | assistant reindex / embedding / job | `bash ops/scripts/validate-assistant.sh --profile full` |
+| Shot 学生回填链路 | `bash ops/scripts/playwright-private-shot-fill-check.sh` |
+| 文献导读 PDF 阅读链路 | `bash ops/scripts/playwright-private-pdf-reader-check.sh` |
 | MediaWiki 启动脚本 / 种子内容 / 扩展 | `bash ops/scripts/smoke-test.sh`，必要时看 `docker compose logs mw_private mw_public` |
 | 工具代理或工具接口 | `bash ops/scripts/smoke-test.sh`，再跑 assistant contract 验证 |

@@ -130,6 +130,85 @@ def build_draft_prompt(
     return PromptEnvelope(system_prompt=system_prompt, user_prompt=user_prompt, temperature=0.1)
 
 
+def build_result_fill_prompt(
+    *,
+    question: str,
+    answer: str,
+    current_page: str | None,
+    source_titles: list[str],
+    conversation_history: list[dict[str, str]],
+    attachment_parts: list[dict[str, Any]],
+) -> PromptEnvelope:
+    system_prompt = (
+        "你负责把实验后截图和简短说明整理成 Shot 记录回填建议。"
+        "只输出一个 JSON 对象，字段固定为 title、field_suggestions、draft_text、missing_items、evidence。"
+        "field_suggestions 必须是对象，键使用 Shot 表单字段名。"
+        "每个字段值优先输出为对象：{value, status, evidence}。"
+        "status 只允许 confirmed 或 pending。"
+        "evidence 是该字段对应的简短来源说明列表。"
+        "draft_text 要写成适合课题组 Shot 记录页面的正式记录语气。"
+        "无法确认的字段不要编造，写到 missing_items。"
+        "missing_items 优先输出为对象数组，每项格式为 {label, reason, evidence}。"
+        "如果暂时只能提供字段名，也允许输出字符串数组。"
+        "evidence 只保留简短的人类可读来源说明。"
+    )
+    user_prompt = (
+        f"当前问题：{question}\n"
+        f"当前页面：{current_page or '无'}\n"
+        f"当前回答草稿：{answer or '无'}\n"
+        f"来源标题：{', '.join(source_titles) if source_titles else '无'}\n"
+        f"最近对话：\n{_history_block(conversation_history)}\n\n"
+        "请针对 Shot 记录给出一版结构化回填建议。"
+        "字段优先使用这些名称：日期、Run、时间、实验目标、页面状态、能量、脉宽、对比度测量、聚焦条件、波前状态、"
+        "靶类型、靶厚编号、靶位置信息、TPS、TPS工具入口、TPS参数快照、TPS结果图、RCF、RCF工具入口、RCF参数快照、"
+        "RCF结果截图、真空、控制平台日志编号、主要观测、候选机制判断、对应理论页、判断依据、原始数据主目录、处理结果文件、"
+        "负责人、截止日期、项目页、周实验日志、会议复盘。"
+    )
+    return PromptEnvelope(
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
+        temperature=0.1,
+        user_content=[{"type": "text", "text": user_prompt}] + (attachment_parts or []),
+    )
+
+
+def build_pdf_ingest_prompt(
+    *,
+    question: str,
+    current_page: str | None,
+    file_name: str,
+    page_count: int,
+    extracted_text: str,
+    page_prompt_parts: list[dict[str, Any]],
+) -> PromptEnvelope:
+    system_prompt = (
+        "你负责把一份上传到实验室私有 wiki 助手的 PDF 文档整理成“写入建议”。"
+        "只输出一个 JSON 对象，字段固定为 "
+        "title、document_summary、recommended_targets、proposed_draft_title、section_outline、"
+        "extracted_page_count、staged_image_count、evidence、needs_confirmation。"
+        "recommended_targets 必须是数组，每项格式为 {target_type,target_title,score,reason}。"
+        "target_type 只允许 control、device_entry、literature_guide。"
+        "section_outline 必须是数组，每项格式为 {title,content}。"
+        "这不是论文导读默认任务；如果文档明显是操作手册、控制说明、设备运行步骤，应优先推荐 control 或 device_entry。"
+        "不要编造 DOI、作者、年份等学术元信息。"
+    )
+    user_prompt = (
+        f"当前问题：{question}\n"
+        f"当前页面：{current_page or '无'}\n"
+        f"PDF 文件：{file_name}\n"
+        f"页数：{page_count}\n\n"
+        "以下是本地抽取到的 PDF 文本，请结合页面渲染图判断文档性质、总结内容，并建议未来应该归档到哪个区域：\n\n"
+        f"{extracted_text[:6000] or '当前文本抽取较少，请优先参考页图。'}"
+    )
+    return PromptEnvelope(
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
+        temperature=0.1,
+        user_content=[{"type": "text", "text": user_prompt}] + (page_prompt_parts or []),
+        max_tokens=1800,
+    )
+
+
 def build_agent_planner_prompt(
     *,
     question: str,

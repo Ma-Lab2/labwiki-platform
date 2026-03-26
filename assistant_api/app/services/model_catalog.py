@@ -11,8 +11,9 @@ from ..config import Settings
 
 FEATURED_MODELS: dict[str, list[str]] = {
     "gpt": [
-        "gpt-5.4-mini",
         "gpt-5.4",
+        "gpt-5.3-codex",
+        "gpt-5.4-mini",
     ],
     "claude": [
         "claude-sonnet-4-5-20250929-thinking",
@@ -32,7 +33,8 @@ FEATURED_MODELS: dict[str, list[str]] = {
 }
 
 FALLBACK_CHAINS: dict[str, list[str]] = {
-    "gpt-5.4": ["gpt-5.4-mini"],
+    "gpt-5.4": ["gpt-5.3-codex", "gpt-5.4-mini"],
+    "gpt-5.3-codex": ["gpt-5.4-mini"],
     "gpt-5.4-mini": [],
     "claude-sonnet-4-6-thinking": [
         "claude-sonnet-4-6",
@@ -52,6 +54,17 @@ FALLBACK_CHAINS: dict[str, list[str]] = {
     "gemini-3-pro-thinking": ["gemini-3-pro"],
     "gemini-3-pro": [],
     "gemini-3.1-pro-preview-thinking": ["gemini-3-pro-thinking", "gemini-3-pro"],
+}
+
+WORKFLOW_MODEL_PRIORITIES: dict[str, list[str]] = {
+    "pdf_ingest_write": [
+        "gpt-5.4",
+        "gpt-5.3-codex",
+        "claude-sonnet-4-5-20250929-thinking",
+        "claude-sonnet-4-5-20250929",
+        "gemini-3-flash-preview-thinking",
+        "gemini-3-flash-preview",
+    ],
 }
 
 _CATALOG_CACHE: dict[str, Any] = {"expires_at": 0.0, "model_ids": []}
@@ -130,6 +143,46 @@ def resolve_generation_selection(
         resolved_model=model,
         fallback_chain=FALLBACK_CHAINS.get(model, []),
     )
+
+
+def resolve_workflow_generation_selection(
+    settings: Settings,
+    *,
+    requested_provider: str | None,
+    requested_model: str | None,
+    session_provider: str | None,
+    session_model: str | None,
+    workflow_hint: str | None,
+) -> ResolvedGenerationSelection:
+    selection = resolve_generation_selection(
+        settings,
+        requested_provider=requested_provider,
+        requested_model=requested_model,
+        session_provider=session_provider,
+        session_model=session_model,
+    )
+    workflow = (workflow_hint or "").strip()
+    priorities = WORKFLOW_MODEL_PRIORITIES.get(workflow, [])
+    if not priorities:
+        return selection
+    current_model = (selection.requested_model or "").strip().lower()
+    if current_model and not current_model.endswith("-mini"):
+        return selection
+
+    available_ids = set(fetch_remote_model_ids(settings))
+    for model in priorities:
+        if available_ids and model not in available_ids:
+            continue
+        if model == selection.requested_model:
+            return selection
+        provider = infer_provider_for_model(model, selection.provider)
+        return ResolvedGenerationSelection(
+            provider=provider,
+            requested_model=model,
+            resolved_model=model,
+            fallback_chain=FALLBACK_CHAINS.get(model, []),
+        )
+    return selection
 
 
 def fetch_remote_model_ids(settings: Settings, *, force_refresh: bool = False) -> list[str]:

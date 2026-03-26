@@ -34,4 +34,9 @@ tools-data/tps/output/*
 tools/pytps-web/frontend/node_modules/
 tools/pytps-web/frontend/dist/
 assistant_api/.venv/
+assistant_api/.venv312/
+assistant_api/backups/
+ops/tests/__pycache__/
+state/assistant_uploads/
+state/**/.cargo-bootstrap-*
 docs/reports/assistant/*.json

@@ -1,0 +1,149 @@
+.labworkbook-root {
+  display: grid;
+  gap: 16px;
+}
+
+.labworkbook-status {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #eef4ff;
+  color: #17335c;
+}
+
+.labworkbook-status.is-error {
+  background: #fff0ef;
+  color: #8a1f16;
+}
+
+.labworkbook-status.is-success {
+  background: #edf8ee;
+  color: #195c27;
+}
+
+.labworkbook-toolbar,
+.labworkbook-summary,
+.labworkbook-tabs,
+.labworkbook-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.labworkbook-card {
+  padding: 16px;
+  border: 1px solid #d8dde6;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.labworkbook-card-meta {
+  max-width: 720px;
+}
+
+.labworkbook-field {
+  display: grid;
+  gap: 6px;
+}
+
+.labworkbook-label {
+  font-size: 13px;
+  color: #44536a;
+}
+
+.labworkbook-input,
+.labworkbook-table-input {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid #b7c2d3;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.labworkbook-button,
+.labworkbook-button-secondary,
+.labworkbook-tab {
+  min-height: 38px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #b7c2d3;
+  cursor: pointer;
+}
+
+.labworkbook-button {
+  background: #17335c;
+  border-color: #17335c;
+  color: #fff;
+}
+
+.labworkbook-button-secondary,
+.labworkbook-tab {
+  background: #fff;
+  color: #17335c;
+}
+
+.labworkbook-tab.is-active {
+  background: #edf3ff;
+  border-color: #7f9bc8;
+}
+
+.labworkbook-tabs {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.labworkbook-sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.labworkbook-sheet-title {
+  font-weight: 600;
+}
+
+.labworkbook-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.labworkbook-table th,
+.labworkbook-table td {
+  padding: 8px;
+  border: 1px solid #d8dde6;
+  vertical-align: top;
+}
+
+.labworkbook-table th {
+  background: #f4f7fb;
+  text-align: left;
+  position: sticky;
+  top: 0;
+}
+
+.labworkbook-action-cell {
+  min-width: 240px;
+}
+
+.labworkbook-help,
+.labworkbook-meta-line {
+  font-size: 13px;
+  color: #516179;
+}
+
+.labworkbook-inline-link {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 13px;
+}
+
+.labworkbook-empty {
+  color: #516179;
+}
+
+@media (max-width: 960px) {
+  .labworkbook-sheet-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

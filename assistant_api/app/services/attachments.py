@@ -4,6 +4,7 @@ import json
 import re
 import shutil
 import uuid
+import base64
 from pathlib import Path
 
 from ..schemas import AttachmentItem
@@ -69,6 +70,20 @@ def delete_attachment(*, attachments_dir: Path, attachment_id: str) -> bool:
     return True
 
 
+def load_attachment_file(
+    *,
+    attachments_dir: Path,
+    attachment_id: str,
+) -> tuple[AttachmentItem, Path]:
+    target_dir = attachments_dir / attachment_id
+    meta_path = target_dir / "meta.json"
+    blob_path = target_dir / "blob"
+    if not meta_path.exists() or not blob_path.exists():
+        raise FileNotFoundError(f"Attachment not found: {attachment_id}")
+    payload = AttachmentItem.model_validate_json(meta_path.read_text(encoding="utf-8"))
+    return payload, blob_path
+
+
 def build_attachment_evidence(attachments: list[AttachmentItem]) -> list[dict[str, str | float | None]]:
     evidence: list[dict[str, str | float | None]] = []
     for item in attachments:
@@ -84,3 +99,27 @@ def build_attachment_evidence(attachments: list[AttachmentItem]) -> list[dict[st
             }
         )
     return evidence
+
+
+def build_attachment_prompt_parts(
+    *,
+    attachments_dir: Path,
+    attachments: list[AttachmentItem],
+) -> list[dict[str, str]]:
+    parts: list[dict[str, str]] = []
+    for index, item in enumerate(attachments, start=1):
+        parts.append({
+            "type": "text",
+            "text": f"附件 {index}: {item.name}（{item.kind}，{item.mime_type}，{item.size_bytes} bytes）",
+        })
+        if item.kind != "image":
+            continue
+        blob_path = attachments_dir / item.id / "blob"
+        if not blob_path.exists():
+            continue
+        parts.append({
+            "type": "image",
+            "mime_type": item.mime_type,
+            "data": base64.b64encode(blob_path.read_bytes()).decode("ascii"),
+        })
+    return parts

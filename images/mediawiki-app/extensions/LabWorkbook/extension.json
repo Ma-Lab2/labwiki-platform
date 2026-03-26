@@ -1,0 +1,56 @@
+{
+  "name": "LabWorkbook",
+  "version": "0.1.0",
+  "author": [
+    "OpenAI Codex"
+  ],
+  "url": "https://github.com/Ma-Lab2/labwiki-platform",
+  "descriptionmsg": "labworkbook-desc",
+  "license-name": "MIT",
+  "AutoloadNamespaces": {
+    "MediaWiki\\Extension\\LabWorkbook\\": "includes/"
+  },
+  "MessagesDirs": {
+    "LabWorkbook": [
+      "i18n"
+    ]
+  },
+  "ExtensionMessagesFiles": {
+    "LabWorkbookAliases": "LabWorkbook.alias.php"
+  },
+  "SpecialPages": {
+    "LabWorkbook": "MediaWiki\\Extension\\LabWorkbook\\SpecialLabWorkbook"
+  },
+  "APIModules": {
+    "labworkbookget": "MediaWiki\\Extension\\LabWorkbook\\Api\\ApiLabWorkbookGet",
+    "labworkbooksave": "MediaWiki\\Extension\\LabWorkbook\\Api\\ApiLabWorkbookSave",
+    "labworkbookupsertshot": "MediaWiki\\Extension\\LabWorkbook\\Api\\ApiLabWorkbookUpsertShot"
+  },
+  "ResourceModules": {
+    "ext.labworkbook.ui": {
+      "scripts": [
+        "modules/ext.labworkbook.utils.js",
+        "modules/ext.labworkbook.ui.js"
+      ],
+      "styles": [
+        "modules/ext.labworkbook.ui.css"
+      ],
+      "dependencies": [
+        "mediawiki.api",
+        "mediawiki.util"
+      ],
+      "targets": [
+        "desktop",
+        "mobile"
+      ]
+    }
+  },
+  "ResourceFileModulePaths": {
+    "localBasePath": "",
+    "remoteExtPath": "LabWorkbook"
+  },
+  "Hooks": {
+    "LoadExtensionSchemaUpdates": "MediaWiki\\Extension\\LabWorkbook\\Hooks::onLoadExtensionSchemaUpdates"
+  },
+  "manifest_version": 2
+}

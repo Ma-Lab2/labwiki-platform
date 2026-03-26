@@ -1,0 +1,99 @@
+{
+  "name": "LabAuth",
+  "version": "0.1.0",
+  "author": [
+    "OpenAI Codex"
+  ],
+  "url": "https://github.com/Ma-Lab2/labwiki-platform",
+  "descriptionmsg": "labauth-desc",
+  "license-name": "MIT",
+  "AutoloadNamespaces": {
+    "MediaWiki\\Extension\\LabAuth\\": "includes/"
+  },
+  "MessagesDirs": {
+    "LabAuth": [
+      "i18n"
+    ]
+  },
+  "ExtensionMessagesFiles": {
+    "LabAuthAliases": "LabAuth.alias.php"
+  },
+  "SpecialPages": {
+    "StudentSignup": "MediaWiki\\Extension\\LabAuth\\SpecialStudentSignup",
+    "LabAccountAdmin": "MediaWiki\\Extension\\LabAuth\\SpecialLabAccountAdmin"
+  },
+  "APIModules": {
+    "labauthsignupsubmit": "MediaWiki\\Extension\\LabAuth\\Api\\ApiLabAuthSignupSubmit",
+    "labauthsignupstatus": "MediaWiki\\Extension\\LabAuth\\Api\\ApiLabAuthSignupStatus",
+    "labauthadminqueue": "MediaWiki\\Extension\\LabAuth\\Api\\ApiLabAuthAdminQueue",
+    "labauthadminapprove": "MediaWiki\\Extension\\LabAuth\\Api\\ApiLabAuthAdminApprove",
+    "labauthadminreject": "MediaWiki\\Extension\\LabAuth\\Api\\ApiLabAuthAdminReject",
+    "labauthadminusers": "MediaWiki\\Extension\\LabAuth\\Api\\ApiLabAuthAdminUsers",
+    "labauthadminhistory": "MediaWiki\\Extension\\LabAuth\\Api\\ApiLabAuthAdminHistory",
+    "labauthadminactivity": "MediaWiki\\Extension\\LabAuth\\Api\\ApiLabAuthAdminActivity",
+    "labauthadmindisable": "MediaWiki\\Extension\\LabAuth\\Api\\ApiLabAuthAdminDisable",
+    "labauthadminenable": "MediaWiki\\Extension\\LabAuth\\Api\\ApiLabAuthAdminEnable",
+    "labauthadminresetpassword": "MediaWiki\\Extension\\LabAuth\\Api\\ApiLabAuthAdminResetPassword"
+  },
+  "ResourceModules": {
+    "ext.labauth.signup": {
+      "scripts": [
+        "modules/ext.labauth.signup.js"
+      ],
+      "styles": [
+        "modules/ext.labauth.ui.css"
+      ],
+      "dependencies": [
+        "mediawiki.api",
+        "mediawiki.util"
+      ],
+      "targets": [
+        "desktop",
+        "mobile"
+      ]
+    },
+    "ext.labauth.admin": {
+      "scripts": [
+        "modules/ext.labauth.admin-utils.js",
+        "modules/ext.labauth.admin.js"
+      ],
+      "styles": [
+        "modules/ext.labauth.ui.css"
+      ],
+      "dependencies": [
+        "mediawiki.api",
+        "mediawiki.util"
+      ],
+      "targets": [
+        "desktop",
+        "mobile"
+      ]
+    }
+  },
+  "ResourceFileModulePaths": {
+    "localBasePath": "",
+    "remoteExtPath": "LabAuth"
+  },
+  "Hooks": {
+    "TitleReadWhitelist": "MediaWiki\\Extension\\LabAuth\\Hooks::onTitleReadWhitelist",
+    "LoadExtensionSchemaUpdates": "MediaWiki\\Extension\\LabAuth\\Hooks::onLoadExtensionSchemaUpdates"
+  },
+  "AuthManagerAutoConfig": {
+    "preauth": {
+      "LabAuthDisabledAccountPreAuthenticationProvider": {
+        "class": "MediaWiki\\Extension\\LabAuth\\DisabledAccountPreAuthenticationProvider",
+        "sort": 20
+      }
+    }
+  },
+  "AvailableRights": [
+    "manage-lab-accounts"
+  ],
+  "GroupPermissions": {
+    "sysop": {
+      "manage-lab-accounts": true
+    },
+    "student": {}
+  },
+  "manifest_version": 2
+}

@@ -25,14 +25,22 @@
   "ResourceModules": {
     "ext.labassistant.shell": {
       "scripts": [
+        "modules/ext.labassistant.asset-version.js",
         "modules/ext.labassistant.editor-utils.js",
+        "modules/ext.labassistant.editor-upload-utils.js",
+        "modules/ext.labassistant.attachment-utils.js",
+        "modules/ext.labassistant.pdf-reader-utils.js",
+        "modules/ext.labassistant.pdf-ingest-utils.js",
+        "modules/ext.labassistant.session-export-utils.js",
+        "modules/ext.labassistant.shell-utils.js",
         "modules/ext.labassistant.shell.js"
       ],
       "styles": [
         "modules/ext.labassistant.ui.css"
       ],
       "dependencies": [
-        "mediawiki.util"
+        "mediawiki.util",
+        "mediawiki.api"
       ],
       "targets": [
         "desktop",
@@ -44,7 +52,14 @@
         "modules/vendor/highlight/highlight.min.js",
         "modules/vendor/marked.umd.js",
         "modules/vendor/purify.min.js",
+        "modules/ext.labassistant.asset-version.js",
         "modules/ext.labassistant.editor-utils.js",
+        "modules/ext.labassistant.editor-upload-utils.js",
+        "modules/ext.labassistant.attachment-utils.js",
+        "modules/ext.labassistant.pdf-reader-utils.js",
+        "modules/ext.labassistant.pdf-ingest-utils.js",
+        "modules/ext.labassistant.session-export-utils.js",
+        "modules/ext.labassistant.shell-utils.js",
         "modules/ext.labassistant.ui.js"
       ],
       "styles": [
@@ -99,6 +114,9 @@
         "intermediate",
         "research"
       ]
+    },
+    "LabAssistantAssetEpoch": {
+      "value": "2026-03-26-pdf-control-formalize-1"
     }
   },
   "manifest_version": 2

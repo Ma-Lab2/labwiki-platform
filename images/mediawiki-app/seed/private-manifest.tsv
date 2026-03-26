@@ -46,6 +46,7 @@ Diagnostic:脉冲表征与超快诊断理论	private/diagnostic-ultrafast-theory
 Diagnostic:TPS	private/diagnostic-tps.wiki
 Diagnostic:RCF	private/diagnostic-rcf.wiki
 Data:数据管理总览	private/data-index.wiki
+Data:实验工作簿	private/data-workbooks.wiki
 Data:实验日志与数据关联	private/data-shot-linking.wiki
 Data:TPS分析与归档	private/data-tps-archiving.wiki
 Data:RCF计算与归档	private/data-rcf-archiving.wiki

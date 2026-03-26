@@ -90,6 +90,65 @@ class WikiClientConfigTest(unittest.TestCase):
             "http://192.168.1.2:8443/index.php?title=Theory%3ATNSA",
         )
 
+    def test_upload_file_retries_once_when_mediawiki_returns_badtoken(self):
+        settings = make_settings()
+        client = MediaWikiClient(settings)
+        issued_tokens: list[str] = []
+
+        def fake_login():
+            token = f"csrf-{len(issued_tokens) + 1}"
+            issued_tokens.append(token)
+            client.csrf_token = token
+            client.logged_in = True
+
+        badtoken_response = Mock()
+        badtoken_response.raise_for_status.return_value = None
+        badtoken_response.json.return_value = {"error": {"code": "badtoken", "info": "Invalid CSRF token."}}
+
+        success_response = Mock()
+        success_response.raise_for_status.return_value = None
+        success_response.json.return_value = {"upload": {"result": "Success"}}
+
+        with patch.object(client, "login", side_effect=fake_login) as mock_login, \
+                patch.object(client.client, "post", side_effect=[badtoken_response, success_response]) as mock_post:
+            payload = client.upload_file("fixture.pdf", b"pdf", "Upload regression fixture", content_type="application/pdf")
+
+        self.assertEqual(payload["upload"]["result"], "Success")
+        self.assertEqual(mock_login.call_count, 2)
+        self.assertEqual(
+            [call.kwargs["data"]["token"] for call in mock_post.call_args_list],
+            ["csrf-1", "csrf-2"],
+        )
+
+    def test_edit_page_retries_once_when_mediawiki_returns_badtoken(self):
+        settings = make_settings()
+        client = MediaWikiClient(settings)
+        issued_tokens: list[str] = []
+
+        def fake_login():
+            token = f"csrf-{len(issued_tokens) + 1}"
+            issued_tokens.append(token)
+            client.csrf_token = token
+            client.logged_in = True
+
+        with patch.object(client, "login", side_effect=fake_login) as mock_login, \
+                patch.object(
+                    client,
+                    "_post",
+                    side_effect=[
+                        {"error": {"code": "badtoken", "info": "Invalid CSRF token."}},
+                        {"edit": {"result": "Success"}},
+                    ],
+                ) as mock_post:
+            payload = client.edit_page("Control:回归测试", "正文", "回归测试")
+
+        self.assertEqual(payload["edit"]["result"], "Success")
+        self.assertEqual(mock_login.call_count, 2)
+        self.assertEqual(
+            [call.args[0]["token"] for call in mock_post.call_args_list],
+            ["csrf-1", "csrf-2"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -19,7 +19,7 @@
 
 {| class="labwiki-strip"
 |-
-| 当日常用： [[Special:LabAssistant|知识助手]] · [[Shot:Shot日志入口|Shot 入口]] · [[Shot:周实验日志|周实验日志]] · [[SOP:主靶室打靶流程|打靶 SOP]] · [[SOP:10分钟全要素检查清单|10 分钟检查清单]] · [[Data:实验日志与数据关联|数据关联规则]]
+| 当日常用： [[Special:LabAssistant|知识助手]] · [[Special:实验工作簿|实验总表]] · [[Shot:Shot日志入口|Shot 入口]] · [[Shot:周实验日志|周实验日志]] · [[SOP:主靶室打靶流程|打靶 SOP]] · [[SOP:10分钟全要素检查清单|10 分钟检查清单]] · [[Data:实验日志与数据关联|数据关联规则]]
 |}
 
 == 今日操作面 ==
@@ -37,6 +37,7 @@
 * [{{SERVER}}/tools/tps/ TPS 工具]
 | * [[Shot:Shot模板]]
 * [[Shot:表单新建]]
+* [[Special:实验工作簿|实验总表]]
 * [[Shot:周实验日志]]
 * [[风险与问题]]
 | * [[Data:实验日志与数据关联]]

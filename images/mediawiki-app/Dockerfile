@@ -7,6 +7,8 @@ USER root
 COPY images/mediawiki-app/theme /var/www/html/labwiki/theme
 COPY images/mediawiki-app/extensions/Cargo /var/www/html/extensions/Cargo
 COPY images/mediawiki-app/extensions/LabAssistant /var/www/html/extensions/LabAssistant
+COPY images/mediawiki-app/extensions/LabAuth /var/www/html/extensions/LabAuth
+COPY images/mediawiki-app/extensions/LabWorkbook /var/www/html/extensions/LabWorkbook
 COPY images/mediawiki-app/extensions/PageForms /var/www/html/extensions/PageForms
 
 FROM mw-source AS mw-runtime
@@ -26,6 +28,8 @@ COPY images/mediawiki-app/seed /opt/labwiki/seed
 RUN test -d /var/www/html/extensions/VisualEditor \
     && test -d /var/www/html/extensions/Cargo \
     && test -d /var/www/html/extensions/LabAssistant \
+    && test -d /var/www/html/extensions/LabAuth \
+    && test -d /var/www/html/extensions/LabWorkbook \
     && test -d /var/www/html/extensions/PageForms \
     && chmod +x /usr/local/bin/bootstrap-instance.sh
 

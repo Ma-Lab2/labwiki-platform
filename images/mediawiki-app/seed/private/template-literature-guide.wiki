@@ -7,11 +7,12 @@ _table=lab_literature_guides
 |authors=List (;) of String
 |pub_year=Integer
 |doi=String
+|pdf_file=String
 |summary=Text
 |related_pages=List (;) of Page
 |sources=List (;) of String
 }}
-{{#template_params:标题|作者|年份|DOI|摘要|相关页面|来源}}
+{{#template_params:标题|作者|年份|DOI|PDF文件|摘要|相关页面|来源}}
 </noinclude><includeonly>
 {{#cargo_store:
 _table=lab_literature_guides
@@ -20,6 +21,7 @@ _table=lab_literature_guides
 |authors={{{作者|}}}
 |pub_year={{{年份|}}}
 |doi={{{DOI|}}}
+|pdf_file={{{PDF文件|}}}
 |summary={{{摘要|}}}
 |related_pages={{{相关页面|}}}
 |sources={{{来源|}}}
@@ -32,6 +34,14 @@ _table=lab_literature_guides
 * 作者：{{{作者|}}}
 * 年份：{{{年份|}}}
 * DOI：{{{DOI|}}}
+* PDF文件：{{{PDF文件|（未关联）}}}
+
+== 论文 PDF ==
+{{#if:{{{PDF文件|}}}|
+<div class="labassistant-pdf-reader-source" data-source-type="wiki_file" data-file-title="{{{PDF文件|}}}" data-file-label="{{{PDF文件|}}}" data-page-title="{{FULLPAGENAME}}"></div>
+|
+<div class="labassistant-callout labassistant-pdf-reader-empty">当前条目尚未关联正式 PDF 文件。可在“PDF文件”字段中填写或上传一个 Wiki 文件。</div>
+}}
 
 == 相关页面 ==
 {{{相关页面|}}}

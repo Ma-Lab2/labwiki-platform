@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Iterator
+from pathlib import Path
 from typing import Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
@@ -14,8 +15,9 @@ from ..clients.wiki import MediaWikiClient
 from ..config import Settings
 from ..constants import AssistantMode, SourceType, TaskType
 from ..models import AssistantSession, AssistantTurn
-from ..schemas import ActionTraceItem, ChatRequest, ChatResponse, DraftPreviewPayload, ModelInfoPayload, PlanResponse, SourceItem, StepItem, WritePreviewPayload, WriteResultPayload
+from ..schemas import ActionTraceItem, ChatRequest, ChatResponse, DraftPreviewPayload, ModelInfoPayload, PdfIngestReviewPayload, PlanResponse, ResultFillPayload, SourceItem, StepItem, WritePreviewPayload, WriteResultPayload
 from .agent_loop import AgentExecutor
+from .attachments import build_attachment_evidence
 from .audit import log_audit
 from .drafts import prepare_draft_preview, save_draft_preview
 from .intent import (
@@ -26,7 +28,9 @@ from .intent import (
     is_write_action_request,
 )
 from .llm import LLMClient
-from .model_catalog import fallback_model_for, resolve_generation_selection
+from .model_catalog import fallback_model_for, resolve_workflow_generation_selection
+from .pdf_ingest import is_pdf_ingest_request, prepare_pdf_ingest_review
+from .result_fill import is_shot_result_fill_request, prepare_shot_result_fill
 from .search import search_chunks
 from .write_actions import prepare_write_preview
 
@@ -56,6 +60,8 @@ class WorkflowState(TypedDict, total=False):
     draft_preview_data: dict[str, Any] | None
     write_preview_data: dict[str, Any] | None
     write_result_data: dict[str, Any] | None
+    result_fill_data: dict[str, Any] | None
+    pdf_ingest_review_data: dict[str, Any] | None
     pending_write_action: dict[str, Any] | None
     stop_reason: str | None
     structured_only: bool
@@ -259,23 +265,19 @@ def _apply_generation_selection(
     settings: Settings,
     session_record: AssistantSession,
     request: ChatRequest,
-) -> dict[str, str | None]:
-    selection = resolve_generation_selection(
+) -> Any:
+    selection = resolve_workflow_generation_selection(
         settings,
         requested_provider=request.generation_provider,
         requested_model=request.generation_model,
         session_provider=session_record.generation_provider,
         session_model=session_record.generation_model,
+        workflow_hint=request.workflow_hint,
     )
     session_record.generation_provider = selection.provider
     session_record.generation_model = selection.requested_model
     session_record.generation_fallback_model = fallback_model_for(selection.requested_model)
-    return {
-        "provider": selection.provider,
-        "requested_model": selection.requested_model,
-        "resolved_model": selection.resolved_model,
-        "fallback_model": session_record.generation_fallback_model,
-    }
+    return selection
 
 
 def _gaps_for_answer(task_type: str, evidence: list[dict[str, Any]], has_external: bool) -> list[str]:
@@ -336,6 +338,245 @@ def _serialize_sources(evidence: list[dict[str, Any]]) -> list[dict[str, Any]]:
         "url": item.get("url"),
         "snippet": item.get("snippet"),
     } for item in evidence[:8]]
+
+
+def _context_evidence(wiki: MediaWikiClient, context_pages: list[str]) -> list[dict[str, Any]]:
+    evidence: list[dict[str, Any]] = []
+    for title in context_pages[:1]:
+        text = wiki.get_page_text(title) or ""
+        evidence.append({
+            "source_type": SourceType.CONTEXT.value,
+            "source_id": title,
+            "title": title,
+            "url": wiki.page_url(title),
+            "snippet": " ".join(text.split())[:280] if text else title,
+            "content": text,
+            "score": 2.0,
+        })
+    return evidence
+
+
+def _result_fill_answer(payload: dict[str, Any]) -> str:
+    parts: list[str] = []
+    title = str(payload.get("title") or "Shot 结果回填建议")
+    draft_text = str(payload.get("draft_text") or "").strip()
+    missing_items: list[str] = []
+    for item in payload.get("missing_items", []) or []:
+        if isinstance(item, dict):
+            label = str(item.get("label") or item.get("field") or item.get("name") or "").strip()
+            reason = str(item.get("reason") or item.get("note") or item.get("message") or "").strip()
+            evidence = [
+                str(entry).strip()
+                for entry in item.get("evidence", [])
+                if str(entry).strip()
+            ] if isinstance(item.get("evidence"), list) else []
+            if not label:
+                continue
+            line = label
+            if reason:
+                line += "：" + reason
+            if evidence:
+                line += "（证据：" + "；".join(evidence) + "）"
+            missing_items.append(line)
+            continue
+        value = str(item).strip()
+        if value:
+            missing_items.append(value)
+    evidence = [str(item).strip() for item in payload.get("evidence", []) if str(item).strip()]
+
+    parts.append(f"## {title}")
+    if draft_text:
+        parts.append(draft_text)
+    if missing_items:
+        parts.append("### 待确认项\n- " + "\n- ".join(missing_items))
+    if evidence:
+        parts.append("### 识别依据\n- " + "\n- ".join(evidence))
+    return "\n\n".join(parts).strip()
+
+
+def _run_shot_result_fill(
+    *,
+    settings: Settings,
+    llm: LLMClient,
+    wiki: MediaWikiClient,
+    request: ChatRequest,
+    conversation_history: list[dict[str, str]],
+) -> WorkflowState:
+    evidence = _dedupe_evidence(
+        _context_evidence(wiki, request.context_pages),
+        build_attachment_evidence(request.attachments),
+    )
+    result_fill_data = prepare_shot_result_fill(
+        settings=settings,
+        llm=llm,
+        attachments_dir=Path(settings.attachments_dir),
+        request=request,
+        answer="",
+        source_titles=[item["title"] for item in evidence[:6]],
+        conversation_history=conversation_history,
+    )
+    answer = _result_fill_answer(result_fill_data)
+    return {
+        "question": request.question,
+        "mode": request.mode.value,
+        "detail_level": request.detail_level.value,
+        "context_pages": request.context_pages,
+        "user_name": request.user_name,
+        "conversation_history": conversation_history,
+        "task_type": TaskType.DRAFT.value,
+        "planned_sources": [SourceType.CONTEXT.value, "attachment"],
+        "needs_external_search": False,
+        "structured_only": False,
+        "should_generate_draft_preview": False,
+        "should_generate_write_preview": False,
+        "steps": [
+            {
+                "stage": "intake",
+                "title": "理解结果回填请求",
+                "status": "complete",
+                "detail": "已接收 Shot 页面、附件截图和回填需求。",
+            },
+            {
+                "stage": "result_fill",
+                "title": "生成 Shot 回填建议",
+                "status": "complete",
+                "detail": "已生成字段建议、正文草稿和待确认项。",
+            },
+            {
+                "stage": "finalize",
+                "title": "完成本轮循环",
+                "status": "complete",
+                "detail": "shot_result_fill_ready",
+            },
+        ],
+        "evidence": evidence,
+        "external_attempts": 0,
+        "external_hits": 0,
+        "tool_calls": [],
+        "action_trace": [],
+        "unresolved_gaps": [
+            str(item.get("label") or item.get("field") or item.get("name") or "").strip()
+            if isinstance(item, dict) else str(item).strip()
+            for item in (result_fill_data.get("missing_items") or [])
+            if (isinstance(item, dict) and str(item.get("label") or item.get("field") or item.get("name") or "").strip()) or (not isinstance(item, dict) and str(item).strip())
+        ],
+        "confidence": 0.84,
+        "answer": answer,
+        "suggested_followups": [
+            "请只保留可自动回填的字段。",
+            "请把这版结果草稿填入编辑框。",
+            "请把待确认项改写成检查清单。",
+        ],
+        "draft_preview_data": None,
+        "write_preview_data": None,
+        "write_result_data": None,
+        "result_fill_data": result_fill_data,
+        "pending_write_action": None,
+        "stop_reason": "shot_result_fill_ready",
+    }
+
+
+def _pdf_ingest_answer(payload: dict[str, Any]) -> str:
+    lines = [f"## {str(payload.get('title') or 'PDF 解析与写入建议')}"]
+    summary = str(payload.get("document_summary") or "").strip()
+    if summary:
+        lines.append(summary)
+    targets = payload.get("recommended_targets") or []
+    if targets:
+        lines.append("### 建议归档区域")
+        for item in targets[:3]:
+            target_title = str(item.get("target_title") or "").strip()
+            reason = str(item.get("reason") or "").strip()
+            if not target_title:
+                continue
+            line = f"- {target_title}"
+            if reason:
+                line += f"：{reason}"
+            lines.append(line)
+    sections = payload.get("section_outline") or []
+    if sections:
+        lines.append("### 提取章节")
+        for item in sections[:3]:
+            title = str(item.get("title") or "").strip()
+            content = str(item.get("content") or "").strip()
+            if title and content:
+                lines.append(f"- {title}：{content[:120]}")
+    return "\n\n".join(lines).strip()
+
+
+def _run_pdf_ingest_review(
+    *,
+    settings: Settings,
+    llm: LLMClient,
+    wiki: MediaWikiClient,
+    request: ChatRequest,
+    conversation_history: list[dict[str, str]],
+) -> WorkflowState:
+    evidence = _dedupe_evidence(
+        _context_evidence(wiki, request.context_pages),
+        build_attachment_evidence(request.attachments),
+    )
+    review_data = prepare_pdf_ingest_review(
+        settings=settings,
+        llm=llm,
+        attachments_dir=Path(settings.attachments_dir),
+        request=request,
+    )
+    answer = _pdf_ingest_answer(review_data)
+    return {
+        "question": request.question,
+        "mode": request.mode.value,
+        "detail_level": request.detail_level.value,
+        "context_pages": request.context_pages,
+        "user_name": request.user_name,
+        "conversation_history": conversation_history,
+        "task_type": TaskType.DRAFT.value,
+        "planned_sources": [SourceType.CONTEXT.value, "attachment"],
+        "needs_external_search": False,
+        "structured_only": False,
+        "should_generate_draft_preview": False,
+        "should_generate_write_preview": False,
+        "steps": [
+            {
+                "stage": "intake",
+                "title": "理解 PDF 摄取请求",
+                "status": "complete",
+                "detail": "已接收 PDF 附件并准备提取内容。",
+            },
+            {
+                "stage": "pdf_ingest",
+                "title": "生成 PDF 解析与写入建议",
+                "status": "complete",
+                "detail": "已整理摘要、归档区域建议和草稿章节。",
+            },
+            {
+                "stage": "finalize",
+                "title": "完成本轮循环",
+                "status": "complete",
+                "detail": "pdf_ingest_review_ready",
+            },
+        ],
+        "evidence": evidence,
+        "external_attempts": 0,
+        "external_hits": 0,
+        "tool_calls": [],
+        "action_trace": [],
+        "unresolved_gaps": [],
+        "confidence": 0.86,
+        "answer": answer,
+        "suggested_followups": [
+            "请生成草稿预览。",
+            "请只保留建议写入 Control 的部分。",
+            "请把这份 PDF 拆成设备摘要和控制步骤两部分。",
+        ],
+        "draft_preview_data": None,
+        "write_preview_data": None,
+        "write_result_data": None,
+        "result_fill_data": None,
+        "pdf_ingest_review_data": review_data,
+        "pending_write_action": None,
+        "stop_reason": "pdf_ingest_review_ready",
+    }
 
 
 class AssistantWorkflow:
@@ -432,6 +673,9 @@ class AssistantWorkflow:
             "suggested_followups": [],
             "draft_preview_data": None,
             "write_preview_data": None,
+            "write_result_data": None,
+            "result_fill_data": None,
+            "pdf_ingest_review_data": None,
             "pending_write_action": None,
             "stop_reason": None,
         }
@@ -790,7 +1034,14 @@ def _persist_chat_state(
     session_record: AssistantSession,
     request: ChatRequest,
     state: WorkflowState,
-) -> tuple[AssistantTurn, DraftPreviewPayload | None, WritePreviewPayload | None, WriteResultPayload | None]:
+) -> tuple[
+    AssistantTurn,
+    DraftPreviewPayload | None,
+    WritePreviewPayload | None,
+    WriteResultPayload | None,
+    ResultFillPayload | None,
+    PdfIngestReviewPayload | None,
+]:
     turn = AssistantTurn(
         session_id=session_record.id,
         question=request.question,
@@ -804,6 +1055,8 @@ def _persist_chat_state(
         draft_preview=state.get("draft_preview_data"),
         write_preview=state.get("write_preview_data"),
         write_result=state.get("write_result_data"),
+        result_fill=state.get("result_fill_data"),
+        pdf_ingest_review=state.get("pdf_ingest_review_data"),
         model_info=state.get("model_info"),
         unresolved_gaps=state["unresolved_gaps"],
         suggested_followups=state["suggested_followups"],
@@ -863,6 +1116,14 @@ def _persist_chat_state(
     if state.get("write_result_data"):
         write_result = WriteResultPayload(**state["write_result_data"])
         turn.write_result = write_result.model_dump()
+    result_fill = None
+    if state.get("result_fill_data"):
+        result_fill = ResultFillPayload(**state["result_fill_data"])
+        turn.result_fill = result_fill.model_dump()
+    pdf_ingest_review = None
+    if state.get("pdf_ingest_review_data"):
+        pdf_ingest_review = PdfIngestReviewPayload(**state["pdf_ingest_review_data"])
+        turn.pdf_ingest_review = pdf_ingest_review.model_dump()
     if state.get("model_info"):
         turn.model_info = state["model_info"]
 
@@ -886,7 +1147,7 @@ def _persist_chat_state(
             "write_result": state.get("write_result_data"),
         },
     )
-    return turn, draft_preview, write_preview, write_result
+    return turn, draft_preview, write_preview, write_result, result_fill, pdf_ingest_review
 
 
 def _build_chat_response(
@@ -896,6 +1157,8 @@ def _build_chat_response(
     draft_preview: DraftPreviewPayload | None,
     write_preview: WritePreviewPayload | None,
     write_result: WriteResultPayload | None,
+    result_fill: ResultFillPayload | None,
+    pdf_ingest_review: PdfIngestReviewPayload | None,
 ) -> ChatResponse:
     return ChatResponse(
         session_id=session_record.id,
@@ -917,6 +1180,8 @@ def _build_chat_response(
         draft_preview=draft_preview,
         write_preview=write_preview,
         write_result=write_result,
+        result_fill=result_fill,
+        pdf_ingest_review=pdf_ingest_review,
         model_info=ModelInfoPayload(**state["model_info"]) if state.get("model_info") else None,
     )
 
@@ -932,17 +1197,49 @@ def run_chat(
 ) -> ChatResponse:
     session_record = _session_for_request(db, request)
     session_record.current_page = request.context_pages[0] if request.context_pages else session_record.current_page
-    _apply_generation_selection(settings, session_record, request)
-    request_llm = llm.with_generation_config(
-        resolve_generation_selection(
-            settings,
-            requested_provider=session_record.generation_provider,
-            requested_model=session_record.generation_model,
-            session_provider=session_record.generation_provider,
-            session_model=session_record.generation_model,
-        )
-    )
+    selection = _apply_generation_selection(settings, session_record, request)
+    request_llm = llm.with_generation_config(selection)
     conversation_history = _conversation_history_for_session(db, session_record.id, settings.conversation_history_turns)
+    if is_pdf_ingest_request(request):
+        state = _run_pdf_ingest_review(
+            settings=settings,
+            llm=request_llm,
+            wiki=wiki,
+            request=request,
+            conversation_history=conversation_history,
+        )
+        state["model_info"] = request_llm.model_info
+        turn, draft_preview, write_preview, write_result, result_fill, pdf_ingest_review = _persist_chat_state(db, settings, session_record, request, state)
+        return _build_chat_response(
+            session_record,
+            turn,
+            state,
+            draft_preview,
+            write_preview,
+            write_result,
+            result_fill,
+            pdf_ingest_review,
+        )
+    if is_shot_result_fill_request(request):
+        state = _run_shot_result_fill(
+            settings=settings,
+            llm=request_llm,
+            wiki=wiki,
+            request=request,
+            conversation_history=conversation_history,
+        )
+        state["model_info"] = request_llm.model_info
+        turn, draft_preview, write_preview, write_result, result_fill, pdf_ingest_review = _persist_chat_state(db, settings, session_record, request, state)
+        return _build_chat_response(
+            session_record,
+            turn,
+            state,
+            draft_preview,
+            write_preview,
+            write_result,
+            result_fill,
+            pdf_ingest_review,
+        )
     task_type = classify_question(request.question, request.mode, request.context_pages).value
     planned_sources, _ = plan_sources(task_type=TaskType(task_type), context_pages=request.context_pages, structured_only=_prefers_structured_only(request.question), enable_zotero=settings.enable_zotero)
     executor = AgentExecutor(db, settings, request_llm, wiki, openalex, tools)
@@ -966,8 +1263,17 @@ def run_chat(
         state["steps"] = _append_step(state["steps"], "synthesize", "生成回答", "complete", "回答已生成。")
     state = executor.finalize(state, request)
     state["model_info"] = request_llm.model_info
-    turn, draft_preview, write_preview, write_result = _persist_chat_state(db, settings, session_record, request, state)
-    return _build_chat_response(session_record, turn, state, draft_preview, write_preview, write_result)
+    turn, draft_preview, write_preview, write_result, result_fill, pdf_ingest_review = _persist_chat_state(db, settings, session_record, request, state)
+    return _build_chat_response(
+        session_record,
+        turn,
+        state,
+        draft_preview,
+        write_preview,
+        write_result,
+        result_fill,
+        pdf_ingest_review,
+    )
 
 
 def run_chat_stream(
@@ -981,16 +1287,8 @@ def run_chat_stream(
 ) -> Iterator[dict[str, Any]]:
     session_record = _session_for_request(db, request)
     session_record.current_page = request.context_pages[0] if request.context_pages else session_record.current_page
-    _apply_generation_selection(settings, session_record, request)
-    request_llm = llm.with_generation_config(
-        resolve_generation_selection(
-            settings,
-            requested_provider=session_record.generation_provider,
-            requested_model=session_record.generation_model,
-            session_provider=session_record.generation_provider,
-            session_model=session_record.generation_model,
-        )
-    )
+    selection = _apply_generation_selection(settings, session_record, request)
+    request_llm = llm.with_generation_config(selection)
     conversation_history = _conversation_history_for_session(db, session_record.id, settings.conversation_history_turns)
 
     yield {
@@ -1001,6 +1299,60 @@ def run_chat_stream(
             "model_info": request_llm.model_info,
         },
     }
+    if is_pdf_ingest_request(request):
+        state = _run_pdf_ingest_review(
+            settings=settings,
+            llm=request_llm,
+            wiki=wiki,
+            request=request,
+            conversation_history=conversation_history,
+        )
+        state["model_info"] = request_llm.model_info
+        for step in state["steps"]:
+            yield {"event": "step", "data": step}
+        yield {"event": "sources", "data": {"sources": _serialize_sources(state["evidence"])}}
+        turn, draft_preview, write_preview, write_result, result_fill, pdf_ingest_review = _persist_chat_state(db, settings, session_record, request, state)
+        if pdf_ingest_review is not None:
+            yield {"event": "pdf_ingest_review", "data": pdf_ingest_review.model_dump()}
+        response = _build_chat_response(
+            session_record,
+            turn,
+            state,
+            draft_preview,
+            write_preview,
+            write_result,
+            result_fill,
+            pdf_ingest_review,
+        )
+        yield {"event": "done", "data": response.model_dump()}
+        return
+    if is_shot_result_fill_request(request):
+        state = _run_shot_result_fill(
+            settings=settings,
+            llm=request_llm,
+            wiki=wiki,
+            request=request,
+            conversation_history=conversation_history,
+        )
+        state["model_info"] = request_llm.model_info
+        for step in state["steps"]:
+            yield {"event": "step", "data": step}
+        yield {"event": "sources", "data": {"sources": _serialize_sources(state["evidence"])}}
+        turn, draft_preview, write_preview, write_result, result_fill, pdf_ingest_review = _persist_chat_state(db, settings, session_record, request, state)
+        if result_fill is not None:
+            yield {"event": "result_fill", "data": result_fill.model_dump()}
+        response = _build_chat_response(
+            session_record,
+            turn,
+            state,
+            draft_preview,
+            write_preview,
+            write_result,
+            result_fill,
+            pdf_ingest_review,
+        )
+        yield {"event": "done", "data": response.model_dump()}
+        return
     task_type = classify_question(request.question, request.mode, request.context_pages).value
     planned_sources, _ = plan_sources(task_type=TaskType(task_type), context_pages=request.context_pages, structured_only=_prefers_structured_only(request.question), enable_zotero=settings.enable_zotero)
     executor = AgentExecutor(db, settings, request_llm, wiki, openalex, tools)
@@ -1026,12 +1378,25 @@ def run_chat_stream(
         yield {"event": "step", "data": step}
     yield {"event": "sources", "data": {"sources": _serialize_sources(state["evidence"])}}
 
-    turn, draft_preview, write_preview, write_result = _persist_chat_state(db, settings, session_record, request, state)
+    turn, draft_preview, write_preview, write_result, result_fill, pdf_ingest_review = _persist_chat_state(db, settings, session_record, request, state)
     if draft_preview is not None:
         yield {"event": "draft_preview", "data": draft_preview.model_dump()}
     if write_preview is not None:
         yield {"event": "write_preview", "data": write_preview.model_dump()}
     if write_result is not None:
         yield {"event": "write_result", "data": write_result.model_dump()}
-    response = _build_chat_response(session_record, turn, state, draft_preview, write_preview, write_result)
+    if result_fill is not None:
+        yield {"event": "result_fill", "data": result_fill.model_dump()}
+    if pdf_ingest_review is not None:
+        yield {"event": "pdf_ingest_review", "data": pdf_ingest_review.model_dump()}
+    response = _build_chat_response(
+        session_record,
+        turn,
+        state,
+        draft_preview,
+        write_preview,
+        write_result,
+        result_fill,
+        pdf_ingest_review,
+    )
     yield {"event": "done", "data": response.model_dump()}

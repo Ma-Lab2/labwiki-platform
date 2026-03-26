@@ -1,0 +1,13 @@
+{
+  "@metadata": {
+    "authors": [
+      "OpenAI Codex"
+    ]
+  },
+  "labauth-desc": "Provides lab login, student signup approval, and account administration for the private wiki.",
+  "labauth-login": "Lab Login",
+  "labauth-signup": "Student Signup",
+  "labauth-admin": "Account Administration",
+  "right-manage-lab-accounts": "Manage pending student signups and lab accounts",
+  "action-manage-lab-accounts": "manage lab accounts"
+}

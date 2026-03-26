@@ -155,6 +155,8 @@
 - MediaWiki assistant UI:
   - `images/mediawiki-app/extensions/LabAssistant/modules/ext.labassistant.ui.js`
   - `images/mediawiki-app/extensions/LabAssistant/modules/ext.labassistant.ui.css`
+  - `images/mediawiki-app/extensions/LabAssistant/modules/ext.labassistant.shell.js`
+  - `images/mediawiki-app/extensions/LabAssistant/modules/ext.labassistant.pdf-reader-utils.js`
 - Special page entry:
   - `images/mediawiki-app/extensions/LabAssistant/includes/SpecialLabAssistant.php`
 - Reverse proxy path:
@@ -165,6 +167,9 @@
 当前网页前端还会通过 `/tools/assistant/api/models/catalog` 加载分组模型目录，并用 `/tools/assistant/api/session/{session_id}/model` 持久化当前会话的 generation model。
 `/session/{session_id}` 现在不只返回问题摘要，而是返回每轮 turn 的 `step_stream`、`sources`、`action_trace`、`draft_preview`、`write_preview`、`write_result` 和 `model_info`，供前端恢复最近一次完整结果面板。
 当前 capability/action 层也已经暴露给外部入口：网页端和 CLI 都可以通过 `/capabilities` 查看 provider/capability 目录，再通过 `/actions/preview` 和 `/actions/commit` 走统一 preview/commit 语义。
+当前文献导读页已经接入两条 PDF 阅读链：
+- 正式 Wiki PDF：`Template:文献导读` 渲染 `.labassistant-pdf-reader-source`，由 `ext.labassistant.shell.js` 挂载页内阅读器
+- 助手临时 PDF：附件 chip 里的“阅读”动作打开浮动阅读器，内容流走 `/tools/assistant/api/attachments/{attachment_id}/content`
 当前抽屉版网页体验按“普通学生整理助手”优化：
 - 默认围绕当前页整理词条、知识页、shot 和周实验日志草稿
 - 显式 `问答/草稿` 模式按钮不再作为主路径
@@ -202,6 +207,9 @@ assistant 前端会按 host 作用域隔离本地会话状态，避免 loopback 
   - `assistant_api/app/benchmarks/student_eval_cases.json`
   - `assistant_api/app/services/student_eval_report.py`
   - `ops/scripts/build-assistant-student-eval-report.sh`
+- PDF 阅读模块现在有独立浏览器回归：
+  - `ops/scripts/playwright-private-pdf-reader-check.sh`
+  - 覆盖文献导读页空状态、正式 PDF 内嵌阅读器、助手临时 PDF 浮动阅读器，以及“发送摘录到助手”
 - 这套评测不是自动问答回放器，而是“人工打分 + 自动聚合报告”：
   - case 集定义学生真实问题和期望行为
   - CSV 打分表记录五维评分、惩罚项、失败标签和优化建议
@@ -302,6 +310,7 @@ bash ops/scripts/benchmark-assistant-retrieval.sh --output backups/validation/re
 bash ops/scripts/build-assistant-student-eval-report.sh --template-output backups/validation/student-eval-template.csv
 bash ops/scripts/build-assistant-student-eval-report.sh --scores backups/validation/student-eval-scores.csv --json-output backups/validation/student-eval-report.json --markdown-output backups/validation/student-eval-report.md
 bash ops/scripts/playwright-private-session-check.sh
+bash ops/scripts/playwright-private-shot-fill-check.sh
 ```
 
 当前参考报告：

@@ -10,6 +10,7 @@ class PromptEnvelope:
     user_prompt: str
     temperature: float
     max_tokens: int | None = None
+    user_content: list[dict[str, Any]] | None = None
 
 
 class BaseGenerationProvider(Protocol):
