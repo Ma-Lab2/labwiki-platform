@@ -65,6 +65,12 @@ WRITE_ACTION_CONFIG: dict[str, dict[str, Any]] = {
         "required_fields": ["目标页面", "区块", "追加内容"],
         "allowed_sections": ["Shot 列表", "本周结果", "共性问题", "下周动作"],
     },
+    "update_managed_page_section": {
+        "prefix": "",
+        "template": None,
+        "operation": "replace_section_body",
+        "required_fields": ["目标页面", "区块", "内容"],
+    },
 }
 
 WEEKLY_LOG_SKELETON = """= {title} =
@@ -81,6 +87,33 @@ WEEKLY_LOG_SKELETON = """= {title} =
 
 == 下周动作 ==
 """
+
+MANAGED_PAGE_SECTION_CONFIG: dict[str, dict[str, Any]] = {
+    "Shot:Shot日志入口": {
+        "marker": "PRIVATE_SHOT_INDEX",
+        "allowed_sections": ["使用规则", "当前索引", "维护规则"],
+    },
+    "Shot:周实验日志": {
+        "marker": "PRIVATE_SHOT_WEEKLY_LOG",
+        "allowed_sections": ["本周条目", "本周总结"],
+    },
+    "Shot:表单新建": {
+        "marker": "PRIVATE_SHOT_FORM_ENTRY",
+        "allowed_sections": ["使用规则", "相关页面"],
+    },
+    "Meeting:会议入口": {
+        "marker": "PRIVATE_MEETING_INDEX",
+        "allowed_sections": ["当前入口", "说明"],
+    },
+    "FAQ:常见问题入口": {
+        "marker": "PRIVATE_FAQ_INDEX",
+        "allowed_sections": ["当前建议收录", "使用规则"],
+    },
+    "Project:项目总览": {
+        "marker": "PRIVATE_PROJECT_INDEX",
+        "allowed_sections": ["当前入口", "使用规则"],
+    },
+}
 
 
 
@@ -105,6 +138,240 @@ def infer_write_action_type(question: str) -> str | None:
     if "诊断" in question:
         return "create_diagnostic_entry"
     return None
+
+
+def _extract_section_body(existing_text: str, section: str) -> str:
+    pattern = re.compile(rf"(?s)^==\s*{re.escape(section)}\s*==\s*\n(.*?)(?=^==\s|\Z)", re.MULTILINE)
+    match = pattern.search(existing_text)
+    if not match:
+        raise ValueError(f"无法定位区块：{section}")
+    return match.group(1).strip()
+
+
+def _replace_section_body(existing_text: str, section: str, new_body: str) -> str:
+    pattern = re.compile(rf"(?s)^(==\s*{re.escape(section)}\s*==\s*\n)(.*?)(?=^==\s|\Z)", re.MULTILINE)
+    match = pattern.search(existing_text)
+    if not match:
+        raise ValueError(f"无法定位区块：{section}")
+    replacement = match.group(1) + new_body.strip() + "\n\n"
+    return existing_text[:match.start()] + replacement + existing_text[match.end():]
+
+
+def _normalize_section_lines(value: Any) -> list[str]:
+    if isinstance(value, list):
+        return [str(item).rstrip() for item in value if str(item).strip()]
+    if isinstance(value, str):
+        return [line.rstrip() for line in value.splitlines() if line.strip()]
+    return []
+
+
+def _normalize_managed_section_append_line(value: str) -> str:
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    bullet_match = re.match(r"^(\*|-|\d+\.)\s+", raw)
+    bullet = bullet_match.group(1) if bullet_match else "*"
+    content = raw[bullet_match.end():].strip() if bullet_match else raw
+    for _ in range(4):
+        updated = re.sub(
+            r"^(?:请\s*)?(?:编辑一下|编辑|修改一下|修改|更新一下|更新)\s*(?:使用规则(?:区域|区块)?|当前入口|说明|相关页面|本周总结|本周条目|当前索引|维护规则)?\s*[:：]\s*",
+            "",
+            content,
+        ).strip()
+        updated = re.sub(
+            r"^(?:请\s*)?(?:加一条|补一条|新增一条|新增|加入一条规则|加入一条|追加一条|增加一条|添加一条规则|添加一条)\s*[:：]?\s*",
+            "",
+            updated,
+        ).strip()
+        updated = re.sub(r"^(?:规则|条目)\s*[:：]\s*", "", updated).strip()
+        if updated == content:
+            break
+        content = updated
+    content = content.strip("。；;，, ")
+    if not content:
+        return ""
+    return f"{bullet} {content}"
+
+
+def _is_managed_section_meta_line(value: str) -> bool:
+    content = re.sub(r"^(\*|-|\d+\.)\s+", "", str(value or "").strip()).strip()
+    if not content:
+        return True
+    meta_prefixes = (
+        "已完成",
+        "已按当前页面内容更新",
+        "可直接保留",
+        "若你希望",
+        "如果你",
+        "说明",
+        "证据边界",
+        "当前页面内容里已经出现了这条规则",
+        "无法进一步确认",
+        "建议可改为",
+        "可整理后的",
+        "现有证据显示",
+        "wikitext",
+        "wiki",
+        "文本",
+        "复制",
+    )
+    return any(content.startswith(prefix) for prefix in meta_prefixes)
+
+
+def _clean_managed_section_lines(lines: list[str]) -> list[str]:
+    cleaned: list[str] = []
+    for line in lines:
+        normalized = _normalize_managed_section_append_line(line)
+        if not normalized or _is_managed_section_meta_line(normalized):
+            continue
+        if normalized not in cleaned:
+            cleaned.append(normalized)
+    return cleaned
+
+
+def _is_append_like_request(question: str) -> bool:
+    hints = ["加一条", "新增", "补一条", "补充", "加入", "追加", "增加"]
+    return any(hint in question for hint in hints)
+
+
+def _is_delete_like_request(question: str) -> bool:
+    hints = ["删掉", "删除", "去掉", "移除", "取消这条", "去除"]
+    return any(hint in question for hint in hints)
+
+
+def _is_replace_like_request(question: str) -> bool:
+    hints = ["改成", "改为", "改写", "替换成", "改写成", "重写成", "更正式的写法", "改一下措辞", "改得更正式"]
+    return any(hint in question for hint in hints)
+
+
+def _extract_managed_section_append_lines(question: str) -> list[str]:
+    candidate = ""
+    for pattern in (
+        r"[:：]\s*([^\n]+?)\s*$",
+        r"(?:加一条|补一条|新增一条|新增|加入一条规则|加入一条|追加一条|增加一条)([^\n]+?)\s*$",
+    ):
+        match = re.search(pattern, question)
+        if match:
+            candidate = match.group(1).strip()
+            if candidate:
+                break
+    if not candidate:
+        return []
+    normalized = _normalize_managed_section_append_line(candidate)
+    return [normalized] if normalized else []
+
+
+def _extract_managed_section_delete_lines(question: str) -> list[str]:
+    candidate = ""
+    for pattern in (
+        r"[:：]\s*([^\n]+?)\s*$",
+        r"(?:删掉|删除|去掉|移除)\s*(?:这条规则|这条|该规则|该条)?\s*[:：]?\s*([^\n]+?)\s*$",
+    ):
+        match = re.search(pattern, question)
+        if match:
+            candidate = match.group(1).strip()
+            if candidate:
+                break
+    if not candidate:
+        return []
+    normalized = _normalize_managed_section_append_line(candidate)
+    return [normalized] if normalized else []
+
+
+def _extract_managed_section_replace_payload(question: str, answer: str) -> tuple[list[str], list[str]]:
+    new_lines = _extract_managed_section_append_lines(question)
+    if not new_lines:
+        answer_lines = _clean_managed_section_lines(_normalize_section_lines(answer))
+        if answer_lines:
+            new_lines = [answer_lines[-1]]
+    if not new_lines:
+        return [], []
+
+    candidate = ""
+    for pattern in (
+        r"(?:把|将).*?[“\"]([^”\"]+)[”\"]\s*(?:这条规则|这条|该规则|该条)?\s*(?:改成|改为|改写成|改写|替换成|重写成)",
+        r"(?:把|将)\s*“([^”]+)”\s*(?:这条规则|这条|该规则|该条)?\s*(?:改成|改为|改写成|改写|替换成|重写成)",
+        r"(?:把|将)\s*\"([^\"]+)\"\s*(?:这条规则|这条|该规则|该条)?\s*(?:改成|改为|改写成|改写|替换成|重写成)",
+        r"(?:把|将)\s*(.+?)\s*(?:这条规则|这条|该规则|该条)\s*(?:改成|改为|改写成|改写|替换成|重写成)",
+        r"(?:把|将)\s*(.+?)\s*(?:改成|改为|改写成|改写|替换成|重写成)",
+    ):
+        match = re.search(pattern, question)
+        if match:
+            candidate = match.group(1).strip()
+            if candidate:
+                break
+    if not candidate:
+        return [], new_lines
+    candidate = re.sub(
+        r"^(?:使用规则(?:区域|区块)?|当前入口|说明|相关页面|本周总结|本周条目|当前索引|维护规则)\s*[里内]\s*",
+        "",
+        candidate,
+    ).strip("“”\"' ")
+    normalized_old_line = _normalize_managed_section_append_line(candidate)
+    return ([normalized_old_line] if normalized_old_line else []), new_lines
+
+
+def _infer_managed_page_section(question: str, current_page: str, existing_text: str) -> str:
+    config = MANAGED_PAGE_SECTION_CONFIG.get(current_page)
+    if not config:
+        raise ValueError("当前页面不支持助手区块填充")
+    matched = [section for section in config["allowed_sections"] if section in question]
+    if len(matched) == 1:
+        return matched[0]
+    if len(matched) > 1:
+        raise ValueError("当前请求命中了多个可编辑区块，请明确要修改哪个区块")
+    raise ValueError(
+        "当前页支持助手区块填充，但这次没有识别出目标区块；请直接说明区块名，例如“给使用规则加一条”。"
+    )
+
+
+def _build_managed_section_lines(
+    *,
+    question: str,
+    answer: str,
+    existing_text: str,
+    section: str,
+) -> list[str]:
+    existing_lines = _clean_managed_section_lines(_normalize_section_lines(_extract_section_body(existing_text, section)))
+    if _is_append_like_request(question):
+        question_lines = _extract_managed_section_append_lines(question)
+        answer_lines = _clean_managed_section_lines(_normalize_section_lines(answer))
+        proposed_lines = question_lines or answer_lines
+        if not proposed_lines:
+            raise ValueError("缺少可写入的区块内容")
+        merged = list(existing_lines)
+        for line in proposed_lines:
+            if line not in merged:
+                merged.append(line)
+        return merged
+    if _is_delete_like_request(question):
+        delete_lines = _extract_managed_section_delete_lines(question)
+        if not delete_lines:
+            raise ValueError("缺少要删除的区块内容")
+        return [line for line in existing_lines if line not in delete_lines]
+    if _is_replace_like_request(question):
+        old_lines, new_lines = _extract_managed_section_replace_payload(question, answer)
+        if not new_lines:
+            raise ValueError("缺少可写入的区块内容")
+        if not old_lines:
+            raise ValueError("缺少要替换的原区块内容")
+        replaced: list[str] = []
+        used_old = set()
+        for line in existing_lines:
+            if line in old_lines and line not in used_old:
+                for new_line in new_lines:
+                    if new_line not in replaced:
+                        replaced.append(new_line)
+                used_old.add(line)
+            elif line not in replaced:
+                replaced.append(line)
+        if not used_old:
+            raise ValueError("未在当前区块中找到要替换的内容")
+        return replaced
+    proposed_lines = _normalize_section_lines(answer)
+    if not proposed_lines:
+        raise ValueError("缺少可写入的区块内容")
+    return proposed_lines
 
 
 def _sanitize_title(text: str, fallback: str) -> str:
@@ -468,6 +735,14 @@ def _render_write_preview_text(action_type: str, target_page: str, structured_pa
         ]
         lines.extend(str(item) for item in structured_payload.get("追加内容", []))
         return "\n".join(lines).strip()
+    if action_type == "update_managed_page_section":
+        lines = [
+            f"目标页面：{target_page}",
+            f"区块：{structured_payload.get('区块', '')}",
+            "",
+        ]
+        lines.extend(str(item) for item in structured_payload.get("内容", []))
+        return "\n".join(lines).strip()
     return _render_template_page(config["template"], config["field_order"], structured_payload)
 
 
@@ -482,6 +757,47 @@ def prepare_write_preview(
     current_page: str | None,
     conversation_history: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
+    if current_page in MANAGED_PAGE_SECTION_CONFIG:
+        existing_text = wiki.get_page_text(current_page)
+        if "LABWIKI_MANAGED_PAGE:" in existing_text:
+            section = _infer_managed_page_section(question, current_page, existing_text)
+            content_lines = _build_managed_section_lines(
+                question=question,
+                answer=answer,
+                existing_text=existing_text,
+                section=section,
+            )
+            preview_text = _render_write_preview_text(
+                "update_managed_page_section",
+                current_page,
+                {"区块": section, "内容": content_lines},
+            )
+            return {
+                "action_type": "update_managed_page_section",
+                "operation": "replace_section_body",
+                "target_page": current_page,
+                "target_section": section,
+                "preview_text": preview_text,
+                "structured_payload": {
+                    "目标页面": current_page,
+                    "区块": section,
+                    "内容": content_lines,
+                },
+                "metadata_json": {
+                    "preview_kind": "write_action",
+                    "action_type": "update_managed_page_section",
+                    "operation": "replace_section_body",
+                    "target_section": section,
+                    "missing_fields": [],
+                    "structured_payload": {
+                        "目标页面": current_page,
+                        "区块": section,
+                        "内容": content_lines,
+                    },
+                    "preview_summary": f"已生成 {current_page} / {section} 的区块更新预览。",
+                    "source_titles": source_titles,
+                },
+            }
     action_type = infer_write_action_type(question)
     if action_type is None and is_page_structuring_request(question, current_page) and any(
         token in question for token in ["词条", "条目", "术语页", "术语条目"]
@@ -534,12 +850,14 @@ def prepare_write_preview(
         "action_type": action_type,
         "operation": operation,
         "target_page": target_page,
+        "target_section": normalized.get("target_section"),
         "preview_text": preview_text,
         "structured_payload": normalized["structured_payload"],
         "metadata_json": {
             "preview_kind": "write_action",
             "action_type": action_type,
             "operation": operation,
+            "target_section": normalized.get("target_section"),
             "missing_fields": normalized["missing_fields"],
             "structured_payload": normalized["structured_payload"],
             "preview_summary": normalized["preview_summary"],
@@ -626,6 +944,24 @@ def _validate_and_render_write(
         rendered = _append_to_weekly_log(current_text, section, "\n".join(payload.get("追加内容", [])), target_page)
         summary = f"Assistant append weekly log section: {section}"
         return rendered, summary
+    if action_type == "update_managed_page_section":
+        config = MANAGED_PAGE_SECTION_CONFIG.get(target_page)
+        if not config:
+            raise ValueError("当前页面不在托管页白名单内")
+        current_text = wiki.get_page_text(target_page)
+        expected_marker = f"LABWIKI_MANAGED_PAGE:{config['marker']}"
+        if expected_marker not in current_text:
+            raise ValueError("当前页面缺少托管页标记，不能执行区块写入")
+        payload = metadata.get("structured_payload") or {}
+        section = str(metadata.get("target_section") or payload.get("区块") or "").strip()
+        if section not in config["allowed_sections"]:
+            raise ValueError("目标区块不在当前托管页白名单内")
+        content_lines = _normalize_section_lines(payload.get("内容"))
+        if not content_lines:
+            raise ValueError("区块内容为空")
+        rendered = _replace_section_body(current_text, section, "\n".join(content_lines))
+        summary = f"Assistant update managed page section: {section}"
+        return rendered, summary
 
     allowed_prefix = WRITE_ACTION_CONFIG[action_type]["prefix"]
     if not target_page.startswith(allowed_prefix):
@@ -658,6 +994,7 @@ def commit_prepared_write(
         "page_title": target_page,
         "operation": metadata.get("operation"),
         "action_type": metadata.get("action_type"),
+        "target_section": metadata.get("target_section"),
         "detail": "write committed",
     }
     log_audit(

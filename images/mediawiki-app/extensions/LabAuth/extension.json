@@ -19,6 +19,7 @@
     "LabAuthAliases": "LabAuth.alias.php"
   },
   "SpecialPages": {
+    "LabLogin": "MediaWiki\\Extension\\LabAuth\\SpecialLabLogin",
     "StudentSignup": "MediaWiki\\Extension\\LabAuth\\SpecialStudentSignup",
     "LabAccountAdmin": "MediaWiki\\Extension\\LabAuth\\SpecialLabAccountAdmin"
   },
@@ -36,16 +37,18 @@
     "labauthadminresetpassword": "MediaWiki\\Extension\\LabAuth\\Api\\ApiLabAuthAdminResetPassword"
   },
   "ResourceModules": {
-    "ext.labauth.signup": {
-      "scripts": [
-        "modules/ext.labauth.signup.js"
-      ],
+    "ext.labauth.login": {
       "styles": [
         "modules/ext.labauth.ui.css"
       ],
-      "dependencies": [
-        "mediawiki.api",
-        "mediawiki.util"
+      "targets": [
+        "desktop",
+        "mobile"
+      ]
+    },
+    "ext.labauth.signup": {
+      "styles": [
+        "modules/ext.labauth.ui.css"
       ],
       "targets": [
         "desktop",
@@ -76,6 +79,8 @@
   },
   "Hooks": {
     "TitleReadWhitelist": "MediaWiki\\Extension\\LabAuth\\Hooks::onTitleReadWhitelist",
+    "SpecialPageBeforeExecute": "MediaWiki\\Extension\\LabAuth\\Hooks::onSpecialPageBeforeExecute",
+    "BeforePageDisplay": "MediaWiki\\Extension\\LabAuth\\Hooks::onBeforePageDisplay",
     "LoadExtensionSchemaUpdates": "MediaWiki\\Extension\\LabAuth\\Hooks::onLoadExtensionSchemaUpdates"
   },
   "AuthManagerAutoConfig": {

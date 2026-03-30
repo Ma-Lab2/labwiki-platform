@@ -113,6 +113,12 @@ import sys
 print(json.dumps(sys.argv[1]))
 PY
 )"
+BASE_URL_JSON="$(python - <<'PY' "${BASE_URL}"
+import json
+import sys
+print(json.dumps(sys.argv[1]))
+PY
+)"
 
 cleanup() {
   playwright-cli -s="${SESSION_NAME}" close >/dev/null 2>&1 || true
@@ -187,6 +193,10 @@ playwright-cli -s="${SESSION_NAME}" delete-data >/dev/null 2>&1 || true
 playwright-cli -s="${SESSION_NAME}" open about:blank >/dev/null
 playwright-cli -s="${SESSION_NAME}" goto "${BASE_URL}/index.php?title=Special:%E5%AD%A6%E7%94%9F%E6%B3%A8%E5%86%8C" >/dev/null
 wait_for_page_ready
+SIGNUP_THEME_ID="$(pl_eval_json "document.documentElement.getAttribute('data-labwiki-theme')")"
+assert_equals "${SIGNUP_THEME_ID}" "deep-space-window" "Signup page did not load the default private-site theme"
+SIGNUP_THEME_PICKER_PRESENT="$(pl_eval_json "Boolean(document.querySelector('.labwiki-theme-picker .labwiki-theme-select'))")"
+assert_equals "${SIGNUP_THEME_PICKER_PRESENT}" "True" "Signup page is missing the private-site theme picker"
 playwright-cli -s="${SESSION_NAME}" run-code "async page => {
   await page.getByLabel('姓名').fill(${STUDENT_NAME_JSON});
   await page.getByLabel('学号').fill(${STUDENT_ID_JSON});
@@ -203,10 +213,14 @@ assert_equals "${SIGNUP_SUCCESS}" "True" "Student registration request did not s
 
 playwright-cli -s="${SESSION_NAME}" goto "${BASE_URL}/index.php?title=Special:%E7%94%A8%E6%88%B7%E7%99%BB%E5%BD%95" >/dev/null
 wait_for_page_ready
-NATIVE_LOGIN_FORM="$(pl_eval_json "Boolean(document.querySelector('form[name=userlogin], #userloginForm'))")"
-assert_equals "${NATIVE_LOGIN_FORM}" "True" "Native MediaWiki login form is not available"
 CUSTOM_LOGIN_PRESENT="$(pl_eval_json "Boolean(document.querySelector('.labauth-login-shell'))")"
-assert_equals "${CUSTOM_LOGIN_PRESENT}" "False" "Native login route is still intercepted by the custom login shell"
+assert_equals "${CUSTOM_LOGIN_PRESENT}" "True" "Custom lab login shell is not visible"
+CUSTOM_LOGIN_TITLE="$(pl_eval_json "document.title.includes('实验室登录')")"
+assert_equals "${CUSTOM_LOGIN_TITLE}" "True" "Native login route did not land on the custom lab login page"
+LOGIN_THEME_ID="$(pl_eval_json "document.documentElement.getAttribute('data-labwiki-theme')")"
+assert_equals "${LOGIN_THEME_ID}" "deep-space-window" "Login page did not load the default private-site theme"
+LOGIN_THEME_PICKER_PRESENT="$(pl_eval_json "Boolean(document.querySelector('.labwiki-theme-picker .labwiki-theme-select'))")"
+assert_equals "${LOGIN_THEME_PICKER_PRESENT}" "True" "Login page is missing the private-site theme picker"
 playwright-cli -s="${SESSION_NAME}" run-code "async page => {
   await page.getByLabel('用户名').fill(${PRIVATE_USER_JSON});
   await page.getByLabel('密码').fill(${PRIVATE_PASSWORD_JSON});
@@ -218,11 +232,10 @@ wait_for_page_ready
 playwright-cli -s="${SESSION_NAME}" goto "${BASE_URL}/index.php?title=Special:%E8%B4%A6%E6%88%B7%E7%AE%A1%E7%90%86%E5%90%8E%E5%8F%B0" >/dev/null
 wait_for_page_ready
 playwright-cli -s="${SESSION_NAME}" run-code "async page => {
-  await page.evaluate(() => {
-    window.confirm = () => true;
-  });
   const card = page.locator('.labauth-request-card', { hasText: ${STUDENT_USERNAME_JSON} }).first();
   await card.getByRole('button', { name: '审批通过' }).click();
+  await page.getByRole('heading', { name: '通过学生申请' }).waitFor();
+  await page.getByRole('button', { name: '确认通过' }).click();
   await page.waitForLoadState('networkidle');
 }" >/dev/null
 wait_for_page_ready
@@ -244,6 +257,14 @@ wait_for_page_ready
 
 POST_STUDENT_LOGIN_USER="$(pl_eval_json "window.mw && mw.config.get('wgUserName') === ${STUDENT_CANONICAL_USERNAME_JSON}")"
 assert_equals "${POST_STUDENT_LOGIN_USER}" "True" "Approved student could not log in through the native MediaWiki login page"
+playwright-cli -s="${SESSION_NAME}" goto "${BASE_URL}/index.php?title=Special:%E7%94%A8%E6%88%B7%E7%99%BB%E5%BD%95" >/dev/null
+wait_for_page_ready
+LOGGED_IN_NATIVE_LOGIN_REDIRECTED="$(pl_eval_json "window.location.href === ${BASE_URL_JSON} + '/index.php?title=%E9%A6%96%E9%A1%B5'")"
+assert_equals "${LOGGED_IN_NATIVE_LOGIN_REDIRECTED}" "True" "Logged-in user was not redirected away from login page"
+playwright-cli -s="${SESSION_NAME}" goto "${BASE_URL}/index.php?title=Special:%E5%AD%A6%E7%94%9F%E6%B3%A8%E5%86%8C" >/dev/null
+wait_for_page_ready
+LOGGED_IN_SIGNUP_REDIRECTED="$(pl_eval_json "window.location.href === ${BASE_URL_JSON} + '/index.php?title=%E9%A6%96%E9%A1%B5'")"
+assert_equals "${LOGGED_IN_SIGNUP_REDIRECTED}" "True" "Logged-in user was not redirected away from signup page"
 
 reset_browser_session
 
@@ -260,11 +281,10 @@ wait_for_page_ready
 playwright-cli -s="${SESSION_NAME}" goto "${BASE_URL}/index.php?title=Special:%E8%B4%A6%E6%88%B7%E7%AE%A1%E7%90%86%E5%90%8E%E5%8F%B0" >/dev/null
 wait_for_page_ready
 playwright-cli -s="${SESSION_NAME}" run-code "async page => {
-  await page.evaluate(() => {
-    window.confirm = () => true;
-  });
   const userRow = page.locator('.labauth-user-row', { hasText: ${STUDENT_CANONICAL_USERNAME_JSON} }).first();
   await userRow.getByRole('button', { name: '停用' }).click();
+  await page.getByRole('heading', { name: '停用账户' }).waitFor();
+  await page.getByRole('button', { name: '确认停用' }).click();
   await page.waitForLoadState('networkidle');
 }" >/dev/null
 wait_for_page_ready
@@ -302,11 +322,10 @@ wait_for_page_ready
 playwright-cli -s="${SESSION_NAME}" goto "${BASE_URL}/index.php?title=Special:%E8%B4%A6%E6%88%B7%E7%AE%A1%E7%90%86%E5%90%8E%E5%8F%B0" >/dev/null
 wait_for_page_ready
 playwright-cli -s="${SESSION_NAME}" run-code "async page => {
-  await page.evaluate(() => {
-    window.confirm = () => true;
-  });
   const userRow = page.locator('.labauth-user-row', { hasText: ${STUDENT_CANONICAL_USERNAME_JSON} }).first();
   await userRow.getByRole('button', { name: '恢复' }).click();
+  await page.getByRole('heading', { name: '恢复账户' }).waitFor();
+  await page.getByRole('button', { name: '确认恢复' }).click();
   await page.waitForLoadState('networkidle');
 }" >/dev/null
 wait_for_page_ready

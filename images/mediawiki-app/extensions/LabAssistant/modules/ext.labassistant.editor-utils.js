@@ -93,6 +93,63 @@
     return 'labassistant-submission-guidance::' + String( host || '' ) + '::' + String( title || '' );
   }
 
+  function escapeRegExp( value ) {
+    return String( value || '' ).replace( /[.*+?^${}()|[\]\\]/g, '\\$&' );
+  }
+
+  function normalizeManagedSectionLines( value ) {
+    if ( Array.isArray( value ) ) {
+      return value.map( function ( item ) {
+        return String( item || '' ).replace( /\r\n?/g, '\n' ).trimRight();
+      } ).filter( function ( item ) {
+        return item.trim();
+      } );
+    }
+    if ( typeof value === 'string' ) {
+      return value.replace( /\r\n?/g, '\n' ).split( '\n' ).map( function ( item ) {
+        return item.trimRight();
+      } ).filter( function ( item ) {
+        return item.trim();
+      } );
+    }
+    return [];
+  }
+
+  function replaceManagedPageSectionBody( source, section, newBody ) {
+    var text = String( source || '' ).replace( /\r\n?/g, '\n' );
+    var headerPattern;
+    var headerMatch;
+    var bodyStart = 0;
+    var nextHeadingMatch;
+    var bodyEnd = 0;
+    var lines = normalizeManagedSectionLines( newBody );
+    var replacement;
+
+    if ( !String( section || '' ).trim() ) {
+      throw new Error( '缺少目标区块' );
+    }
+    if ( !lines.length ) {
+      throw new Error( '区块内容为空' );
+    }
+
+    headerPattern = new RegExp(
+      '(^==\\s*' + escapeRegExp( section ) + '\\s*==\\s*\\n)',
+      'm'
+    );
+    headerMatch = headerPattern.exec( text );
+    if ( !headerMatch ) {
+      throw new Error( '无法定位区块：' + section );
+    }
+
+    bodyStart = headerMatch.index + headerMatch[ 1 ].length;
+    nextHeadingMatch = /(?:^|\n)==\s/m.exec( text.slice( bodyStart ) );
+    bodyEnd = nextHeadingMatch ? bodyStart + nextHeadingMatch.index + ( nextHeadingMatch[ 0 ].charAt( 0 ) === '\n' ? 1 : 0 ) : text.length;
+    replacement = headerMatch[ 1 ] + lines.join( '\n' ) + '\n\n';
+    return text.slice( 0, headerMatch.index ) +
+      replacement +
+      text.slice( bodyEnd );
+  }
+
   function splitSuggestedValues( value ) {
     if ( Array.isArray( value ) ) {
       return value
@@ -567,6 +624,7 @@
     detectEditorMode: detectEditorMode,
     extractFormNameFromTitle: extractFormNameFromTitle,
     normalizeFieldLabels: normalizeFieldLabels,
+    replaceManagedPageSectionBody: replaceManagedPageSectionBody,
     resolvePageFormRuntimeContext: resolvePageFormRuntimeContext,
     matchStructuredFieldsToInventory: matchStructuredFieldsToInventory,
     isLowConfidenceAutofillValue: isLowConfidenceAutofillValue,

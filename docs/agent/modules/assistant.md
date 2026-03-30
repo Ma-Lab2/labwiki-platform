@@ -13,6 +13,10 @@
 - prompt registry、few-shot 和领域关键词注入
 - session、turn、job、draft preview、audit 的持久化
 
+如果当前问题集中在“助手怎么理解编辑操作、什么时候出操作卡、为什么会把解释文本写进页面”，先补读：
+
+- `docs/agent/modules/assistant-editing-semantics.md`
+
 对应运行服务：
 
 - `assistant_api`
@@ -174,11 +178,10 @@
 - 默认围绕当前页整理词条、知识页、shot 和周实验日志草稿
 - 显式 `问答/草稿` 模式按钮不再作为主路径
 - `action_trace` / 工具痕迹在抽屉版默认弱化，更多保留给高级页
-当前本地部署同时支持：
-- `http://localhost:8443` 作为本机浏览器与 CLI 首选入口
-- `http://127.0.0.1:8443` 仅作为次级 transport-level 入口；部分本地代理软件会错误接管这条链路
-- `http://192.168.1.2:8443` 这类 LAN host 作为局域网入口
-assistant 前端会按 host 作用域隔离本地会话状态，避免 loopback 和 LAN host 的 localStorage 互相污染。
+当前本地部署对私有站只保留一个用户入口：
+- `http://localhost:8443` 作为本机浏览器与 CLI 的唯一 canonical 入口
+- `http://127.0.0.1:8443` 与其他非 canonical host 应视为 transport-level 端点，并重定向回 `localhost`
+assistant 前端仍按 host 作用域隔离本地会话状态，因此私有站相关脚本、书签和回归检查都应固定使用 `localhost:8443`。
 
 ## Non-Negotiable Constraints
 

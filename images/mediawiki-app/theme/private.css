@@ -1,33 +1,256 @@
-:root {
-  --page-bg: #e5ebe9;
-  --surface: rgba(246, 250, 249, 0.97);
-  --surface-strong: #fbfdfc;
-  --surface-muted: #eaf1ef;
-  --surface-ink: #edf5f3;
-  --accent: #205566;
-  --accent-strong: #133844;
-  --accent-soft: rgba(32, 85, 102, 0.08);
-  --hero-bg: linear-gradient(180deg, #f4f8f7 0%, #e4ecea 100%);
+html[data-labwiki-private="1"][data-labwiki-theme="deep-space-window"],
+html.labwiki-private.labwiki-theme-deep-space-window {
+  --page-bg: #0a1331;
+  --surface: rgba(244, 248, 255, 0.94);
+  --surface-strong: rgba(251, 253, 255, 0.98);
+  --surface-muted: rgba(232, 239, 253, 0.96);
+  --surface-ink: #e8f1ff;
+  --ink: #10203d;
+  --muted: #59698f;
+  --muted-strong: #33466f;
+  --line: rgba(107, 140, 219, 0.2);
+  --line-strong: rgba(70, 111, 197, 0.36);
+  --accent: #2f6cf2;
+  --accent-strong: #1844ad;
+  --accent-soft: rgba(47, 108, 242, 0.12);
+  --hero-bg: linear-gradient(180deg, rgba(248, 251, 255, 0.96) 0%, rgba(232, 241, 255, 0.96) 100%);
+  --labwiki-private-body-bg:
+    radial-gradient(circle at 16% 18%, rgba(140, 193, 255, 0.16), transparent 20%),
+    radial-gradient(circle at 82% 14%, rgba(101, 135, 255, 0.18), transparent 24%),
+    linear-gradient(rgba(140, 188, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(140, 188, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(180deg, #08112a 0%, #101c42 42%, #081029 100%);
+  --labwiki-private-body-overlay:
+    radial-gradient(circle at 12% 20%, rgba(255, 255, 255, 0.82) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 72% 24%, rgba(175, 210, 255, 0.62) 0 1px, transparent 1.9px),
+    radial-gradient(circle at 84% 72%, rgba(255, 255, 255, 0.7) 0 1px, transparent 1.8px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent 220px),
+    radial-gradient(circle at top right, rgba(146, 207, 255, 0.14), transparent 26%);
+  --labwiki-theme-drawer-bg: rgba(10, 18, 47, 0.92);
+  --labwiki-theme-drawer-line: rgba(171, 203, 255, 0.14);
+  --labwiki-theme-drawer-ink: #f2f6ff;
+  --labwiki-theme-drawer-muted: rgba(216, 228, 255, 0.78);
+  --labwiki-auth-bg: #e6eefc;
+  --labwiki-auth-surface: #f7faff;
+  --labwiki-auth-surface-strong: #ffffff;
+  --labwiki-auth-panel: #edf3ff;
+  --labwiki-auth-panel-strong: #122145;
+  --labwiki-auth-border: #ccdaf8;
+  --labwiki-auth-border-strong: #87a6eb;
+  --labwiki-auth-text: #12203f;
+  --labwiki-auth-muted: #5d6d95;
+  --labwiki-auth-accent: #1d58d8;
+  --labwiki-auth-accent-strong: #153ca2;
+  --labwiki-auth-link: #2a67eb;
+  --labwiki-auth-warning-bg: #fff2e6;
+  --labwiki-auth-warning-border: #f0c18a;
+  --labwiki-auth-warning-text: #8d4d0f;
+  --labwiki-auth-success-bg: #edf5ff;
+  --labwiki-auth-success-border: #b8ccf4;
+  --labwiki-auth-success-text: #1c4fb5;
+  --labwiki-auth-shadow: 0 28px 64px rgba(19, 38, 82, 0.18);
+  --labwiki-auth-shadow-soft: 0 16px 32px rgba(19, 38, 82, 0.11);
+  --labwiki-assistant-ink: #10243d;
+  --labwiki-assistant-ink-soft: rgba(16, 36, 61, 0.72);
+  --labwiki-assistant-paper: #f3f7ff;
+  --labwiki-assistant-panel: rgba(248, 251, 255, 0.96);
+  --labwiki-assistant-panel-strong: rgba(240, 246, 255, 0.98);
+  --labwiki-assistant-line: rgba(84, 113, 189, 0.14);
+  --labwiki-assistant-accent: #2566ea;
+  --labwiki-assistant-accent-soft: rgba(37, 102, 234, 0.12);
+  --labwiki-assistant-user: #173d73;
+  --labwiki-assistant-user-soft: rgba(23, 61, 115, 0.1);
+  --labwiki-assistant-shadow: 0 22px 70px rgba(17, 31, 68, 0.18);
+  --labwiki-assistant-aside: rgba(11, 23, 56, 0.96);
+  --labwiki-assistant-aside-card: rgba(255, 255, 255, 0.07);
+  --labwiki-assistant-aside-line: rgba(255, 255, 255, 0.08);
+  --labwiki-assistant-kicker: #8bc3ff;
+  --labwiki-workbook-status-bg: #eef4ff;
+  --labwiki-workbook-status-text: #17335c;
+  --labwiki-workbook-error-bg: #fff0ef;
+  --labwiki-workbook-error-text: #8a1f16;
+  --labwiki-workbook-success-bg: #edf8ee;
+  --labwiki-workbook-success-text: #195c27;
+  --labwiki-workbook-card: #ffffff;
+  --labwiki-workbook-line: #ccd7ef;
+  --labwiki-workbook-line-strong: #9eb5e2;
+  --labwiki-workbook-muted: #53688c;
+  --labwiki-workbook-ink: #17335c;
+  --labwiki-workbook-tab-active: #e7efff;
+  --labwiki-workbook-table-head: #f0f5ff;
+}
+
+html[data-labwiki-private="1"][data-labwiki-theme="polar-silver-blue"],
+html.labwiki-private.labwiki-theme-polar-silver-blue {
+  --page-bg: #dde6f2;
+  --surface: rgba(248, 251, 255, 0.97);
+  --surface-strong: rgba(255, 255, 255, 0.99);
+  --surface-muted: rgba(239, 244, 250, 0.98);
+  --surface-ink: #eef4fb;
+  --ink: #1e2e49;
+  --muted: #64778f;
+  --muted-strong: #45566f;
+  --line: rgba(113, 135, 167, 0.18);
+  --line-strong: rgba(86, 108, 142, 0.28);
+  --accent: #5f7ca8;
+  --accent-strong: #425a7d;
+  --accent-soft: rgba(95, 124, 168, 0.12);
+  --hero-bg: linear-gradient(180deg, rgba(249, 252, 255, 0.98) 0%, rgba(235, 242, 250, 0.98) 100%);
+  --labwiki-private-body-bg:
+    radial-gradient(circle at 14% 18%, rgba(255, 255, 255, 0.32), transparent 18%),
+    linear-gradient(rgba(123, 144, 170, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(123, 144, 170, 0.05) 1px, transparent 1px),
+    linear-gradient(180deg, #eef4fb 0%, #dfe7f1 100%);
+  --labwiki-private-body-overlay:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34), transparent 240px),
+    radial-gradient(circle at top right, rgba(196, 214, 236, 0.3), transparent 24%);
+  --labwiki-theme-drawer-bg: rgba(237, 243, 250, 0.94);
+  --labwiki-theme-drawer-line: rgba(104, 127, 162, 0.16);
+  --labwiki-theme-drawer-ink: #1f2f4f;
+  --labwiki-theme-drawer-muted: rgba(68, 87, 120, 0.82);
+  --labwiki-auth-bg: #edf3fb;
+  --labwiki-auth-surface: #f8fbff;
+  --labwiki-auth-surface-strong: #ffffff;
+  --labwiki-auth-panel: #eef3fb;
+  --labwiki-auth-panel-strong: #1f2f4f;
+  --labwiki-auth-border: #d4dff1;
+  --labwiki-auth-border-strong: #94aacd;
+  --labwiki-auth-text: #1f2f4f;
+  --labwiki-auth-muted: #687b97;
+  --labwiki-auth-accent: #5f7ca8;
+  --labwiki-auth-accent-strong: #425a7d;
+  --labwiki-auth-link: #5472a0;
+  --labwiki-auth-warning-bg: #fff4e9;
+  --labwiki-auth-warning-border: #edcc9b;
+  --labwiki-auth-warning-text: #8a5820;
+  --labwiki-auth-success-bg: #edf5ff;
+  --labwiki-auth-success-border: #c8d7ef;
+  --labwiki-auth-success-text: #375482;
+  --labwiki-auth-shadow: 0 24px 56px rgba(48, 68, 98, 0.14);
+  --labwiki-auth-shadow-soft: 0 14px 28px rgba(48, 68, 98, 0.1);
+  --labwiki-assistant-ink: #20324f;
+  --labwiki-assistant-ink-soft: rgba(32, 50, 79, 0.72);
+  --labwiki-assistant-paper: #f6f9fd;
+  --labwiki-assistant-panel: rgba(251, 253, 255, 0.97);
+  --labwiki-assistant-panel-strong: rgba(243, 247, 252, 0.99);
+  --labwiki-assistant-line: rgba(111, 130, 162, 0.16);
+  --labwiki-assistant-accent: #5c79a3;
+  --labwiki-assistant-accent-soft: rgba(92, 121, 163, 0.12);
+  --labwiki-assistant-user: #324d7a;
+  --labwiki-assistant-user-soft: rgba(50, 77, 122, 0.1);
+  --labwiki-assistant-shadow: 0 20px 56px rgba(49, 69, 99, 0.12);
+  --labwiki-assistant-aside: rgba(32, 47, 79, 0.96);
+  --labwiki-assistant-aside-card: rgba(255, 255, 255, 0.06);
+  --labwiki-assistant-aside-line: rgba(255, 255, 255, 0.08);
+  --labwiki-assistant-kicker: #b4c8ed;
+  --labwiki-workbook-status-bg: #eff4fb;
+  --labwiki-workbook-status-text: #324b70;
+  --labwiki-workbook-error-bg: #fff1ef;
+  --labwiki-workbook-error-text: #8b1f16;
+  --labwiki-workbook-success-bg: #eef7f2;
+  --labwiki-workbook-success-text: #2a6840;
+  --labwiki-workbook-card: #ffffff;
+  --labwiki-workbook-line: #d5deea;
+  --labwiki-workbook-line-strong: #a9bad3;
+  --labwiki-workbook-muted: #60738d;
+  --labwiki-workbook-ink: #274066;
+  --labwiki-workbook-tab-active: #eef4fb;
+  --labwiki-workbook-table-head: #f2f6fb;
+}
+
+html[data-labwiki-private="1"][data-labwiki-theme="cyan-tide-glow"],
+html.labwiki-private.labwiki-theme-cyan-tide-glow {
+  --page-bg: #071429;
+  --surface: rgba(240, 251, 255, 0.93);
+  --surface-strong: rgba(248, 254, 255, 0.98);
+  --surface-muted: rgba(229, 244, 247, 0.96);
+  --surface-ink: #e8f9fb;
+  --ink: #0d2534;
+  --muted: #537282;
+  --muted-strong: #2f5263;
+  --line: rgba(63, 171, 192, 0.18);
+  --line-strong: rgba(42, 146, 167, 0.32);
+  --accent: #1da8c6;
+  --accent-strong: #0d6f84;
+  --accent-soft: rgba(29, 168, 198, 0.14);
+  --hero-bg: linear-gradient(180deg, rgba(243, 252, 255, 0.96) 0%, rgba(223, 247, 251, 0.96) 100%);
+  --labwiki-private-body-bg:
+    radial-gradient(circle at 18% 16%, rgba(38, 210, 235, 0.14), transparent 20%),
+    radial-gradient(circle at 84% 18%, rgba(91, 150, 255, 0.12), transparent 24%),
+    linear-gradient(rgba(54, 172, 197, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(54, 172, 197, 0.05) 1px, transparent 1px),
+    linear-gradient(180deg, #061329 0%, #0a203c 46%, #081628 100%);
+  --labwiki-private-body-overlay:
+    radial-gradient(circle at 12% 22%, rgba(255, 255, 255, 0.72) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 72% 28%, rgba(167, 242, 255, 0.52) 0 1px, transparent 2px),
+    linear-gradient(120deg, rgba(152, 245, 255, 0.1) 0%, rgba(152, 245, 255, 0) 40%, rgba(152, 245, 255, 0.12) 70%, rgba(152, 245, 255, 0) 100%);
+  --labwiki-theme-drawer-bg: rgba(8, 24, 38, 0.94);
+  --labwiki-theme-drawer-line: rgba(134, 236, 255, 0.14);
+  --labwiki-theme-drawer-ink: #ecfeff;
+  --labwiki-theme-drawer-muted: rgba(202, 244, 250, 0.76);
+  --labwiki-auth-bg: #e5f4fb;
+  --labwiki-auth-surface: #f4fcff;
+  --labwiki-auth-surface-strong: #ffffff;
+  --labwiki-auth-panel: #e7f7fb;
+  --labwiki-auth-panel-strong: #0d2334;
+  --labwiki-auth-border: #c7eaf1;
+  --labwiki-auth-border-strong: #7ed2df;
+  --labwiki-auth-text: #0f2a3d;
+  --labwiki-auth-muted: #5a7d8d;
+  --labwiki-auth-accent: #169dbc;
+  --labwiki-auth-accent-strong: #0f748a;
+  --labwiki-auth-link: #168fb2;
+  --labwiki-auth-warning-bg: #fff3e6;
+  --labwiki-auth-warning-border: #ebcc9e;
+  --labwiki-auth-warning-text: #8c5612;
+  --labwiki-auth-success-bg: #e7fbff;
+  --labwiki-auth-success-border: #b5e7ef;
+  --labwiki-auth-success-text: #0f7282;
+  --labwiki-auth-shadow: 0 28px 62px rgba(7, 29, 43, 0.2);
+  --labwiki-auth-shadow-soft: 0 16px 30px rgba(7, 29, 43, 0.14);
+  --labwiki-assistant-ink: #0d2734;
+  --labwiki-assistant-ink-soft: rgba(13, 39, 52, 0.72);
+  --labwiki-assistant-paper: #f1fbfc;
+  --labwiki-assistant-panel: rgba(244, 253, 255, 0.96);
+  --labwiki-assistant-panel-strong: rgba(237, 250, 252, 0.98);
+  --labwiki-assistant-line: rgba(42, 146, 167, 0.16);
+  --labwiki-assistant-accent: #1498b6;
+  --labwiki-assistant-accent-soft: rgba(20, 152, 182, 0.14);
+  --labwiki-assistant-user: #125a75;
+  --labwiki-assistant-user-soft: rgba(18, 90, 117, 0.1);
+  --labwiki-assistant-shadow: 0 22px 70px rgba(8, 33, 47, 0.16);
+  --labwiki-assistant-aside: rgba(7, 28, 39, 0.96);
+  --labwiki-assistant-aside-card: rgba(255, 255, 255, 0.06);
+  --labwiki-assistant-aside-line: rgba(255, 255, 255, 0.08);
+  --labwiki-assistant-kicker: #79eef5;
+  --labwiki-workbook-status-bg: #e8fbff;
+  --labwiki-workbook-status-text: #0e6272;
+  --labwiki-workbook-error-bg: #fff0ef;
+  --labwiki-workbook-error-text: #8a1f16;
+  --labwiki-workbook-success-bg: #ecfbf5;
+  --labwiki-workbook-success-text: #1f6c4d;
+  --labwiki-workbook-card: #fcfeff;
+  --labwiki-workbook-line: #c6e8ee;
+  --labwiki-workbook-line-strong: #95d0d9;
+  --labwiki-workbook-muted: #557986;
+  --labwiki-workbook-ink: #0f5060;
+  --labwiki-workbook-tab-active: #e6f8fb;
+  --labwiki-workbook-table-head: #eefafc;
 }
 
 body.skin-vector-2022 {
-  background:
-    linear-gradient(rgba(14, 37, 42, 0.024) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(14, 37, 42, 0.024) 1px, transparent 1px),
-    linear-gradient(180deg, #f2f6f5 0%, #dfe8e6 100%);
+  background: var(--labwiki-private-body-bg);
   background-size: 24px 24px, 24px 24px, auto;
 }
 
 body.skin-vector-legacy {
-  background:
-    linear-gradient(rgba(14, 37, 42, 0.024) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(14, 37, 42, 0.024) 1px, transparent 1px),
-    linear-gradient(180deg, #f2f6f5 0%, #dfe8e6 100%);
+  background: var(--labwiki-private-body-bg);
   background-size: 24px 24px, 24px 24px, auto;
 }
 
-.mw-logo-wordmark::before {
-  content: "实验运行台账";
+body.skin-vector-2022::before,
+body.skin-vector-legacy::before {
+  background: var(--labwiki-private-body-overlay);
 }
 
 body.skin-vector-legacy #mw-page-base,
@@ -173,7 +396,17 @@ body.skin-vector-legacy #mw-panel .mw-list-item.active > a {
 }
 
 .vector-sticky-pinned-container .vector-toc-landmark,
-#vector-page-titlebar-toc {
+#vector-page-titlebar-toc,
+body.skin-vector-2022 #mw-panel-toc,
+body.skin-vector-2022 #mw-panel-toc-list {
+  display: none !important;
+}
+
+body.skin-vector-2022 .mw-table-of-contents-container.vector-toc-landmark {
+  display: none !important;
+}
+
+body.skin-vector-2022 .vector-page-titlebar .vector-toc-landmark {
   display: none !important;
 }
 
@@ -198,20 +431,24 @@ body.skin-vector-legacy #mw-panel .mw-list-item.active > a {
   box-shadow: var(--shadow-card);
 }
 
+.labwiki-sidebar-shell--dropdown {
+  position: static;
+  top: auto;
+  width: min(22rem, calc(100vw - 32px));
+  max-height: calc(100dvh - 7.5rem);
+  overflow: hidden;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+}
+
+#vector-main-menu-unpinned-container > #vector-main-menu {
+  display: none;
+}
+
 .labwiki-sidebar-header {
+  flex: 0 0 auto;
   margin-bottom: 12px;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--line);
-}
-
-.labwiki-sidebar-header small {
-  display: block;
-  margin-bottom: 8px;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 0.68rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--accent-strong);
 }
 
 .labwiki-sidebar-header strong {
@@ -222,58 +459,175 @@ body.skin-vector-legacy #mw-panel .mw-list-item.active > a {
   color: var(--ink);
 }
 
-.labwiki-sidebar-shell .vector-menu + .vector-menu {
-  margin-top: 12px;
+.labwiki-sidebar-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.labwiki-sidebar-shell .vector-menu-heading {
-  margin: 0 0 8px;
+.labwiki-sidebar-shell--dropdown .labwiki-sidebar-accordion {
+  min-height: 0;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.labwiki-sidebar-section {
+  display: block;
+}
+
+.labwiki-sidebar-section-toggle {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line) !important;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.82) !important;
+  box-shadow: none;
+  color: var(--ink) !important;
+  font-family: "Source Serif 4", "Noto Serif SC", serif;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.labwiki-sidebar-section-toggle:hover {
+  background: var(--accent-soft) !important;
+  border-color: var(--line-strong) !important;
+  color: var(--accent-strong) !important;
+}
+
+.labwiki-sidebar-section-title {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.labwiki-sidebar-counter {
+  flex: 0 0 auto;
+  min-width: 1.6rem;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--muted-strong);
   font-family: "IBM Plex Mono", monospace;
   font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted-strong);
+  text-align: center;
 }
 
-.labwiki-sidebar-shell .vector-menu-content-list {
+.labwiki-sidebar-chevron {
+  position: relative;
+  flex: 0 0 auto;
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.labwiki-sidebar-chevron::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translate(-50%, -58%) rotate(45deg);
+  transition: transform 140ms ease;
+}
+
+.labwiki-sidebar-section.is-open .labwiki-sidebar-section-toggle .labwiki-sidebar-chevron::before {
+  transform: translate(-50%, -42%) rotate(225deg);
+}
+
+.labwiki-sidebar-section-panel {
+  margin-top: 8px;
+}
+
+.labwiki-sidebar-links {
   margin: 0;
   padding: 0;
 }
 
-.labwiki-sidebar-shell .mw-list-item {
+.labwiki-sidebar-link-item {
   list-style: none;
 }
 
-.labwiki-sidebar-shell .mw-list-item + .mw-list-item {
+.labwiki-sidebar-link-item + .labwiki-sidebar-link-item {
   margin-top: 2px;
 }
 
-.labwiki-sidebar-shell .mw-list-item a {
+.labwiki-sidebar-link {
   display: block;
   padding: 8px 10px;
   border-radius: 8px;
+  border-left: 2px solid transparent;
   color: var(--muted);
   text-decoration: none;
 }
 
-.labwiki-sidebar-shell .mw-list-item a:hover {
+.labwiki-sidebar-link:hover {
   background: var(--accent-soft);
+  border-left-color: rgba(47, 108, 242, 0.32);
   color: var(--accent-strong);
 }
 
-.labwiki-sidebar-shell .mw-list-item a .vector-icon {
+.labwiki-sidebar-link.is-active {
+  background: rgba(32, 85, 102, 0.14);
+  border-left-color: var(--accent);
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
+body.skin-vector-2022 .vector-user-links {
+  position: relative;
+  overflow: visible;
+}
+
+body.skin-vector-2022 .vector-appearance-landmark {
+  position: absolute;
+  top: 0;
+  left: calc(100% + 12px);
+  display: flex !important;
+  align-items: center;
+}
+
+body.skin-vector-2022 #vector-appearance-dropdown {
+  position: relative;
+}
+
+body.skin-vector-2022 #vector-appearance-dropdown-checkbox,
+body.skin-vector-2022 #vector-appearance-dropdown .vector-dropdown-content {
+  display: none !important;
+}
+
+body.skin-vector-2022 #vector-appearance-dropdown-label.labwiki-appearance-settings-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--shadow-card);
+  color: var(--accent-strong);
+}
+
+body.skin-vector-2022 #vector-appearance-dropdown-label.labwiki-appearance-settings-link .vector-dropdown-label-text {
   display: none;
 }
 
-body.page-首页 .vector-column-start,
-body.page-Main_Page .vector-column-start {
-  display: none;
+body.skin-vector-2022 #vector-appearance-dropdown-label.labwiki-appearance-settings-link:hover {
+  background: var(--accent-soft);
+  border-color: var(--line-strong);
 }
 
-body.page-首页 .vector-column-container,
-body.page-Main_Page .vector-column-container {
-  grid-template-columns: minmax(0, 1fr);
+@media (max-width: 960px) {
+  body.skin-vector-2022 .vector-appearance-landmark {
+    display: none !important;
+  }
 }
 
 body.page-首页 .mw-body,
@@ -353,10 +707,6 @@ table.labwiki-runbook td {
 }
 
 @media (max-width: 960px) {
-  .vector-main-menu-container {
-    display: none;
-  }
-
   body.skin-vector-legacy #mw-panel,
   body.skin-vector-legacy #left-navigation,
   body.skin-vector-legacy #right-navigation,

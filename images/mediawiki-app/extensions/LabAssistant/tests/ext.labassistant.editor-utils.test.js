@@ -12,6 +12,7 @@ const {
   matchStructuredFieldsToInventory,
   normalizeMissingItemEntries,
   parseMissingFields,
+  replaceManagedPageSectionBody,
   resolvePageFormRuntimeContext
 } = require('../modules/ext.labassistant.editor-utils.js');
 
@@ -58,6 +59,33 @@ test('buildSubmissionGuidanceStorageKey scopes submission guidance to title and 
     buildSubmissionGuidanceStorageKey('Shot:2026-03-23-Run96-Shot001', 'localhost:8443'),
     'labassistant-submission-guidance::localhost:8443::Shot:2026-03-23-Run96-Shot001'
   );
+});
+
+test('replaceManagedPageSectionBody replaces only the target managed section body', () => {
+  const source = [
+    '<!-- LABWIKI_MANAGED_PAGE:PRIVATE_SHOT_INDEX -->',
+    '= Shot:Shot日志入口 =',
+    '',
+    '== 使用规则 ==',
+    '* 每轮实验 / 每个 shot 一页',
+    '* 页面命名：`Shot:YYYY-MM-DD-RunXX-ShotYYY`',
+    '',
+    '== 必填页面 ==',
+    '* [[Shot:表单新建]]'
+  ].join('\n');
+
+  const output = replaceManagedPageSectionBody(
+    source,
+    '使用规则',
+    [
+      '* 每轮实验 / 每个 shot 一页',
+      '* 页面命名：`Shot:YYYY-MM-DD-RunXX-ShotYYY`',
+      '* 每个 Shot 页面必须备注原日志存放位置，包括实验室电脑名称（或编号）与文件夹完整路径'
+    ]
+  );
+
+  assert.match(output, /== 使用规则 ==\n\* 每轮实验 \/ 每个 shot 一页\n\* 页面命名：`Shot:YYYY-MM-DD-RunXX-ShotYYY`\n\* 每个 Shot 页面必须备注原日志存放位置，包括实验室电脑名称（或编号）与文件夹完整路径\n\n== 必填页面 ==/);
+  assert.match(output, /== 必填页面 ==\n\* \[\[Shot:表单新建\]\]/);
 });
 
 test('matchStructuredFieldsToInventory matches conservative aliases for term entry fields', () => {

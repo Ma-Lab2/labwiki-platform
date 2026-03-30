@@ -674,12 +674,15 @@
 
   function applyDraftHandoffToSourceEditor( config ) {
     var textarea = document.getElementById( 'wpTextbox1' );
+    var editorUtils = getEditorUtils();
     var title = config.defaultContextTitle || config.currentTitle || '';
     var key;
     var raw;
     var payload;
     var helper;
     var notice;
+    var nextContent = '';
+    var targetSection = '';
 
     if ( !textarea || !title || !window.sessionStorage ) {
       return;
@@ -702,7 +705,22 @@
       return;
     }
 
-    textarea.value = payload.content;
+    targetSection = String( payload.target_section || '' ).trim();
+    nextContent = payload.content;
+    if ( targetSection && editorUtils && editorUtils.replaceManagedPageSectionBody ) {
+      try {
+        nextContent = editorUtils.replaceManagedPageSectionBody(
+          textarea.value,
+          targetSection,
+          ( payload.structured_payload && payload.structured_payload.内容 ) || payload.content
+        );
+      } catch ( error ) {
+        console.warn( error );
+        return;
+      }
+    }
+
+    textarea.value = nextContent;
     textarea.dispatchEvent( new Event( 'input', { bubbles: true } ) );
     textarea.dispatchEvent( new Event( 'change', { bubbles: true } ) );
     textarea.focus();
@@ -714,7 +732,9 @@
     }
     notice = document.createElement( 'div' );
     notice.className = 'labassistant-callout labassistant-editor-handoff-notice';
-    notice.textContent = '已从可视化编辑页带入草稿，页面尚未保存。';
+    notice.textContent = targetSection ?
+      ( '已替换区块“' + targetSection + '”内容，页面尚未保存。' ) :
+      '已从可视化编辑页带入草稿，页面尚未保存。';
     helper.appendChild( notice );
   }
 

@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${ROOT_DIR}"
 
-BASE_URL="${BASE_URL:-http://192.168.1.2:8443}"
+BASE_URL="${BASE_URL:-http://localhost:8443}"
 LOOPBACK_URL="${LOOPBACK_URL:-http://localhost:8443}"
 PRIVATE_USER="${PRIVATE_ADMIN_USER:-admin}"
 PRIVATE_PASSWORD_FILE="${PRIVATE_PASSWORD_FILE:-${ROOT_DIR}/secrets/private_admin_password.txt}"

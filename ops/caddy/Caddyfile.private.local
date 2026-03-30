@@ -1,6 +1,6 @@
 :80 {
-    @allowed_host host {$PRIVATE_HOST} 127.0.0.1 localhost
-    @noncanonical_host not host {$PRIVATE_HOST} 127.0.0.1 localhost
+    @allowed_host host {$PRIVATE_HOST}
+    @noncanonical_host not host {$PRIVATE_HOST}
 
     redir @noncanonical_host http://{$PRIVATE_HOST}:8443{uri} 308
 

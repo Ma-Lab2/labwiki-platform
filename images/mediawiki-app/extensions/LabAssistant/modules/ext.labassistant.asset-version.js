@@ -1,5 +1,5 @@
 ( function () {
-  var ASSET_VERSION = '2026-03-26-pdf-control-formalize-1';
+  var ASSET_VERSION = '2026-03-29-gpt54-default-1';
 
   if ( typeof window !== 'undefined' ) {
     window.LabAssistantAssetVersion = ASSET_VERSION;

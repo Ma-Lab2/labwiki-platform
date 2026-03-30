@@ -376,6 +376,16 @@ class AgentExecutor:
                 "complete",
                 f"已写入 {state['write_result_data'].get('page_title', '目标页')}。",
             )
+        elif state["task_type"] == TaskType.WRITE_ACTION.value and state.get("write_preview_data"):
+            preview = state["write_preview_data"]
+            target_page = preview.get("target_page") or "目标页"
+            target_section = preview.get("target_section")
+            state["answer"] = (
+                "已生成写入预览：" +
+                target_page +
+                ( f" / {target_section}" if target_section else "" ) +
+                "。请确认后再提交。"
+            )
 
         confidence = _confidence_for_answer(state["evidence"], state["unresolved_gaps"], state["external_hits"])
         state["confidence"] = confidence
@@ -484,7 +494,7 @@ class AgentExecutor:
             if preview.get("metadata_json", {}).get("missing_fields"):
                 return {"action": "answer", "action_input": {"answer_strategy": "grounded"}, "stop_reason": "write_preview_missing_fields"}
             if not state.get("write_result_data"):
-                return {"action": "commit_write", "action_input": {}}
+                return {"action": "answer", "action_input": {"answer_strategy": "grounded"}, "stop_reason": "write_preview_ready"}
             return {"action": "answer", "action_input": {"answer_strategy": "grounded"}, "stop_reason": "write_committed"}
         if task_type == TaskType.DRAFT.value and has_context_evidence and page_focused and not state.get("answer"):
             return {"action": "answer", "action_input": {"answer_strategy": "grounded"}, "stop_reason": "current_page_draft_ready"}
@@ -797,6 +807,7 @@ class AgentExecutor:
             "action_type": metadata.get("action_type"),
             "operation": metadata.get("operation"),
             "target_page": prepared["target_page"],
+            "target_section": metadata.get("target_section"),
             "preview_text": prepared["preview_text"],
             "structured_payload": metadata.get("structured_payload") or {},
             "metadata_json": metadata,
@@ -809,6 +820,7 @@ class AgentExecutor:
             f"已生成写入预览：{prepared['target_page']}。",
             {
                 "target_page": prepared["target_page"],
+                "target_section": metadata.get("target_section"),
                 "missing_fields": metadata.get("missing_fields", []),
             },
         )

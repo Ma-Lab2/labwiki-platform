@@ -18,10 +18,15 @@
     return variant === 'drawer' || variant === 'plugin' || variant === 'mobile-sheet';
   }
 
+  function shouldHydrateStoredSession( variant ) {
+    return variant !== 'special';
+  }
+
   var exported = {
     DEFAULT_MOBILE_BREAKPOINT: DEFAULT_MOBILE_BREAKPOINT,
     isCompactWorkspaceVariant: isCompactWorkspaceVariant,
-    resolveShellPresentation: resolveShellPresentation
+    resolveShellPresentation: resolveShellPresentation,
+    shouldHydrateStoredSession: shouldHydrateStoredSession
   };
 
   if ( typeof window !== 'undefined' ) {

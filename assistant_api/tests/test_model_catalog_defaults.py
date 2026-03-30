@@ -40,7 +40,7 @@ def _settings(**overrides) -> Settings:
         "openai_max_tokens": 2048,
         "openai_compatible_base_url": "https://relay.example/v1",
         "openai_compatible_api_key": "relay-key",
-        "openai_compatible_model": "gpt-5.4-mini",
+        "openai_compatible_model": "gpt-5.4",
         "openai_compatible_timeout": 180,
         "openai_compatible_max_tokens": 2048,
         "embedding_base_url": "https://relay.example/v1",
@@ -70,13 +70,13 @@ def _settings(**overrides) -> Settings:
 
 
 class ModelCatalogDefaultSelectionTests(unittest.TestCase):
-    def test_claude_is_preferred_when_anthropic_key_exists(self) -> None:
+    def test_configured_provider_still_wins_when_anthropic_key_exists(self) -> None:
         settings = _settings(generation_provider="openai_compatible")
 
         selection = default_generation_selection(settings)
 
-        self.assertEqual(selection.provider, "anthropic")
-        self.assertEqual(selection.requested_model, "claude-sonnet-4-5-20250929-thinking")
+        self.assertEqual(selection.provider, "openai_compatible")
+        self.assertEqual(selection.requested_model, "gpt-5.4")
 
     def test_configured_provider_is_used_when_claude_is_unavailable(self) -> None:
         settings = _settings(
@@ -87,7 +87,7 @@ class ModelCatalogDefaultSelectionTests(unittest.TestCase):
         selection = default_generation_selection(settings)
 
         self.assertEqual(selection.provider, "openai_compatible")
-        self.assertEqual(selection.requested_model, "gpt-5.4-mini")
+        self.assertEqual(selection.requested_model, "gpt-5.4")
 
     @patch("app.services.model_catalog.fetch_remote_model_ids")
     def test_pdf_ingest_promotes_mini_to_gpt_5_4_when_available(self, fetch_remote_model_ids) -> None:

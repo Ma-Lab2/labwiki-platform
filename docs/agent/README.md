@@ -18,6 +18,7 @@
 | 任务类型 | 先读文档 |
 | --- | --- |
 | 改 assistant API、检索、模型配置、reindex、草稿提交 | `docs/agent/modules/assistant.md` |
+| 改知识助手的页面编辑、区块写入、操作卡、源码 handoff | `docs/agent/modules/assistant-editing-semantics.md` |
 | 改 MediaWiki 启动、私有站行为、扩展入口、种子内容 | `docs/agent/modules/mediawiki.md` |
 | 改 RCF/TPS 工具接入、代理路径、只读动作边界 | `docs/agent/modules/tools.md` |
 | 改 compose、Caddy、更新/升级脚本、验证脚本、内网部署 | `docs/agent/modules/ops-and-validation.md` |
@@ -61,4 +62,5 @@
 - 部署入口：`README.md`
 - 助手架构决策：`docs/assistant-architecture-decision.md`
 - 助手 API 设计：`docs/assistant-api-design.md`
+- 助手编辑语义：`docs/agent/modules/assistant-editing-semantics.md`
 - LangGraph loop 设计：`docs/langgraph-loop-design.md`

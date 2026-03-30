@@ -99,10 +99,7 @@ def infer_family_for_model(model: str) -> str:
 
 
 def default_generation_selection(settings: Settings) -> ResolvedGenerationSelection:
-    if settings.anthropic_api_key:
-        model = settings.anthropic_model
-        provider = "anthropic"
-    elif settings.generation_provider == "anthropic":
+    if settings.generation_provider == "anthropic":
         model = settings.anthropic_model
         provider = "anthropic"
     elif settings.generation_provider in {"openai_compatible", "domestic"}:

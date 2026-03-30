@@ -1,11 +1,38 @@
+:root {
+  --labassistant-ui-ink: var(--labwiki-assistant-ink, #0e2833);
+  --labassistant-ui-ink-soft: var(--labwiki-assistant-ink-soft, rgba(14, 40, 51, 0.72));
+  --labassistant-ui-paper: var(--labwiki-assistant-paper, #f7f4ec);
+  --labassistant-ui-panel: var(--labwiki-assistant-panel, rgba(255, 252, 246, 0.97));
+  --labassistant-ui-panel-strong: var(--labwiki-assistant-panel-strong, rgba(254, 250, 242, 0.99));
+  --labassistant-ui-line: var(--labwiki-assistant-line, rgba(14, 40, 51, 0.12));
+  --labassistant-ui-accent: var(--labwiki-assistant-accent, #0f6c73);
+  --labassistant-ui-accent-soft: var(--labwiki-assistant-accent-soft, rgba(15, 108, 115, 0.12));
+  --labassistant-ui-user: var(--labwiki-assistant-user, #163b5b);
+  --labassistant-ui-user-soft: var(--labwiki-assistant-user-soft, rgba(22, 59, 91, 0.1));
+  --labassistant-ui-shadow: var(--labwiki-assistant-shadow, 0 22px 70px rgba(11, 27, 33, 0.15));
+  --labassistant-ui-aside: var(--labwiki-assistant-aside, rgba(13, 38, 45, 0.96));
+  --labassistant-ui-aside-card: var(--labwiki-assistant-aside-card, rgba(255, 255, 255, 0.06));
+  --labassistant-ui-aside-line: var(--labwiki-assistant-aside-line, rgba(255, 255, 255, 0.08));
+  --labassistant-ui-kicker: var(--labwiki-assistant-kicker, #85d8d6);
+  --labassistant-ui-launcher-dot: color-mix(in srgb, var(--labassistant-ui-accent) 42%, #f8f4eb);
+  --labassistant-ui-backdrop: color-mix(in srgb, var(--labassistant-ui-ink) 18%, transparent);
+  --labassistant-ui-warning: #8a5d00;
+  --labassistant-ui-error: #b42318;
+  --labassistant-ui-success: #18794e;
+}
+
 .labassistant-launcher-button {
   align-items: center;
-  background: linear-gradient(135deg, #123f4a, #0f6c73);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--labassistant-ui-accent) 60%, var(--labassistant-ui-user)),
+    var(--labassistant-ui-accent)
+  );
   border: 0;
   border-radius: 999px;
   bottom: 24px;
-  box-shadow: 0 22px 56px rgba(12, 36, 43, 0.26);
-  color: #f7f3e9;
+  box-shadow: 0 22px 56px color-mix(in srgb, var(--labassistant-ui-ink) 26%, transparent);
+  color: color-mix(in srgb, var(--labassistant-ui-paper) 86%, white);
   cursor: pointer;
   display: inline-flex;
   font-family: "IBM Plex Sans", "Noto Sans SC", sans-serif;
@@ -19,10 +46,10 @@
 }
 
 .labassistant-attachment-open {
-  background: rgba(15, 108, 115, 0.12);
+  background: var(--labassistant-ui-accent-soft);
   border: 0;
   border-radius: 999px;
-  color: #0f6c73;
+  color: var(--labassistant-ui-accent);
   cursor: pointer;
   font-size: 11px;
   font-weight: 700;
@@ -30,10 +57,10 @@
 }
 
 .labassistant-pdf-reader-shell {
-  background: rgba(255, 252, 246, 0.98);
-  border: 1px solid rgba(14, 40, 51, 0.12);
+  background: color-mix(in srgb, var(--labassistant-ui-panel) 94%, white);
+  border: 1px solid var(--labassistant-ui-line);
   border-radius: 22px;
-  box-shadow: 0 22px 60px rgba(11, 27, 33, 0.14);
+  box-shadow: 0 22px 60px color-mix(in srgb, var(--labassistant-ui-ink) 14%, transparent);
   display: grid;
   gap: 12px;
   margin: 18px 0;
@@ -56,7 +83,7 @@
 
 .labassistant-pdf-reader-toolbar {
   align-items: center;
-  border-bottom: 1px solid rgba(14, 40, 51, 0.1);
+  border-bottom: 1px solid color-mix(in srgb, var(--labassistant-ui-line) 88%, transparent);
   display: flex;
   gap: 12px;
   justify-content: space-between;
@@ -77,7 +104,7 @@
 .labassistant-pdf-reader-title span,
 .labassistant-pdf-reader-copy span,
 .labassistant-pdf-reader-status {
-  color: rgba(14, 40, 51, 0.72);
+  color: var(--labassistant-ui-ink-soft);
   font-size: 12px;
 }
 
@@ -92,14 +119,14 @@
 .labassistant-pdf-reader-page,
 .labassistant-pdf-reader-zoom,
 .labassistant-pdf-reader-quote-input {
-  border: 1px solid rgba(14, 40, 51, 0.14);
+  border: 1px solid color-mix(in srgb, var(--labassistant-ui-line) 92%, transparent);
   border-radius: 14px;
   font-family: "IBM Plex Sans", "Noto Sans SC", sans-serif;
 }
 
 .labassistant-pdf-reader-page,
 .labassistant-pdf-reader-zoom {
-  background: #fff;
+  background: color-mix(in srgb, var(--labassistant-ui-panel-strong) 90%, white);
   min-height: 34px;
   padding: 6px 10px;
 }
@@ -109,10 +136,10 @@
 }
 
 .labassistant-pdf-reader-button {
-  background: rgba(14, 40, 51, 0.08);
+  background: color-mix(in srgb, var(--labassistant-ui-ink) 8%, transparent);
   border: 0;
   border-radius: 999px;
-  color: #0e2833;
+  color: var(--labassistant-ui-ink);
   cursor: pointer;
   font-size: 12px;
   font-weight: 700;
@@ -122,8 +149,12 @@
 }
 
 .labassistant-pdf-reader-button.is-primary {
-  background: linear-gradient(135deg, #123f4a, #0f6c73);
-  color: #f7f3e9;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--labassistant-ui-accent) 62%, var(--labassistant-ui-user)),
+    var(--labassistant-ui-accent)
+  );
+  color: color-mix(in srgb, var(--labassistant-ui-paper) 86%, white);
 }
 
 .labassistant-pdf-reader-button.is-link {
@@ -141,8 +172,8 @@
 
 .labassistant-pdf-reader-frame-wrap,
 .labassistant-pdf-reader-quote {
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(14, 40, 51, 0.08);
+  background: color-mix(in srgb, var(--labassistant-ui-panel-strong) 70%, white);
+  border: 1px solid color-mix(in srgb, var(--labassistant-ui-line) 76%, transparent);
   border-radius: 18px;
   overflow: hidden;
 }
@@ -169,15 +200,15 @@
 }
 
 .labassistant-pdf-reader-status.is-success {
-  color: #18794e;
+  color: var(--labassistant-ui-success);
 }
 
 .labassistant-pdf-reader-status.is-warning {
-  color: #8a5d00;
+  color: var(--labassistant-ui-warning);
 }
 
 .labassistant-pdf-reader-status.is-error {
-  color: #b42318;
+  color: var(--labassistant-ui-error);
 }
 
 .labassistant-pdf-reader-empty {
@@ -208,7 +239,7 @@
 }
 
 .labassistant-launcher-dot {
-  background: #f3c87a;
+  background: var(--labassistant-ui-launcher-dot);
   border-radius: 999px;
   display: inline-block;
   height: 10px;
@@ -216,7 +247,7 @@
 }
 
 .labassistant-plugin-backdrop {
-  background: rgba(8, 20, 27, 0.34);
+  background: var(--labassistant-ui-backdrop);
   inset: 0;
   position: fixed;
   transition: opacity 160ms ease;
@@ -241,7 +272,7 @@
 }
 
 .labassistant-plugin-shell .labassistant-workspace {
-  border: 1px solid rgba(14, 40, 51, 0.1);
+  border: 1px solid color-mix(in srgb, var(--labassistant-ui-line) 88%, transparent);
   border-radius: 26px;
   height: min(78vh, 760px);
   max-height: min(78vh, 760px);
@@ -271,20 +302,24 @@
 }
 
 .labassistant-workspace {
-  --assistant-ink: #0e2833;
-  --assistant-ink-soft: rgba(14, 40, 51, 0.72);
-  --assistant-paper: #f7f4ec;
-  --assistant-panel: rgba(255, 252, 246, 0.97);
-  --assistant-panel-strong: rgba(254, 250, 242, 0.99);
-  --assistant-line: rgba(14, 40, 51, 0.12);
-  --assistant-accent: #0f6c73;
-  --assistant-accent-soft: rgba(15, 108, 115, 0.12);
-  --assistant-user: #163b5b;
-  --assistant-user-soft: rgba(22, 59, 91, 0.1);
-  --assistant-shadow: 0 22px 70px rgba(11, 27, 33, 0.15);
+  --assistant-ink: var(--labassistant-ui-ink);
+  --assistant-ink-soft: var(--labassistant-ui-ink-soft);
+  --assistant-paper: var(--labassistant-ui-paper);
+  --assistant-panel: var(--labassistant-ui-panel);
+  --assistant-panel-strong: var(--labassistant-ui-panel-strong);
+  --assistant-line: var(--labassistant-ui-line);
+  --assistant-accent: var(--labassistant-ui-accent);
+  --assistant-accent-soft: var(--labassistant-ui-accent-soft);
+  --assistant-user: var(--labassistant-ui-user);
+  --assistant-user-soft: var(--labassistant-ui-user-soft);
+  --assistant-shadow: var(--labassistant-ui-shadow);
   background:
-    radial-gradient(circle at top right, rgba(15, 108, 115, 0.14), transparent 26%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(251, 247, 239, 0.98));
+    radial-gradient(circle at top right, color-mix(in srgb, var(--assistant-accent) 18%, transparent), transparent 26%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--assistant-panel-strong) 96%, white),
+      color-mix(in srgb, var(--assistant-paper) 92%, var(--assistant-panel))
+    );
   border-left: 1px solid var(--assistant-line);
   box-shadow: var(--assistant-shadow);
   color: var(--assistant-ink);
@@ -297,8 +332,12 @@
 
 .labassistant-workspace.is-special {
   background:
-    radial-gradient(circle at top left, rgba(15, 108, 115, 0.14), transparent 24%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(251, 247, 239, 0.98));
+    radial-gradient(circle at top left, color-mix(in srgb, var(--assistant-accent) 18%, transparent), transparent 24%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--assistant-panel-strong) 96%, white),
+      color-mix(in srgb, var(--assistant-paper) 92%, var(--assistant-panel))
+    );
   border: 1px solid var(--assistant-line);
   border-radius: 28px;
   box-shadow: var(--assistant-shadow);
@@ -337,8 +376,9 @@
 .labassistant-special-layout {
   display: grid;
   gap: 0;
-  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.85fr);
+  grid-template-columns: minmax(260px, 304px) minmax(0, 1fr);
   min-height: 76vh;
+  position: relative;
 }
 
 .labassistant-main-column {
@@ -346,7 +386,7 @@
   flex: 1 1 auto;
   grid-template-rows: auto auto minmax(0, 1fr) auto;
   height: 100%;
-  min-height: 0;
+  min-height: 100%;
   overflow: hidden;
 }
 
@@ -364,17 +404,95 @@
   display: none !important;
 }
 
-.labassistant-special-aside {
-  background: rgba(13, 38, 45, 0.96);
-  color: rgba(248, 244, 234, 0.92);
-  display: grid;
-  gap: 14px;
-  padding: 24px 22px;
+.labassistant-special-layout.is-history-collapsed {
+  grid-template-columns: 0 minmax(0, 1fr);
+}
+
+.labassistant-special-backdrop {
+  background: color-mix(in srgb, var(--assistant-ink) 18%, transparent);
+  inset: 0;
+  position: fixed;
+  z-index: 58;
+}
+
+.labassistant-special-backdrop[hidden] {
+  display: none !important;
+}
+
+.labassistant-workspace.is-special .labassistant-main-column {
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--assistant-accent) 10%, transparent), transparent 28%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--assistant-panel-strong) 96%, white),
+      color-mix(in srgb, var(--assistant-paper) 94%, var(--assistant-panel))
+    );
+}
+
+.labassistant-workspace.is-special .labassistant-header {
+  padding: 14px 18px 10px;
+}
+
+.labassistant-header-copy.is-special {
+  gap: 4px;
+}
+
+.labassistant-workspace.is-special .labassistant-header h2 {
+  font-family: "IBM Plex Sans", "Noto Sans SC", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+}
+
+.labassistant-workspace.is-special .labassistant-settings-panel {
+  background: color-mix(in srgb, var(--assistant-panel) 92%, white);
+  border-bottom: 1px solid color-mix(in srgb, var(--assistant-line) 82%, transparent);
+  padding: 0 18px 16px;
+}
+
+.labassistant-workspace.is-special .labassistant-transcript {
+  gap: 16px;
+  padding: 18px 20px 28px;
+}
+
+.labassistant-workspace.is-special .labassistant-composer {
+  padding: 12px 18px 18px;
+}
+
+.labassistant-workspace.is-special .labassistant-compact-model-select {
+  display: none;
+}
+
+.labassistant-workspace.is-special .labassistant-history-panel {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--assistant-panel-strong) 98%, white),
+      color-mix(in srgb, var(--assistant-paper) 88%, var(--assistant-panel))
+    );
+  border-bottom: 0;
+  border-right: 1px solid color-mix(in srgb, var(--assistant-line) 76%, transparent);
+  gap: 10px;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  padding: 18px 14px;
+  position: relative;
+  transition: transform 160ms ease, opacity 160ms ease, padding 160ms ease;
+}
+
+.labassistant-special-layout.is-history-collapsed .labassistant-history-panel {
+  border-right: 0;
+  opacity: 0;
+  padding-left: 0;
+  padding-right: 0;
+  pointer-events: none;
 }
 
 .labassistant-aside-card {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--labassistant-ui-aside-card);
+  border: 1px solid var(--labassistant-ui-aside-line);
   border-radius: 18px;
   display: grid;
   gap: 8px;
@@ -383,7 +501,7 @@
 
 .labassistant-aside-card small,
 .labassistant-header-kicker {
-  color: #85d8d6;
+  color: var(--labassistant-ui-kicker);
   font-family: "IBM Plex Sans", "Noto Sans SC", sans-serif;
   font-size: 11px;
   font-weight: 700;
@@ -507,8 +625,8 @@
 }
 
 .labassistant-toolbar-button.is-active {
-  background: rgba(15, 108, 115, 0.12);
-  border-color: rgba(15, 108, 115, 0.24);
+  background: var(--assistant-accent-soft);
+  border-color: color-mix(in srgb, var(--assistant-accent) 24%, transparent);
   color: var(--assistant-accent);
 }
 
@@ -541,8 +659,8 @@
 .labassistant-workspace.is-drawer .labassistant-toolbar-button.is-active,
 .labassistant-workspace.is-plugin .labassistant-toolbar-button:hover,
 .labassistant-workspace.is-plugin .labassistant-toolbar-button.is-active {
-  background: rgba(14, 40, 51, 0.06);
-  border-color: rgba(14, 40, 51, 0.08);
+  background: color-mix(in srgb, var(--assistant-ink) 6%, transparent);
+  border-color: color-mix(in srgb, var(--assistant-line) 78%, transparent);
   color: var(--assistant-ink);
 }
 
@@ -554,8 +672,8 @@
 }
 
 .labassistant-mode-switch {
-  background: rgba(14, 40, 51, 0.05);
-  border: 1px solid rgba(14, 40, 51, 0.08);
+  background: color-mix(in srgb, var(--assistant-ink) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--assistant-line) 78%, transparent);
   border-radius: 12px;
   display: inline-flex;
   gap: 4px;
@@ -577,31 +695,35 @@
 }
 
 .labassistant-mode-button.is-active {
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 6px 16px rgba(12, 31, 36, 0.08);
+  background: color-mix(in srgb, var(--assistant-panel-strong) 94%, white);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--assistant-ink) 8%, transparent);
   color: var(--assistant-accent);
 }
 
 .labassistant-send-button,
 .labassistant-inline-button {
-  background: linear-gradient(135deg, #123f4a, #0f6c73);
-  box-shadow: 0 14px 34px rgba(15, 108, 115, 0.18);
-  color: #f7f3e9;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--assistant-accent) 60%, var(--assistant-user)),
+    var(--assistant-accent)
+  );
+  box-shadow: 0 14px 34px color-mix(in srgb, var(--assistant-accent) 18%, transparent);
+  color: color-mix(in srgb, var(--assistant-paper) 86%, white);
 }
 
 .labassistant-inline-button-secondary {
-  background: rgba(14, 40, 51, 0.06);
-  border-color: rgba(14, 40, 51, 0.1);
+  background: color-mix(in srgb, var(--assistant-ink) 6%, transparent);
+  border-color: color-mix(in srgb, var(--assistant-line) 88%, transparent);
   box-shadow: none;
   color: var(--assistant-ink);
 }
 
 .labassistant-inline-button-secondary:hover {
-  background: rgba(14, 40, 51, 0.1);
+  background: color-mix(in srgb, var(--assistant-ink) 10%, transparent);
 }
 
 .labassistant-followup-button {
-  background: rgba(15, 108, 115, 0.08);
+  background: color-mix(in srgb, var(--assistant-accent) 8%, transparent);
   color: var(--assistant-accent);
 }
 
@@ -631,10 +753,10 @@
 }
 
 .labassistant-settings-popover {
-  background: rgba(255, 252, 246, 0.98);
-  border: 1px solid rgba(14, 40, 51, 0.1);
+  background: color-mix(in srgb, var(--assistant-panel-strong) 94%, white);
+  border: 1px solid color-mix(in srgb, var(--assistant-line) 88%, transparent);
   border-radius: 18px;
-  box-shadow: 0 18px 42px rgba(11, 27, 33, 0.14);
+  box-shadow: 0 18px 42px color-mix(in srgb, var(--assistant-ink) 14%, transparent);
   display: grid;
   gap: 12px;
   padding: 14px;
@@ -651,7 +773,7 @@
 }
 
 .labassistant-history-panel {
-  background: rgba(255, 252, 246, 0.96);
+  background: color-mix(in srgb, var(--assistant-panel) 94%, white);
   border-bottom: 1px solid var(--assistant-line);
   display: grid;
   gap: 10px;
@@ -674,8 +796,8 @@
 }
 
 .labassistant-history-search {
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(14, 40, 51, 0.15);
+  background: color-mix(in srgb, var(--assistant-panel-strong) 92%, white);
+  border: 1px solid color-mix(in srgb, var(--assistant-line) 96%, transparent);
   border-radius: 14px;
   box-sizing: border-box;
   color: var(--assistant-ink);
@@ -688,8 +810,8 @@
 }
 
 .labassistant-history-search:focus {
-  border-color: rgba(15, 108, 115, 0.32);
-  box-shadow: 0 0 0 3px rgba(15, 108, 115, 0.1);
+  border-color: color-mix(in srgb, var(--assistant-accent) 32%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--assistant-accent) 10%, transparent);
   outline: none;
 }
 
@@ -699,11 +821,11 @@
 }
 
 .labassistant-history-status.is-error {
-  color: #b42318;
+  color: var(--labassistant-ui-error);
 }
 
 .labassistant-history-status.is-success {
-  color: #18794e;
+  color: var(--labassistant-ui-success);
 }
 
 .labassistant-history-list {
@@ -713,10 +835,17 @@
   overflow-y: auto;
 }
 
+.labassistant-workspace.is-special .labassistant-history-list {
+  align-content: start;
+  flex: 1 1 auto;
+  max-height: none;
+  min-height: 0;
+}
+
 .labassistant-history-item {
   align-items: center;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(14, 40, 51, 0.08);
+  background: color-mix(in srgb, var(--assistant-panel-strong) 82%, white);
+  border: 1px solid color-mix(in srgb, var(--assistant-line) 78%, transparent);
   border-radius: 16px;
   display: grid;
   gap: 10px;
@@ -746,6 +875,109 @@
 .labassistant-history-meta {
   color: var(--assistant-ink-soft);
   font-size: 12px;
+}
+
+.labassistant-history-new {
+  appearance: none;
+  background: color-mix(in srgb, var(--assistant-accent) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--assistant-line) 78%, transparent);
+  border-radius: 14px;
+  color: var(--assistant-accent);
+  cursor: pointer;
+  font-family: "IBM Plex Sans", "Noto Sans SC", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  min-height: 40px;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.labassistant-history-item.is-special {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  gap: 8px;
+  padding: 0;
+}
+
+.labassistant-history-open {
+  appearance: none;
+  background: color-mix(in srgb, var(--assistant-panel-strong) 78%, white);
+  border: 1px solid color-mix(in srgb, var(--assistant-line) 82%, transparent);
+  border-radius: 16px;
+  cursor: pointer;
+  display: block;
+  padding: 11px 12px;
+  text-align: left;
+  width: 100%;
+}
+
+.labassistant-history-open.is-active,
+.labassistant-history-item.is-special.is-active .labassistant-history-open {
+  background: color-mix(in srgb, var(--assistant-accent) 10%, white);
+  border-color: color-mix(in srgb, var(--assistant-accent) 22%, transparent);
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--assistant-accent) 10%, transparent);
+}
+
+.labassistant-history-actions {
+  align-self: start;
+  position: relative;
+}
+
+.labassistant-history-menu-button {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: 12px;
+  color: var(--assistant-ink-soft);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  min-height: 38px;
+  min-width: 38px;
+}
+
+.labassistant-history-menu-button:hover,
+.labassistant-history-menu-button.is-active {
+  background: color-mix(in srgb, var(--assistant-ink) 6%, transparent);
+  color: var(--assistant-ink);
+}
+
+.labassistant-history-menu {
+  background: color-mix(in srgb, var(--assistant-panel-strong) 96%, white);
+  border: 1px solid color-mix(in srgb, var(--assistant-line) 86%, transparent);
+  border-radius: 14px;
+  box-shadow: 0 16px 34px color-mix(in srgb, var(--assistant-ink) 12%, transparent);
+  display: grid;
+  min-width: 158px;
+  padding: 6px;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 8;
+}
+
+.labassistant-history-menu[hidden] {
+  display: none !important;
+}
+
+.labassistant-history-menu-item {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  color: var(--assistant-ink);
+  cursor: pointer;
+  font-family: "IBM Plex Sans", "Noto Sans SC", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  min-height: 34px;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.labassistant-history-menu-item:hover {
+  background: color-mix(in srgb, var(--assistant-accent) 8%, transparent);
 }
 
 .labassistant-settings-popover-copy {
@@ -794,8 +1026,8 @@
 .labassistant-settings-panel input,
 .labassistant-settings-panel select,
 .labassistant-composer textarea {
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(14, 40, 51, 0.15);
+  background: color-mix(in srgb, var(--assistant-panel-strong) 92%, white);
+  border: 1px solid color-mix(in srgb, var(--assistant-line) 96%, transparent);
   box-sizing: border-box;
   border-radius: 14px;
   color: var(--assistant-ink);
@@ -808,8 +1040,8 @@
 
 .labassistant-settings-popover input,
 .labassistant-settings-popover select {
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(14, 40, 51, 0.12);
+  background: color-mix(in srgb, var(--assistant-panel-strong) 94%, white);
+  border: 1px solid color-mix(in srgb, var(--assistant-line) 88%, transparent);
   box-sizing: border-box;
   border-radius: 12px;
   color: var(--assistant-ink);
@@ -821,8 +1053,8 @@
 }
 
 .labassistant-context-display {
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(14, 40, 51, 0.1);
+  background: color-mix(in srgb, var(--assistant-panel-strong) 94%, white);
+  border: 1px solid color-mix(in srgb, var(--assistant-line) 88%, transparent);
   border-radius: 12px;
   box-sizing: border-box;
   color: var(--assistant-ink-soft);
@@ -845,8 +1077,8 @@
 .labassistant-settings-panel input:focus,
 .labassistant-settings-panel select:focus,
 .labassistant-composer textarea:focus {
-  border-color: rgba(15, 108, 115, 0.42);
-  box-shadow: 0 0 0 4px rgba(15, 108, 115, 0.08);
+  border-color: color-mix(in srgb, var(--assistant-accent) 42%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--assistant-accent) 8%, transparent);
   outline: none;
 }
 
@@ -861,8 +1093,8 @@
 }
 
 .labassistant-empty-state {
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px dashed rgba(14, 40, 51, 0.15);
+  background: color-mix(in srgb, var(--assistant-panel-strong) 72%, white);
+  border: 1px dashed color-mix(in srgb, var(--assistant-line) 96%, transparent);
   border-radius: 16px;
   color: var(--assistant-ink-soft);
   display: grid;
@@ -885,10 +1117,10 @@
 
 .labassistant-editor-helper {
   align-items: center;
-  background: rgba(255, 251, 243, 0.94);
-  border: 1px solid rgba(14, 40, 51, 0.1);
+  background: color-mix(in srgb, var(--assistant-panel) 94%, white);
+  border: 1px solid color-mix(in srgb, var(--assistant-line) 88%, transparent);
   border-radius: 14px;
-  box-shadow: 0 10px 24px rgba(13, 31, 36, 0.05);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--assistant-ink) 5%, transparent);
   display: flex;
   gap: 14px;
   justify-content: space-between;
@@ -917,11 +1149,15 @@
 
 .labassistant-editor-helper-button {
   appearance: none;
-  background: linear-gradient(135deg, #123f4a, #0f6c73);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--assistant-accent) 60%, var(--assistant-user)),
+    var(--assistant-accent)
+  );
   border: 1px solid transparent;
   border-radius: 999px;
-  box-shadow: 0 12px 28px rgba(15, 108, 115, 0.16);
-  color: #f7f3e9;
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--assistant-accent) 16%, transparent);
+  color: color-mix(in srgb, var(--assistant-paper) 86%, white);
   cursor: pointer;
   flex: 0 0 auto;
   font-family: "IBM Plex Sans", "Noto Sans SC", sans-serif;
@@ -947,17 +1183,17 @@
 }
 
 .labassistant-editor-upload-notice.is-pending {
-  border-color: rgba(15, 108, 115, 0.2);
-  color: #0f5559;
+  border-color: color-mix(in srgb, var(--assistant-accent) 20%, transparent);
+  color: color-mix(in srgb, var(--assistant-accent) 74%, var(--assistant-ink));
 }
 
 .labassistant-editor-upload-notice.is-success {
-  border-color: rgba(42, 126, 66, 0.22);
+  border-color: color-mix(in srgb, #2f7a54 22%, transparent);
   color: #255c33;
 }
 
 .labassistant-editor-upload-notice.is-error {
-  border-color: rgba(169, 64, 51, 0.22);
+  border-color: color-mix(in srgb, #a94033 22%, transparent);
   color: #8a3026;
 }
 
@@ -1008,9 +1244,13 @@
 
 .labassistant-message.user {
   align-self: flex-end;
-  background: linear-gradient(135deg, rgba(22, 59, 91, 0.96), rgba(27, 80, 112, 0.96));
-  box-shadow: 0 12px 28px rgba(22, 59, 91, 0.16);
-  color: #f7f3e9;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--assistant-user) 96%, black 4%),
+    color-mix(in srgb, var(--assistant-accent) 34%, var(--assistant-user))
+  );
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--assistant-user) 16%, transparent);
+  color: color-mix(in srgb, var(--assistant-paper) 86%, white);
 }
 
 .labassistant-workspace.is-drawer .labassistant-message.user,
@@ -1023,15 +1263,15 @@
   align-self: flex-start;
   background: var(--assistant-panel);
   border: 1px solid var(--assistant-line);
-  box-shadow: 0 8px 20px rgba(13, 31, 36, 0.05);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--assistant-ink) 5%, transparent);
 }
 
 .labassistant-workspace.is-drawer .labassistant-message.assistant,
 .labassistant-workspace.is-plugin .labassistant-message.assistant {
-  background: rgba(255, 255, 255, 0.84);
-  border-color: rgba(14, 40, 51, 0.08);
+  background: color-mix(in srgb, var(--assistant-panel-strong) 84%, white);
+  border-color: color-mix(in srgb, var(--assistant-line) 78%, transparent);
   border-bottom-left-radius: 10px;
-  box-shadow: 0 8px 16px rgba(13, 31, 36, 0.035);
+  box-shadow: 0 8px 16px color-mix(in srgb, var(--assistant-ink) 4%, transparent);
 }
 
 .labassistant-message-meta {
@@ -1051,7 +1291,7 @@
 }
 
 .labassistant-message.user .labassistant-message-meta {
-  color: rgba(247, 243, 233, 0.72);
+  color: color-mix(in srgb, var(--assistant-paper) 72%, transparent);
 }
 
 .labassistant-markdown {
@@ -1087,7 +1327,7 @@
 }
 
 .labassistant-markdown code {
-  background: rgba(16, 41, 53, 0.08);
+  background: color-mix(in srgb, var(--assistant-ink) 8%, transparent);
   border-radius: 6px;
   font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
   font-size: 0.92em;
@@ -1095,9 +1335,9 @@
 }
 
 .labassistant-markdown pre {
-  background: #11252e;
+  background: color-mix(in srgb, var(--assistant-user) 70%, #091118);
   border-radius: 0 0 18px 18px;
-  color: #eff7f4;
+  color: color-mix(in srgb, var(--assistant-paper) 92%, white);
   margin: 0;
   overflow-x: auto;
   padding: 14px 16px;
@@ -1110,7 +1350,7 @@
 }
 
 .labassistant-markdown blockquote {
-  border-left: 4px solid rgba(15, 108, 115, 0.25);
+  border-left: 4px solid color-mix(in srgb, var(--assistant-accent) 25%, transparent);
   color: var(--assistant-ink-soft);
   padding-left: 14px;
 }
@@ -1122,17 +1362,17 @@
 
 .labassistant-markdown th,
 .labassistant-markdown td {
-  border: 1px solid rgba(14, 40, 51, 0.12);
+  border: 1px solid color-mix(in srgb, var(--assistant-line) 92%, transparent);
   padding: 8px 10px;
   text-align: left;
 }
 
 .labassistant-markdown th {
-  background: rgba(15, 108, 115, 0.08);
+  background: color-mix(in srgb, var(--assistant-accent) 8%, transparent);
 }
 
 .labassistant-code-block {
-  background: #11252e;
+  background: color-mix(in srgb, var(--assistant-user) 70%, #091118);
   border-radius: 18px;
   margin: 0 0 12px;
   overflow: hidden;
@@ -1165,7 +1405,7 @@
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 999px;
-  color: #f7f3e9;
+  color: color-mix(in srgb, var(--assistant-paper) 88%, white);
   cursor: pointer;
   font-family: "IBM Plex Sans", "Noto Sans SC", sans-serif;
   font-size: 12px;
@@ -1192,16 +1432,16 @@
 }
 
 .labassistant-callout {
-  background: rgba(15, 108, 115, 0.08);
-  border: 1px solid rgba(15, 108, 115, 0.12);
+  background: color-mix(in srgb, var(--assistant-accent) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--assistant-accent) 12%, transparent);
   border-radius: 12px;
   color: var(--assistant-ink);
   padding: 10px 12px;
 }
 
 .labassistant-inspector {
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(14, 40, 51, 0.1);
+  background: color-mix(in srgb, var(--assistant-panel-strong) 60%, white);
+  border: 1px solid color-mix(in srgb, var(--assistant-line) 88%, transparent);
   border-radius: 12px;
   display: grid;
   gap: 0;
@@ -1210,8 +1450,8 @@
 
 .labassistant-workspace.is-drawer .labassistant-inspector,
 .labassistant-workspace.is-plugin .labassistant-inspector {
-  background: rgba(255, 255, 255, 0.45);
-  border-color: rgba(14, 40, 51, 0.06);
+  background: color-mix(in srgb, var(--assistant-panel-strong) 45%, white);
+  border-color: color-mix(in srgb, var(--assistant-line) 56%, transparent);
   border-radius: 10px;
 }
 
@@ -1262,8 +1502,12 @@
 
 .labassistant-inspector-tabs {
   align-items: center;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.54), rgba(255, 255, 255, 0.18));
-  border-bottom: 1px solid rgba(14, 40, 51, 0.08);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--assistant-panel-strong) 54%, white),
+    color-mix(in srgb, var(--assistant-panel-strong) 18%, transparent)
+  );
+  border-bottom: 1px solid color-mix(in srgb, var(--assistant-line) 78%, transparent);
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -1279,8 +1523,8 @@
 
 .labassistant-inspector-tab {
   appearance: none;
-  background: rgba(15, 108, 115, 0.06);
-  border: 1px solid rgba(14, 40, 51, 0.08);
+  background: color-mix(in srgb, var(--assistant-accent) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--assistant-line) 78%, transparent);
   border-radius: 999px;
   color: var(--assistant-ink-soft);
   cursor: pointer;
@@ -1293,7 +1537,7 @@
 
 .labassistant-workspace.is-drawer .labassistant-inspector-tab,
 .labassistant-workspace.is-plugin .labassistant-inspector-tab {
-  background: rgba(14, 40, 51, 0.045);
+  background: color-mix(in srgb, var(--assistant-ink) 4.5%, transparent);
   border-color: transparent;
   font-size: 11px;
   min-height: 24px;
@@ -1302,18 +1546,18 @@
 
 .labassistant-workspace.is-drawer .labassistant-inspector-tab.is-active,
 .labassistant-workspace.is-plugin .labassistant-inspector-tab.is-active {
-  background: rgba(15, 108, 115, 0.12);
-  border-color: rgba(15, 108, 115, 0.14);
+  background: color-mix(in srgb, var(--assistant-accent) 12%, transparent);
+  border-color: color-mix(in srgb, var(--assistant-accent) 14%, transparent);
 }
 
 .labassistant-workspace.is-drawer .labassistant-inspector-panel,
 .labassistant-workspace.is-plugin .labassistant-inspector-panel {
-  border-top: 1px solid rgba(14, 40, 51, 0.05);
+  border-top: 1px solid color-mix(in srgb, var(--assistant-line) 50%, transparent);
 }
 
 .labassistant-inspector-tab.is-active {
-  background: rgba(15, 108, 115, 0.14);
-  border-color: rgba(15, 108, 115, 0.24);
+  background: color-mix(in srgb, var(--assistant-accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--assistant-accent) 24%, transparent);
   color: var(--assistant-accent);
 }
 
@@ -1337,8 +1581,8 @@
 }
 
 .labassistant-evidence-item {
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(14, 40, 51, 0.08);
+  background: color-mix(in srgb, var(--assistant-panel-strong) 70%, white);
+  border: 1px solid color-mix(in srgb, var(--assistant-line) 78%, transparent);
   border-radius: 12px;
   display: grid;
   gap: 6px;
@@ -1353,7 +1597,7 @@
 }
 
 .labassistant-source-chip {
-  background: rgba(15, 108, 115, 0.12);
+  background: color-mix(in srgb, var(--assistant-accent) 12%, transparent);
   border-radius: 999px;
   color: var(--assistant-accent);
   font-size: 11px;
@@ -1363,8 +1607,8 @@
 }
 
 .labassistant-step-dot {
-  background: rgba(15, 108, 115, 0.2);
-  border: 3px solid rgba(15, 108, 115, 0.14);
+  background: color-mix(in srgb, var(--assistant-accent) 20%, transparent);
+  border: 3px solid color-mix(in srgb, var(--assistant-accent) 14%, transparent);
   border-radius: 999px;
   display: inline-block;
   height: 12px;
@@ -1373,7 +1617,7 @@
 }
 
 .labassistant-step-item.is-running .labassistant-step-dot {
-  background: #0f6c73;
+  background: var(--assistant-accent);
 }
 
 .labassistant-step-item.is-completed .labassistant-step-dot,
@@ -1405,8 +1649,8 @@
 }
 
 .labassistant-form-fill-card {
-  background: rgba(14, 40, 51, 0.03);
-  border: 1px solid rgba(14, 40, 51, 0.08);
+  background: color-mix(in srgb, var(--assistant-ink) 3%, transparent);
+  border: 1px solid color-mix(in srgb, var(--assistant-line) 78%, transparent);
   border-radius: 12px;
   gap: 10px;
 }
@@ -1425,7 +1669,7 @@
 }
 
 .labassistant-form-missing {
-  border-top: 1px solid rgba(14, 40, 51, 0.08);
+  border-top: 1px solid color-mix(in srgb, var(--assistant-line) 78%, transparent);
   display: grid;
   gap: 8px;
   padding-top: 10px;
@@ -1445,7 +1689,7 @@
 }
 
 .labassistant-form-missing-chip {
-  background: rgba(14, 40, 51, 0.06);
+  background: color-mix(in srgb, var(--assistant-ink) 6%, transparent);
   border-radius: 999px;
   color: var(--assistant-ink-soft);
   display: inline-flex;
@@ -1462,10 +1706,16 @@
 }
 
 .labassistant-composer {
-  background: linear-gradient(180deg, rgba(247, 244, 236, 0), rgba(247, 244, 236, 0.9) 18%, rgba(247, 244, 236, 0.98));
-  border-top: 1px solid rgba(14, 40, 51, 0.08);
-  box-shadow: 0 -14px 34px rgba(12, 31, 36, 0.08);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--assistant-paper) 0%, transparent),
+    color-mix(in srgb, var(--assistant-paper) 90%, transparent) 18%,
+    color-mix(in srgb, var(--assistant-paper) 98%, var(--assistant-panel))
+  );
+  border-top: 1px solid color-mix(in srgb, var(--assistant-line) 78%, transparent);
+  box-shadow: 0 -14px 34px color-mix(in srgb, var(--assistant-ink) 8%, transparent);
   flex: 0 0 auto;
+  margin-top: auto;
   position: sticky;
   bottom: 0;
   padding: 10px 18px 12px;
@@ -1474,7 +1724,12 @@
 
 .labassistant-workspace.is-drawer .labassistant-composer,
 .labassistant-workspace.is-plugin .labassistant-composer {
-  background: linear-gradient(180deg, rgba(247, 244, 236, 0), rgba(247, 244, 236, 0.86) 14%, rgba(247, 244, 236, 0.98) 34%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--assistant-paper) 0%, transparent),
+    color-mix(in srgb, var(--assistant-paper) 86%, transparent) 14%,
+    color-mix(in srgb, var(--assistant-paper) 98%, var(--assistant-panel)) 34%
+  );
   border-top: 0;
   box-shadow: none;
 }
@@ -1504,8 +1759,8 @@
 
 .labassistant-attachment-chip {
   align-items: center;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(14, 40, 51, 0.1);
+  background: color-mix(in srgb, var(--assistant-panel-strong) 92%, white);
+  border: 1px solid color-mix(in srgb, var(--assistant-line) 88%, transparent);
   border-radius: 999px;
   display: inline-flex;
   gap: 6px;
@@ -1549,10 +1804,10 @@
 }
 
 .labassistant-composer-shell {
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(14, 40, 51, 0.14);
+  background: color-mix(in srgb, var(--assistant-panel-strong) 94%, white);
+  border: 1px solid color-mix(in srgb, var(--assistant-line) 96%, transparent);
   border-radius: 18px;
-  box-shadow: 0 14px 30px rgba(11, 27, 33, 0.1);
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--assistant-ink) 10%, transparent);
   display: grid;
   gap: 8px;
   padding: 10px;
@@ -1560,10 +1815,10 @@
 
 .labassistant-workspace.is-drawer .labassistant-composer-shell,
 .labassistant-workspace.is-plugin .labassistant-composer-shell {
-  background: rgba(255, 255, 255, 0.96);
-  border-color: rgba(14, 40, 51, 0.1);
+  background: color-mix(in srgb, var(--assistant-panel-strong) 96%, white);
+  border-color: color-mix(in srgb, var(--assistant-line) 88%, transparent);
   border-radius: 20px;
-  box-shadow: 0 16px 34px rgba(11, 27, 33, 0.12);
+  box-shadow: 0 16px 34px color-mix(in srgb, var(--assistant-ink) 12%, transparent);
   gap: 10px;
   padding: 10px;
 }
@@ -1587,8 +1842,8 @@
 .labassistant-plus-button {
   align-items: center;
   appearance: none;
-  background: rgba(15, 108, 115, 0.06);
-  border: 1px solid rgba(14, 40, 51, 0.1);
+  background: color-mix(in srgb, var(--assistant-accent) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--assistant-line) 88%, transparent);
   border-radius: 10px;
   color: var(--assistant-accent);
   cursor: pointer;
@@ -1609,10 +1864,10 @@
 }
 
 .labassistant-upload-menu {
-  background: rgba(255, 252, 246, 0.98);
-  border: 1px solid rgba(14, 40, 51, 0.1);
+  background: color-mix(in srgb, var(--assistant-panel-strong) 94%, white);
+  border: 1px solid color-mix(in srgb, var(--assistant-line) 88%, transparent);
   border-radius: 12px;
-  box-shadow: 0 14px 30px rgba(11, 27, 33, 0.14);
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--assistant-ink) 14%, transparent);
   display: none;
   gap: 4px;
   left: 0;
@@ -1638,12 +1893,12 @@
 }
 
 .labassistant-upload-action:hover {
-  background: rgba(15, 108, 115, 0.08);
+  background: color-mix(in srgb, var(--assistant-accent) 8%, transparent);
 }
 
 .labassistant-compact-model-select {
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(14, 40, 51, 0.12);
+  background: color-mix(in srgb, var(--assistant-panel-strong) 94%, white);
+  border: 1px solid color-mix(in srgb, var(--assistant-line) 88%, transparent);
   border-radius: 10px;
   color: var(--assistant-ink);
   font-family: "IBM Plex Sans", "Noto Sans SC", sans-serif;
@@ -1692,8 +1947,8 @@
 
 .labassistant-workspace.is-drawer .labassistant-question-input,
 .labassistant-workspace.is-plugin .labassistant-question-input {
-  background: rgba(252, 250, 245, 0.92);
-  border-color: rgba(14, 40, 51, 0.08);
+  background: color-mix(in srgb, var(--assistant-paper) 92%, white);
+  border-color: color-mix(in srgb, var(--assistant-line) 78%, transparent);
   border-radius: 16px;
   font-size: 14px;
   line-height: 1.5;
@@ -1708,16 +1963,12 @@
 
 .labassistant-workspace.is-drawer .labassistant-transcript,
 .labassistant-workspace.is-plugin .labassistant-transcript {
-  padding-bottom: 24px;
+  padding-bottom: 104px;
 }
 
 @media (max-width: 1000px) {
   .labassistant-special-layout {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .labassistant-special-aside {
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
   }
 }
 
@@ -1739,6 +1990,47 @@
     border: 1px solid var(--assistant-line);
     border-radius: 24px;
     min-height: min(82vh, 760px);
+  }
+
+  .labassistant-workspace.is-special {
+    overflow: hidden;
+  }
+
+  .labassistant-workspace.is-special .labassistant-header {
+    padding: 14px 16px 10px;
+  }
+
+  .labassistant-workspace.is-special .labassistant-transcript {
+    padding: 16px 16px 24px;
+  }
+
+  .labassistant-workspace.is-special .labassistant-composer {
+    padding: 10px 16px 16px;
+  }
+
+  .labassistant-workspace.is-special .labassistant-history-panel {
+    border-right: 1px solid color-mix(in srgb, var(--assistant-line) 76%, transparent);
+    border-radius: 0 22px 22px 0;
+    bottom: 0;
+    left: 0;
+    max-width: min(320px, calc(100vw - 56px));
+    position: fixed;
+    top: 0;
+    transform: translateX(-104%);
+    width: min(320px, calc(100vw - 56px));
+    z-index: 59;
+  }
+
+  .labassistant-special-layout.is-history-open .labassistant-history-panel {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
+  }
+
+  .labassistant-special-layout.is-history-collapsed .labassistant-history-panel {
+    border-right: 1px solid color-mix(in srgb, var(--assistant-line) 76%, transparent);
+    padding-left: 14px;
+    padding-right: 14px;
   }
 
   .labassistant-header,

@@ -45,7 +45,7 @@
     }
 
     var api = new mw.Api();
-    var loginUrl = mw.util.getUrl( 'Special:用户登录' );
+    var loginUrl = mw.util.getUrl( 'Special:实验室登录' );
     var card = el( 'section', { className: 'labauth-auth-card' } );
     var status = el( 'div', { className: 'labauth-status', hidden: 'hidden' } );
     var form = el( 'form', { className: 'labauth-form' } );

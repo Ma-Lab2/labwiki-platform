@@ -5,7 +5,7 @@ MediaWiki Docker Compose baseline for a research group that needs two separate s
 - `mw_public`: public-facing website / open wiki
 - `mw_private`: internal wiki for SOPs, meeting notes, project pages, and lab knowledge
 
-The stack uses one MariaDB container, two isolated MediaWiki instances, two integrated analysis tools, and two Caddy frontends. The private site is bound to `127.0.0.1:8443` by default in the base Compose file, but the current local lab override serves the private wiki through the canonical entry `http://192.168.1.2:8443`.
+The stack uses one MariaDB container, two isolated MediaWiki instances, two integrated analysis tools, and two Caddy frontends. The private site is bound to `127.0.0.1:8443` by default in the base Compose file, but the current local lab override serves the private wiki through the canonical entry `http://localhost:8443`.
 
 ## For GitHub Collaborators
 
@@ -273,13 +273,13 @@ ASSISTANT_OPENAI_WEB_SEARCH_MODEL=gpt-4.1-mini
 
 Prompt assembly is centralized in `assistant_api/app/services/prompts.py`. That file is the current home for system prompts, task-specific guidance, few-shot examples, and domain keyword packs.
 
-For the current local lab environment, the private wiki supports both loopback and LAN entry:
+For the current local lab environment, the private wiki uses a single canonical entry:
 
-- prefer `http://localhost:8443` for local browser access on the lab machine
-- use the LAN host such as `http://192.168.1.2:8443` from other devices on the same network
-- the assistant UI keeps host-scoped local state so `127.0.0.1` and LAN host sessions do not trample each other
+- use `http://localhost:8443` for browser access, CLI access, and assistant callbacks on the lab machine
+- treat `127.0.0.1:8443` and any LAN host as lower-level transport endpoints that must redirect back to `localhost:8443`
+- the assistant UI keeps host-scoped local state, so private-site scripts and saved links should stay on `localhost:8443` to avoid split sessions
 
-Some local proxy tools intercept bare `127.0.0.1` HTTP traffic more aggressively than `localhost`. For browser and CLI use on the lab machine, prefer `http://localhost:8443`. `127.0.0.1:8443` should be treated as a lower-level transport endpoint rather than the primary user-facing entry.
+Some local proxy tools intercept bare `127.0.0.1` HTTP traffic more aggressively than `localhost`. Keep `http://localhost:8443` as the only user-facing private entry and let non-canonical hosts redirect there.
 
 To compare retrieval strategies and tokenizer modes against the current wiki content, run:
 

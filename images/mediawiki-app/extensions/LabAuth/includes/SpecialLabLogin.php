@@ -9,6 +9,7 @@ use MediaWiki\MainConfigNames;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\SpecialPage\LoginSignupSpecialPage;
 use MediaWiki\SpecialPage\SpecialPage;
+use MediaWiki\Title\Title;
 use StatusValue;
 
 class SpecialLabLogin extends LoginSignupSpecialPage {
@@ -58,6 +59,11 @@ class SpecialLabLogin extends LoginSignupSpecialPage {
 	}
 
 	protected function beforeExecute( $subPage ) {
+		if ( $this->getUser()->isRegistered() ) {
+			$this->getOutput()->redirect( Title::newMainPage()->getLocalURL() );
+			return false;
+		}
+
 		if ( $subPage === 'signup' || $this->getRequest()->getText( 'type' ) === 'signup' ) {
 			$this->getOutput()->redirect( SpecialPage::getTitleFor( 'StudentSignup' )->getFullURL() );
 			return false;
@@ -144,20 +150,42 @@ class SpecialLabLogin extends LoginSignupSpecialPage {
 		}
 
 		$signupUrl = SpecialPage::getTitleFor( 'StudentSignup' )->getLocalURL();
+		$homeUrl = Title::newMainPage()->getLocalURL();
 		return '<div class="labauth-login-shell">'
-			. '<div class="labauth-auth-card">'
+			. '<section class="labauth-portal-shell">'
+			. '<aside class="labauth-portal-hero">'
 			. '<div class="labauth-auth-header">'
 			. '<small>Private Wiki</small>'
 			. '<h1>' . $this->msg( 'labauth-login' )->escaped() . '</h1>'
-			. '<p>使用实验室账号进入私有知识库。学生首次使用请先提交注册申请。</p>'
+			. '<p>进入实验运行台账、控制文档和知识整理工作区。学生首次使用请先提交注册申请。</p>'
+			. '</div>'
+			. '<div class="labauth-hero-steps">'
+			. '<div class="labauth-hero-step"><strong>实验资料集中管理</strong><span>统一访问私有知识库、记录页和控制文档。</span></div>'
+			. '<div class="labauth-hero-step"><strong>学生账号需审核</strong><span>学生先注册，管理员审核通过后才能登录。</span></div>'
+			. '<div class="labauth-hero-step"><strong>管理员统一维护</strong><span>账户停用、恢复和审计记录都在后台完成。</span></div>'
+			. '</div>'
+			. '<div class="labauth-hero-meta">'
+			. '<span>仅面向课题组内部成员开放。</span>'
+			. '<span>如遇停用提示，请联系管理员。</span>'
+			. '</div>'
+			. '</aside>'
+			. '<section class="labauth-auth-card labauth-auth-card-form">'
+			. '<div class="labauth-auth-header">'
+			. '<small>Account Login</small>'
+			. '<h2>' . $this->msg( 'labauth-login' )->escaped() . '</h2>'
+			. '<p>使用已开通的实验室账号登录私有 Wiki。</p>'
 			. '</div>'
 			. $noticeHtml
 			. '<div class="labauth-login-form">' . $formHtml . '</div>'
 			. '<div class="labauth-auth-footer">'
+			. '<a class="labauth-link-button" href="' . htmlspecialchars( $homeUrl ) . '">返回首页</a>'
+			. '<div class="labauth-inline-links">'
 			. '<span>还没有账号？</span>'
 			. '<a class="labauth-link" href="' . htmlspecialchars( $signupUrl ) . '">前往学生注册</a>'
 			. '</div>'
 			. '</div>'
+			. '</section>'
+			. '</section>'
 			. '</div>';
 	}
 }

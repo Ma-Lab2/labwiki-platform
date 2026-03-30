@@ -108,20 +108,14 @@ a:hover {
 }
 
 .mw-logo-wordmark {
-  font-size: 0;
-  line-height: 0;
-}
-
-.mw-logo-tagline {
-  display: none;
-}
-
-.mw-logo-wordmark::before {
-  display: inline-block;
   font-size: 0.98rem;
   line-height: 1.2;
   font-weight: 700;
   letter-spacing: 0.02em;
+}
+
+.mw-logo-tagline {
+  display: none;
 }
 
 .vector-search-box {
@@ -153,12 +147,12 @@ select:focus {
   outline: none;
 }
 
-.cdx-button,
-.mw-ui-button,
-.oo-ui-buttonElement-button,
+.cdx-button--action-progressive,
 button.cdx-button--action-progressive,
-button,
-input[type="submit"] {
+.mw-ui-button.mw-ui-progressive,
+.oo-ui-buttonElement-button.oo-ui-flaggedElement-progressive,
+input[type="submit"],
+button[type="submit"] {
   border-radius: 10px;
   border: 1px solid var(--accent);
   background: var(--accent) !important;
@@ -166,12 +160,12 @@ input[type="submit"] {
   box-shadow: none;
 }
 
-.cdx-button:hover,
-.mw-ui-button:hover,
-.oo-ui-buttonElement-button:hover,
+.cdx-button--action-progressive:hover,
 button.cdx-button--action-progressive:hover,
-button:hover,
-input[type="submit"]:hover {
+.mw-ui-button.mw-ui-progressive:hover,
+.oo-ui-buttonElement-button.oo-ui-flaggedElement-progressive:hover,
+input[type="submit"]:hover,
+button[type="submit"]:hover {
   background: var(--accent-strong) !important;
   border-color: var(--accent-strong);
 }
@@ -264,6 +258,12 @@ input[type="submit"]:hover {
 .vector-page-toolbar .selected span {
   color: var(--accent-strong);
   box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.vector-page-toolbar .selected a,
+.vector-page-toolbar [aria-current="page"] {
+  pointer-events: none;
+  cursor: default;
 }
 
 .vector-column-start,
@@ -477,20 +477,6 @@ body.ns-special .diff th {
 #footer-poweredbyico,
 #footer-copyrightico {
   opacity: 0.42;
-}
-
-body.page-首页 .vector-column-start,
-body.page-首页 .vector-column-end,
-body.page-首页 .vector-page-toolbar-container,
-body.page-Main_Page .vector-column-start,
-body.page-Main_Page .vector-column-end,
-body.page-Main_Page .vector-page-toolbar-container {
-  display: none;
-}
-
-body.page-首页 .vector-column-container,
-body.page-Main_Page .vector-column-container {
-  grid-template-columns: minmax(0, 1fr);
 }
 
 body.page-首页 .mw-body,

@@ -29,6 +29,7 @@
         "modules/ext.labassistant.editor-utils.js",
         "modules/ext.labassistant.editor-upload-utils.js",
         "modules/ext.labassistant.attachment-utils.js",
+        "modules/ext.labassistant.model-utils.js",
         "modules/ext.labassistant.pdf-reader-utils.js",
         "modules/ext.labassistant.pdf-ingest-utils.js",
         "modules/ext.labassistant.session-export-utils.js",
@@ -56,6 +57,7 @@
         "modules/ext.labassistant.editor-utils.js",
         "modules/ext.labassistant.editor-upload-utils.js",
         "modules/ext.labassistant.attachment-utils.js",
+        "modules/ext.labassistant.model-utils.js",
         "modules/ext.labassistant.pdf-reader-utils.js",
         "modules/ext.labassistant.pdf-ingest-utils.js",
         "modules/ext.labassistant.session-export-utils.js",
@@ -116,7 +118,7 @@
       ]
     },
     "LabAssistantAssetEpoch": {
-      "value": "2026-03-26-pdf-control-formalize-1"
+      "value": "2026-03-30-model-utils-fix-1"
     }
   },
   "manifest_version": 2

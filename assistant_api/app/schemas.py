@@ -108,6 +108,7 @@ class WritePreviewPayload(BaseModel):
     action_type: str
     operation: str
     target_page: str
+    target_section: str | None = None
     preview_text: str
     structured_payload: dict[str, Any]
     missing_fields: list[str] = Field(default_factory=list)
@@ -119,7 +120,31 @@ class WriteResultPayload(BaseModel):
     page_title: str
     operation: str | None = None
     action_type: str | None = None
+    target_section: str | None = None
     detail: str | None = None
+
+
+class OperationPreviewPayload(BaseModel):
+    preview_id: str | None = None
+    kind: str
+    operation: str | None = None
+    target_page: str | None = None
+    target_section: str | None = None
+    title: str | None = None
+    content: str | None = None
+    structured_payload: dict[str, Any] = Field(default_factory=dict)
+    missing_fields: list[str] = Field(default_factory=list)
+    metadata: dict[str, Any] | None = None
+
+
+class OperationResultPayload(BaseModel):
+    status: str
+    kind: str
+    operation: str | None = None
+    page_title: str | None = None
+    target_section: str | None = None
+    detail: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class ModelInfoPayload(BaseModel):
@@ -200,6 +225,8 @@ class ChatResponse(BaseModel):
     unresolved_gaps: list[str]
     suggested_followups: list[str]
     action_trace: list[ActionTraceItem] = Field(default_factory=list)
+    operation_preview: OperationPreviewPayload | None = None
+    operation_result: OperationResultPayload | None = None
     draft_preview: DraftPreviewPayload | None = None
     write_preview: WritePreviewPayload | None = None
     write_result: WriteResultPayload | None = None
@@ -358,6 +385,8 @@ class SessionTurnPayload(BaseModel):
     unresolved_gaps: list[str] = Field(default_factory=list)
     suggested_followups: list[str] = Field(default_factory=list)
     action_trace: list[ActionTraceItem] = Field(default_factory=list)
+    operation_preview: OperationPreviewPayload | None = None
+    operation_result: OperationResultPayload | None = None
     draft_preview: DraftPreviewPayload | None = None
     write_preview: WritePreviewPayload | None = None
     write_result: WriteResultPayload | None = None

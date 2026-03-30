@@ -48,6 +48,36 @@
     return stem || 'labassistant-session';
   }
 
+  function buildSessionHistoryDisplay( item, options ) {
+    var sessionId = safeText( item && item.session_id );
+    var title = safeText( item && item.current_page ) || safeText( item && item.latest_question );
+    var subtitle = safeText( item && item.current_page ) && safeText( item && item.latest_question ) ?
+      safeText( item.latest_question ) :
+      '';
+    var meta = [];
+    var formatTimestamp = options && typeof options.formatTimestamp === 'function' ? options.formatTimestamp : null;
+
+    if ( !title ) {
+      title = '会话 ' + sessionId.slice( 0, 8 );
+    }
+    if ( Number( item && item.turn_count ) > 0 ) {
+      meta.push( '轮次 ' + Number( item.turn_count ) );
+    }
+    if ( item && item.updated_at && formatTimestamp ) {
+      meta.push( '更新 ' + safeText( formatTimestamp( item.updated_at ) ) );
+    }
+    if ( sessionId && safeText( options && options.activeSessionId ) === sessionId ) {
+      meta.push( '当前会话' );
+    }
+
+    return {
+      title: title,
+      subtitle: subtitle,
+      meta: meta.join( ' · ' ),
+      isActive: sessionId && safeText( options && options.activeSessionId ) === sessionId
+    };
+  }
+
   function buildSessionExportFileName( item ) {
     var sessionId = safeText( item && item.session_id ) || 'session';
     var shortId = sessionId.slice( 0, 8 );
@@ -61,6 +91,7 @@
   var exported = {
     normalizeSessionHistoryItems: normalizeSessionHistoryItems,
     filterSessionHistoryItems: filterSessionHistoryItems,
+    buildSessionHistoryDisplay: buildSessionHistoryDisplay,
     buildSessionExportFileName: buildSessionExportFileName
   };
 

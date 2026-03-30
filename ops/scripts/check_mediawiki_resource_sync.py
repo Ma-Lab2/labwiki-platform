@@ -33,6 +33,18 @@ def build_default_manifest(root_dir: pathlib.Path) -> list[ManifestItem]:
             "/usr/local/bin/bootstrap-instance.sh",
         ),
         (
+            "images/mediawiki-app/theme/base.css",
+            "/var/www/html/labwiki/theme/base.css",
+        ),
+        (
+            "images/mediawiki-app/theme/private.css",
+            "/var/www/html/labwiki/theme/private.css",
+        ),
+        (
+            "images/mediawiki-app/theme/private.js",
+            "/var/www/html/labwiki/theme/private.js",
+        ),
+        (
             "images/mediawiki-app/extensions/LabAssistant/extension.json",
             "/var/www/html/extensions/LabAssistant/extension.json",
         ),
@@ -91,6 +103,10 @@ def build_default_manifest(root_dir: pathlib.Path) -> list[ManifestItem]:
         (
             "images/mediawiki-app/extensions/LabAuth/modules/ext.labauth.admin.js",
             "/var/www/html/extensions/LabAuth/modules/ext.labauth.admin.js",
+        ),
+        (
+            "images/mediawiki-app/extensions/LabAuth/modules/ext.labauth.ui.css",
+            "/var/www/html/extensions/LabAuth/modules/ext.labauth.ui.css",
         ),
         (
             "images/mediawiki-app/extensions/LabWorkbook/extension.json",

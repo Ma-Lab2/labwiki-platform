@@ -4,10 +4,13 @@
   var MODEL_FAMILY_STORAGE_KEY = 'labassistant-selected-model-family';
   var HOST_STORAGE_KEY = 'labassistant-active-host';
   var MODEL_PREF_VERSION_KEY = 'labassistant-model-pref-version';
-  var MODEL_PREF_VERSION = '2026-03-20-drawer-chat-1';
+  var MODEL_PREF_VERSION = '2026-03-29-gpt54-default-1';
   var DRAWER_ROOT_ID = 'labassistant-drawer-root';
   var DRAFT_HANDOFF_FALLBACK_PREFIX = 'labassistant-draft-handoff::';
   var SUBMISSION_GUIDANCE_FALLBACK_PREFIX = 'labassistant-submission-guidance::';
+  var LEGACY_MODEL_MIGRATIONS = {
+    'gpt-5.4-mini': 'gpt-5.4'
+  };
 
   function getEditorUtils() {
     return window.LabAssistantEditorUtils || ( window.mw && mw.labassistantEditorUtils ) || null;
@@ -19,6 +22,10 @@
 
   function getAttachmentUtils() {
     return window.LabAssistantAttachmentUtils || ( window.mw && mw.labassistantAttachmentUtils ) || null;
+  }
+
+  function getModelUtils() {
+    return window.LabAssistantModelUtils || ( window.mw && mw.labassistantModelUtils ) || null;
   }
 
   function getSessionExportUtils() {
@@ -169,8 +176,25 @@
     localStorage.removeItem( MODEL_FAMILY_STORAGE_KEY );
   }
 
+  function normalizeStoredModelPreference( model ) {
+    var normalized = String( model || '' ).trim();
+    return LEGACY_MODEL_MIGRATIONS[ normalized ] || normalized;
+  }
+
   function syncModelPreferenceVersion() {
+    var modelUtils = getModelUtils();
+    var storedModel = normalizeStoredModelPreference( localStorage.getItem( MODEL_STORAGE_KEY ) );
     var storedVersion = localStorage.getItem( MODEL_PREF_VERSION_KEY );
+    var inferredFamily;
+    if ( storedModel ) {
+      localStorage.setItem( MODEL_STORAGE_KEY, storedModel );
+      inferredFamily = modelUtils && modelUtils.inferModelFamily ?
+        modelUtils.inferModelFamily( storedModel ) :
+        'gpt';
+      if ( !localStorage.getItem( MODEL_FAMILY_STORAGE_KEY ) || inferredFamily !== localStorage.getItem( MODEL_FAMILY_STORAGE_KEY ) ) {
+        localStorage.setItem( MODEL_FAMILY_STORAGE_KEY, inferredFamily );
+      }
+    }
     if ( storedVersion && storedVersion !== MODEL_PREF_VERSION ) {
       localStorage.removeItem( MODEL_STORAGE_KEY );
       localStorage.removeItem( MODEL_FAMILY_STORAGE_KEY );
@@ -587,6 +611,8 @@
       unresolved_gaps: turn.unresolved_gaps || [],
       suggested_followups: turn.suggested_followups || [],
       action_trace: turn.action_trace || [],
+      operation_preview: turn.operation_preview || null,
+      operation_result: turn.operation_result || null,
       draft_preview: turn.draft_preview || null,
       draft_commit_result: turn.draft_commit_result || null,
       write_preview: turn.write_preview || null,
@@ -1072,6 +1098,96 @@
     return {};
   }
 
+  function deriveOperationPreviewFromLegacy( result ) {
+    if ( result.write_preview ) {
+      return {
+        preview_id: result.write_preview.preview_id || null,
+        kind: result.write_preview.action_type === 'update_managed_page_section' ? 'managed_section_edit' : 'structured_write',
+        operation: result.write_preview.operation || '',
+        target_page: result.write_preview.target_page || '',
+        target_section: result.write_preview.target_section || '',
+        title: result.write_preview.target_page || '写入预览',
+        content: result.write_preview.preview_text || '',
+        structured_payload: result.write_preview.structured_payload || {},
+        missing_fields: result.write_preview.missing_fields || [],
+        metadata: result.write_preview.metadata || null
+      };
+    }
+    if ( result.draft_preview ) {
+      return {
+        preview_id: result.draft_preview.preview_id || null,
+        kind: 'draft_page',
+        operation: 'replace_page_body',
+        target_page: result.draft_preview.target_page || '',
+        target_section: '',
+        title: result.draft_preview.title || result.draft_preview.target_page || '页面草稿',
+        content: result.draft_preview.content || '',
+        structured_payload: result.draft_preview.structured_payload || {},
+        missing_fields: ( result.draft_preview.metadata && result.draft_preview.metadata.missing_fields ) || [],
+        metadata: result.draft_preview.metadata || null
+      };
+    }
+    if ( result.result_fill ) {
+      return {
+        preview_id: null,
+        kind: 'shot_result_fill',
+        operation: 'fill',
+        target_page: '',
+        target_section: '',
+        title: result.result_fill.title || '结果回填建议',
+        content: result.result_fill.draft_text || '',
+        structured_payload: {
+          field_suggestions: result.result_fill.field_suggestions || {},
+          missing_items: result.result_fill.missing_items || [],
+          evidence: result.result_fill.evidence || []
+        },
+        missing_fields: [],
+        metadata: null
+      };
+    }
+    return null;
+  }
+
+  function getOperationPreview( result ) {
+    if ( result && result.operation_preview ) {
+      return result.operation_preview;
+    }
+    return deriveOperationPreviewFromLegacy( result || {} );
+  }
+
+  function deriveOperationResultFromLegacy( result ) {
+    if ( result.write_result ) {
+      return {
+        status: result.write_result.status || 'success',
+        kind: result.write_result.action_type === 'update_managed_page_section' ? 'managed_section_edit' : 'write_action',
+        operation: result.write_result.operation || '',
+        page_title: result.write_result.page_title || '',
+        target_section: result.write_result.target_section || '',
+        detail: result.write_result.detail || '',
+        metadata: result.write_result.action_type ? { action_type: result.write_result.action_type } : null
+      };
+    }
+    if ( result.draft_commit_result ) {
+      return {
+        status: result.draft_commit_result.status || 'success',
+        kind: 'draft_page',
+        operation: 'replace_page_body',
+        page_title: result.draft_commit_result.page_title || '',
+        target_section: '',
+        detail: result.draft_commit_result.detail || '草稿页已写入。',
+        metadata: result.draft_commit_result
+      };
+    }
+    return null;
+  }
+
+  function getOperationResult( result ) {
+    if ( result && result.operation_result ) {
+      return result.operation_result;
+    }
+    return deriveOperationResultFromLegacy( result || {} );
+  }
+
   function buildFormMissingFields(result) {
     return buildFormMissingDetails( result ).map( function ( entry ) {
       return entry.label;
@@ -1133,11 +1249,15 @@
     var explicit = String( rawContextTitle || '' ).trim();
     var defaultTitle = String( ( config && config.defaultContextTitle ) || '' ).trim();
     var currentTitle = String( ( config && config.currentTitle ) || '' ).trim();
+    var specialPageName = String( ( config && config.specialPageName ) || '' ).trim();
     if ( explicit ) {
       return explicit;
     }
     if ( defaultTitle ) {
       return defaultTitle;
+    }
+    if ( specialPageName ) {
+      return '';
     }
     if ( /^Shot:/i.test( currentTitle ) ) {
       return currentTitle;
@@ -1156,19 +1276,86 @@
     return 'shot_result_fill';
   }
 
-  function buildDraftHandoffPayload(config, result, content) {
+  function normalizeManagedSectionLines( value ) {
+    if ( Array.isArray( value ) ) {
+      return value.map( function ( item ) {
+        return String( item || '' ).replace( /\r\n?/g, '\n' ).trimEnd();
+      } ).filter( function ( item ) {
+        return item.trim();
+      } );
+    }
+    if ( typeof value === 'string' ) {
+      return value.replace( /\r\n?/g, '\n' ).split( '\n' ).map( function ( item ) {
+        return item.trimEnd();
+      } ).filter( function ( item ) {
+        return item.trim();
+      } );
+    }
+    return [];
+  }
+
+  function getManagedSectionWriteData( result ) {
+    var preview = result && result.write_preview;
+    var payload = preview && preview.structured_payload;
+    var targetSection = String(
+      ( preview && preview.target_section ) ||
+      ( payload && payload.区块 ) ||
+      ''
+    ).trim();
+    var contentLines = normalizeManagedSectionLines( payload && payload.内容 );
+    if ( !targetSection || !contentLines.length ) {
+      return null;
+    }
     return {
-      title: config.defaultContextTitle || config.currentTitle || '',
+      targetSection: targetSection,
+      contentLines: contentLines
+    };
+  }
+
+  function resolveSourceEditTargetTitle( config, result ) {
+    return String(
+      ( result && result.write_preview && result.write_preview.target_page ) ||
+      ( result && result.draft_preview && result.draft_preview.target_page ) ||
+      ( config && config.defaultContextTitle ) ||
+      ( config && config.currentTitle ) ||
+      ''
+    ).trim();
+  }
+
+  function applyManagedPageSectionBody( source, result ) {
+    var editorUtils = getEditorUtils();
+    var managedSection = getManagedSectionWriteData( result );
+    if ( !managedSection || !editorUtils || !editorUtils.replaceManagedPageSectionBody ) {
+      return null;
+    }
+    try {
+      return editorUtils.replaceManagedPageSectionBody(
+        source,
+        managedSection.targetSection,
+        managedSection.contentLines
+      );
+    } catch ( error ) {
+      console.warn( error );
+      return null;
+    }
+  }
+
+  function buildDraftHandoffPayload(config, result, content, title) {
+    var managedSection = getManagedSectionWriteData( result );
+    return {
+      title: title || resolveSourceEditTargetTitle( config, result ),
       source_mode: config.editorMode || 'default',
-      content_type: result.draft_preview ? 'draft_preview' : 'answer',
+      content_type: result && result.write_preview ? 'write_preview' : ( result && result.draft_preview ? 'draft_preview' : 'answer' ),
       content: content,
+      target_section: managedSection ? managedSection.targetSection : '',
+      structured_payload: result && result.write_preview ? ( result.write_preview.structured_payload || null ) : null,
       created_at: new Date().toISOString()
     };
   }
 
   function navigateToSourceEdit(config, content, result) {
-    var payload = buildDraftHandoffPayload( config, result, content );
-    var title = config.defaultContextTitle || config.currentTitle || '';
+    var title = resolveSourceEditTargetTitle( config, result );
+    var payload = buildDraftHandoffPayload( config, result, content, title );
     var key = getDraftHandoffKey( title, window.location.host );
     sessionStorage.setItem( key, JSON.stringify( payload ) );
     var targetUrl = new URL( mw.util.getUrl( title ), window.location.origin );
@@ -1210,8 +1397,10 @@
     var pageFormFields = editorMode === 'pageforms_edit' ? collectPageFormFields() : [];
     var consumedDraftHandoff = editorMode === 'source_edit' ? consumeDraftHandoff( config.defaultContextTitle || config.currentTitle || '' ) : null;
     var state = {
-      sessionId: localStorage.getItem( STORAGE_KEY ) || null,
-      selectedModel: localStorage.getItem( MODEL_STORAGE_KEY ) || null,
+      sessionId: shellUtils && shellUtils.shouldHydrateStoredSession ?
+        ( shellUtils.shouldHydrateStoredSession( variant ) ? ( localStorage.getItem( STORAGE_KEY ) || null ) : null ) :
+        localStorage.getItem( STORAGE_KEY ) || null,
+      selectedModel: normalizeStoredModelPreference( localStorage.getItem( MODEL_STORAGE_KEY ) ) || null,
       selectedFamily: localStorage.getItem( MODEL_FAMILY_STORAGE_KEY ) || null,
       showAllModels: false,
       modelCatalog: null,
@@ -1228,6 +1417,8 @@
       historyError: '',
       historyNotice: '',
       historyExportingSessionId: '',
+      historyMenuSessionId: '',
+      historyCollapsed: variant === 'special' ? false : true,
       drawerPopoverOpen: false,
       uploadMenuOpen: false,
       renderTimer: null,
@@ -1269,6 +1460,10 @@
       className: 'labassistant-pill labassistant-pill-soft',
       text: '上下文：未绑定页面'
     } );
+    var headerContextBrief = variant === 'special' ? createEl( 'span', {
+      className: 'labassistant-context-brief',
+      text: '未绑定上下文'
+    } ) : null;
     var contextSummary = createEl( 'div', {
       className: 'labassistant-context-display',
       text: '自动跟随当前页面'
@@ -1428,7 +1623,7 @@
     var historySearchInput = createEl( 'input', {
       type: 'search',
       className: 'labassistant-history-search',
-      placeholder: '搜索页面、问题或会话 ID'
+      placeholder: variant === 'special' ? '搜索会话' : '搜索页面、问题或会话 ID'
     } );
     var historyStatus = createEl( 'div', {
       className: 'labassistant-history-status',
@@ -1439,21 +1634,31 @@
     } );
     var historyPanel = createEl( 'section', {
       className: 'labassistant-history-panel',
-      hidden: 'hidden'
+      hidden: variant === 'special' ? null : 'hidden'
     }, [
       createEl( 'div', { className: 'labassistant-history-header' }, [
-        createEl( 'strong', { text: '历史会话 / 导出' } ),
+        createEl( 'strong', { text: variant === 'special' ? '会话' : '历史会话 / 导出' } ),
         createEl( 'span', {
           className: 'labassistant-status-note',
-          text: '搜索任意历史会话并导出 Markdown。'
+          text: variant === 'special' ? '点开会话继续对话；导出放在右侧菜单。' : '搜索任意历史会话，点开继续对话；导出放在右侧。'
         } )
       ] ),
+      variant === 'special' ? createEl( 'button', {
+        type: 'button',
+        className: 'labassistant-history-new',
+        text: '+ 新会话'
+      } ) : null,
       historySearchInput,
       historyStatus,
       historyList
-    ] );
+    ].filter( Boolean ) );
 
-    var headerCopy = compactWorkspace ? createEl( 'div', {
+    var headerCopy = variant === 'special' ? createEl( 'div', {
+      className: 'labassistant-header-copy is-special'
+    }, [
+      createEl( 'h2', { text: '知识助手' } ),
+      headerContextBrief
+    ] ) : compactWorkspace ? createEl( 'div', {
       className: 'labassistant-header-copy is-compact'
     }, [
       createEl( 'h2', { text: '知识助手' } )
@@ -1485,7 +1690,9 @@
     var controlStack = createEl( 'div', {
       className: 'labassistant-control-stack',
       hidden: 'hidden'
-    }, [
+    }, variant === 'special' ? [
+      settingsPanel
+    ] : [
       settingsPanel,
       historyPanel
     ] );
@@ -1519,6 +1726,9 @@
     }
 
     var composer = createEl( 'div', { className: 'labassistant-composer' }, composerChildren );
+    var specialShell = null;
+    var specialHistoryBackdrop = null;
+    var specialHistoryNewButton = variant === 'special' ? historyPanel.querySelector( '.labassistant-history-new' ) : null;
 
     function resizeQuestionInput() {
       questionInput.style.height = '0px';
@@ -1531,6 +1741,16 @@
       if ( variant === 'special' ) {
         settingsPanel.hidden = !state.showSettings;
         settingsPanel.style.display = state.showSettings ? 'grid' : 'none';
+        historyPanel.hidden = false;
+        historyPanel.style.display = 'grid';
+        if ( specialShell ) {
+          specialShell.classList.toggle( 'is-history-collapsed', !isSpecialHistoryMobile() && state.historyCollapsed );
+          specialShell.classList.toggle( 'is-history-open', isSpecialHistoryMobile() && state.historyOpen );
+        }
+        if ( specialHistoryBackdrop ) {
+          specialHistoryBackdrop.hidden = !( isSpecialHistoryMobile() && state.historyOpen );
+        }
+        historyButton.classList.toggle( 'is-active', isSpecialHistoryMobile() ? state.historyOpen : !state.historyCollapsed );
       } else {
         settingsPanel.hidden = true;
         settingsPanel.style.display = 'none';
@@ -1541,11 +1761,11 @@
         if ( settingsButton ) {
           settingsButton.classList.toggle( 'is-active', state.drawerPopoverOpen );
         }
+        historyPanel.hidden = !state.historyOpen;
+        historyPanel.style.display = state.historyOpen ? 'grid' : 'none';
+        historyButton.classList.toggle( 'is-active', state.historyOpen );
       }
-      historyPanel.hidden = !state.historyOpen;
-      historyPanel.style.display = state.historyOpen ? 'grid' : 'none';
-      historyButton.classList.toggle( 'is-active', state.historyOpen );
-      controlStack.hidden = !( ( variant === 'special' && state.showSettings ) || state.historyOpen );
+      controlStack.hidden = variant === 'special' ? !state.showSettings : !( ( variant === 'special' && state.showSettings ) || state.historyOpen );
       controlStack.style.display = controlStack.hidden ? 'none' : 'grid';
       if ( uploadMenu ) {
         uploadMenu.hidden = !state.uploadMenuOpen;
@@ -1581,7 +1801,7 @@
       }
       return {
         session_id: state.sessionId,
-        current_page: resolveEffectiveContextTitle( contextInput.value, config ) || config.currentTitle || '',
+        current_page: resolveEffectiveContextTitle( contextInput.value, config ) || '',
         latest_question: state.pendingQuestion || ( lastTurn && lastTurn.question ) || '',
         turn_count: state.turns.length + ( state.pendingQuestion ? 1 : 0 ),
         updated_at: new Date().toISOString(),
@@ -1606,8 +1826,67 @@
       return items;
     }
 
+    function exportHistoryItem( item ) {
+      state.historyExportingSessionId = item.session_id;
+      state.historyNotice = '';
+      state.historyError = '';
+      renderHistoryPanel();
+      downloadSessionMarkdown( apiBase, item, config.userName || '' ).then( function ( filename ) {
+        state.historyNotice = '已开始下载：' + filename;
+      } ).catch( function ( error ) {
+        state.historyError = error.message || 'Markdown 导出失败';
+      } ).finally( function () {
+        state.historyExportingSessionId = '';
+        renderHistoryPanel();
+      } );
+    }
+
+    function isSpecialHistoryMobile() {
+      return variant === 'special' && window.innerWidth <= 720;
+    }
+
+    function loadHistorySession( item ) {
+      state.historyError = '';
+      state.historyNotice = '';
+      state.historyMenuSessionId = '';
+      state.sessionId = item.session_id;
+      state.pendingQuestion = '';
+      state.currentResult = null;
+      state.attachments = [];
+      if ( state.renderTimer ) {
+        clearTimeout( state.renderTimer );
+        state.renderTimer = null;
+      }
+      questionInput.value = '';
+      resizeQuestionInput();
+      refreshComposerState();
+      renderAttachments();
+      refreshSessionBadge();
+      renderHistoryPanel();
+      localStorage.setItem( STORAGE_KEY, item.session_id );
+      localStorage.setItem( HOST_STORAGE_KEY, window.location.host );
+      return loadSession( apiBase, item.session_id ).then( function ( body ) {
+        state.turns = body.turns || [];
+        if ( body.model_info ) {
+          syncSelectedModelFromInfo( body.model_info );
+          refreshModelSelectors();
+          refreshModelBadge( body.model_info );
+        }
+        renderTranscript();
+        renderHistoryPanel();
+        if ( isSpecialHistoryMobile() ) {
+          state.historyOpen = false;
+          refreshLayoutState();
+        }
+      } ).catch( function ( error ) {
+        state.historyError = error.message || '历史会话读取失败';
+        renderHistoryPanel();
+      } );
+    }
+
     function renderHistoryPanel() {
       var items = getHistoryDisplayItems();
+      var exportUtils = getSessionExportUtils();
       if ( historySearchInput.value !== state.historyQuery ) {
         historySearchInput.value = state.historyQuery;
       }
@@ -1626,58 +1905,114 @@
         historyStatus.textContent = state.historyNotice;
         historyStatus.className = 'labassistant-history-status is-success';
       } else if ( !items.length ) {
-        historyStatus.textContent = state.historyQuery ? '没有匹配的历史会话。' : '暂无可导出的历史会话。';
+        historyStatus.textContent = state.historyQuery ? '没有匹配的历史会话。' : ( variant === 'special' ? '暂无历史会话。' : '暂无可导出的历史会话。' );
         historyStatus.className = 'labassistant-history-status';
       } else {
         historyStatus.textContent = '共 ' + items.length + ' 条历史会话。';
         historyStatus.className = 'labassistant-history-status';
       }
       items.forEach( function ( item ) {
-        var title = item.current_page || item.latest_question || ( '会话 ' + shortSessionId( item.session_id ) );
-        var metaParts = [];
+        var display = exportUtils && exportUtils.buildSessionHistoryDisplay ?
+          exportUtils.buildSessionHistoryDisplay( item, {
+            activeSessionId: state.sessionId,
+            formatTimestamp: formatHistoryTimestamp
+          } ) :
+          {
+            title: item.current_page || item.latest_question || ( '会话 ' + shortSessionId( item.session_id ) ),
+            subtitle: item.current_page && item.latest_question ? item.latest_question : '',
+            meta: item.session_id === state.sessionId ? '当前会话' : '',
+            isActive: item.session_id === state.sessionId
+          };
+        if ( variant === 'special' ) {
+          var openButton = createEl( 'button', {
+            type: 'button',
+            className: 'labassistant-history-open' + ( display.isActive ? ' is-active' : '' )
+          }, [
+            createEl( 'div', { className: 'labassistant-history-copy' }, [
+              createEl( 'strong', { text: display.title } ),
+              display.subtitle ? createEl( 'span', {
+                className: 'labassistant-history-subtitle',
+                text: display.subtitle
+              } ) : null,
+              display.meta ? createEl( 'span', {
+                className: 'labassistant-history-meta',
+                text: display.meta
+              } ) : null
+            ].filter( Boolean ) )
+          ] );
+          var moreButton = createEl( 'button', {
+            type: 'button',
+            className: 'labassistant-history-menu-button' + ( state.historyMenuSessionId === item.session_id ? ' is-active' : '' ),
+            text: '···',
+            'aria-label': '更多操作'
+          } );
+          var menu = createEl( 'div', {
+            className: 'labassistant-history-menu',
+            hidden: state.historyMenuSessionId === item.session_id ? null : 'hidden'
+          }, [
+            createEl( 'button', {
+              type: 'button',
+              className: 'labassistant-history-menu-item',
+              text: state.historyExportingSessionId === item.session_id ? '导出中…' : '导出 Markdown'
+            } )
+          ] );
+          openButton.addEventListener( 'click', function () {
+            loadHistorySession( item );
+          } );
+          moreButton.addEventListener( 'click', function ( event ) {
+            event.stopPropagation();
+            state.historyMenuSessionId = state.historyMenuSessionId === item.session_id ? '' : item.session_id;
+            renderHistoryPanel();
+          } );
+          menu.firstChild.disabled = state.historyExportingSessionId === item.session_id;
+          menu.firstChild.addEventListener( 'click', function ( event ) {
+            event.stopPropagation();
+            exportHistoryItem( item );
+            state.historyMenuSessionId = '';
+          } );
+          historyList.appendChild( createEl( 'article', {
+            className: 'labassistant-history-item is-special' + ( display.isActive ? ' is-active' : '' )
+          }, [
+            openButton,
+            createEl( 'div', { className: 'labassistant-history-actions' }, [
+              moreButton,
+              menu
+            ] )
+          ] ) );
+          return;
+        }
         var exportButton = createEl( 'button', {
           type: 'button',
           className: 'labassistant-toolbar-button',
           text: state.historyExportingSessionId === item.session_id ? '导出中…' : '导出 Markdown'
         } );
-        if ( item.turn_count ) {
-          metaParts.push( '轮次 ' + item.turn_count );
-        }
-        if ( item.updated_at ) {
-          metaParts.push( '更新 ' + formatHistoryTimestamp( item.updated_at ) );
-        }
-        if ( item.session_id === state.sessionId ) {
-          metaParts.push( '当前会话' );
-        }
         exportButton.disabled = state.historyExportingSessionId === item.session_id;
         exportButton.addEventListener( 'click', function () {
-          state.historyExportingSessionId = item.session_id;
-          state.historyNotice = '';
-          state.historyError = '';
-          renderHistoryPanel();
-          downloadSessionMarkdown( apiBase, item, config.userName || '' ).then( function ( filename ) {
-            state.historyNotice = '已开始下载：' + filename;
-          } ).catch( function ( error ) {
-            state.historyError = error.message || 'Markdown 导出失败';
-          } ).finally( function () {
-            state.historyExportingSessionId = '';
-            renderHistoryPanel();
-          } );
+          exportHistoryItem( item );
         } );
-        historyList.appendChild( createEl( 'article', {
-          className: 'labassistant-history-item'
+        var openButton = createEl( 'button', {
+          type: 'button',
+          className: 'labassistant-history-open' + ( display.isActive ? ' is-active' : '' )
         }, [
           createEl( 'div', { className: 'labassistant-history-copy' }, [
-            createEl( 'strong', { text: title } ),
-            item.current_page && item.latest_question ? createEl( 'span', {
+            createEl( 'strong', { text: display.title } ),
+            display.subtitle ? createEl( 'span', {
               className: 'labassistant-history-subtitle',
-              text: item.latest_question
+              text: display.subtitle
             } ) : null,
-            createEl( 'span', {
+            display.meta ? createEl( 'span', {
               className: 'labassistant-history-meta',
-              text: metaParts.join( ' · ' )
-            } )
-          ] ),
+              text: display.meta
+            } ) : null
+          ].filter( Boolean ) )
+        ] );
+        openButton.addEventListener( 'click', function () {
+          loadHistorySession( item );
+        } );
+        historyList.appendChild( createEl( 'article', {
+          className: 'labassistant-history-item is-resumable'
+        }, [
+          openButton,
           exportButton
         ] ) );
       } );
@@ -1730,16 +2065,11 @@
     }
 
     function inferFamily( model ) {
-      if ( !model ) {
-        return state.selectedFamily || 'gpt';
+      var modelUtils = getModelUtils();
+      if ( modelUtils && modelUtils.inferModelFamily ) {
+        return modelUtils.inferModelFamily( model, state.selectedFamily || 'gpt' );
       }
-      if ( model.indexOf( 'claude-' ) === 0 ) {
-        return 'claude';
-      }
-      if ( model.indexOf( 'gemini-' ) === 0 ) {
-        return 'gemini';
-      }
-      return 'gpt';
+      return state.selectedFamily || 'gpt';
     }
 
     function findSelectedModelItem() {
@@ -1772,6 +2102,10 @@
         contextBadge.textContent = contextTitle ? ( '上下文：' + contextTitle ) : '上下文：未绑定页面';
       }
       composerContextHint.textContent = contextTitle ? ( '当前页：' + contextTitle ) : '当前页：自动识别';
+      if ( headerContextBrief ) {
+        headerContextBrief.textContent = contextTitle ? ( '上下文 · ' + contextTitle ) : '未绑定上下文';
+        headerContextBrief.title = contextTitle || '';
+      }
       if ( contextSummary ) {
         contextSummary.textContent = explicitContext || contextTitle || '自动跟随当前页面';
         contextSummary.title = contextTitle || '';
@@ -1810,6 +2144,16 @@
     }
 
     function setHistoryOpen( nextState ) {
+      if ( variant === 'special' ) {
+        state.historyOpen = !!nextState;
+        if ( state.historyOpen ) {
+          state.showSettings = false;
+          ensureHistorySessionsLoaded();
+        }
+        refreshLayoutState();
+        renderHistoryPanel();
+        return;
+      }
       state.historyOpen = !!nextState;
       if ( state.historyOpen ) {
         state.uploadMenuOpen = false;
@@ -1827,6 +2171,7 @@
       if ( nextState ) {
         state.drawerPopoverOpen = false;
         state.historyOpen = false;
+        state.historyMenuSessionId = '';
       }
       refreshLayoutState();
     }
@@ -2055,6 +2400,8 @@
         unresolved_gaps: payload.unresolved_gaps || [],
         suggested_followups: payload.suggested_followups || [],
         action_trace: payload.action_trace || [],
+        operation_preview: payload.operation_preview || null,
+        operation_result: payload.operation_result || null,
         draft_preview: payload.draft_preview || null,
         draft_commit_result: payload.draft_commit_result || null,
         write_preview: payload.write_preview || null,
@@ -2980,7 +3327,7 @@
 
     function renderVisualEditorHandoffCard( result, rerender ) {
       var content = '';
-      if ( editorMode !== 'visual_editor' ) {
+      if ( editorMode !== 'visual_editor' || result.draft_preview || result.write_preview ) {
         return null;
       }
       content = ( result.draft_preview && result.draft_preview.content ) ||
@@ -3008,19 +3355,37 @@
     }
 
     function fillEditorWithText( result, content, rerender ) {
+      var managedSection = getManagedSectionWriteData( result );
+      var nextContent = content;
       if ( !editorTextarea || !content ) {
         return false;
       }
-      if ( editorTextarea.value.trim() && !window.confirm( '这会替换当前编辑框内容，但不会自动保存页面。继续吗？' ) ) {
+      if (
+        editorTextarea.value.trim() &&
+        !window.confirm( managedSection ? '这会替换当前区块内容，但不会自动保存页面。继续吗？' : '这会替换当前编辑框内容，但不会自动保存页面。继续吗？' )
+      ) {
         return false;
       }
-      editorTextarea.value = content;
+      if ( managedSection ) {
+        nextContent = applyManagedPageSectionBody( editorTextarea.value, result );
+        if ( !nextContent ) {
+          alert( '无法定位目标区块：' + managedSection.targetSection );
+          return false;
+        }
+      }
+      editorTextarea.value = nextContent;
       editorTextarea.dispatchEvent( new Event( 'input', { bubbles: true } ) );
       editorTextarea.dispatchEvent( new Event( 'change', { bubbles: true } ) );
       editorTextarea.focus();
       editorTextarea.scrollTop = 0;
       if ( result ) {
-        persistResultNotice( result, 'editor_fill_notice', '已填入当前编辑框，页面尚未保存。' );
+        persistResultNotice(
+          result,
+          'editor_fill_notice',
+          managedSection ?
+            ( '已替换区块“' + managedSection.targetSection + '”内容，页面尚未保存。' ) :
+            '已填入当前编辑框，页面尚未保存。'
+        );
       }
       if ( rerender ) {
         rerender();
@@ -3059,14 +3424,22 @@
       } );
     }
 
-    function renderCommitCard( result, rerender ) {
+    function renderOperationCard( result, rerender ) {
+      var operationPreview = getOperationPreview( result );
+      var operationResult = getOperationResult( result );
+      if ( operationPreview && ( operationPreview.kind === 'shot_result_fill' || operationPreview.kind === 'pageforms_fill' ) ) {
+        return renderResultFillCard( result, rerender );
+      }
+      if ( !operationPreview && !operationResult ) {
+        return null;
+      }
       var card = createEl( 'div', { className: 'labassistant-inline-card' } );
 
-      if ( result.draft_preview ) {
-        card.appendChild( createEl( 'h4', { text: result.draft_preview.title || '页面草稿' } ) );
+      if ( operationPreview && operationPreview.kind === 'draft_page' ) {
+        card.appendChild( createEl( 'h4', { text: operationPreview.title || '页面草稿' } ) );
         card.appendChild( createEl( 'div', {
           className: 'labassistant-markdown',
-          html: renderMarkdown( result.draft_preview.content || '' )
+          html: renderMarkdown( operationPreview.content || '' )
         } ) );
         if ( editorMode === 'visual_editor' ) {
           var handoffDraftButton = createEl( 'button', {
@@ -3075,7 +3448,7 @@
             text: '切到源码编辑并填入草稿'
           } );
           handoffDraftButton.addEventListener( 'click', function () {
-            navigateToSourceEdit( config, result.draft_preview.content || '', result );
+            navigateToSourceEdit( config, operationPreview.content || '', result );
           } );
           card.appendChild( handoffDraftButton );
         }
@@ -3086,25 +3459,27 @@
             text: '填入编辑框'
           } );
           fillDraftButton.addEventListener( 'click', function () {
-            fillEditorWithText( result, result.draft_preview.content || '', rerender );
+            fillEditorWithText( result, operationPreview.content || '', rerender );
           } );
           card.appendChild( fillDraftButton );
         }
-        var commitDraftButton = createEl( 'button', {
-          type: 'button',
-          className: 'labassistant-inline-button',
-          text: '确认写入草稿页'
-        } );
-        commitDraftButton.addEventListener( 'click', function () {
-          commitDraftPreview( result, rerender, commitDraftButton, '提交失败' ).catch( function ( error ) {
-            alert( error.message || '提交失败' );
+        if ( result.draft_preview ) {
+          var commitDraftButton = createEl( 'button', {
+            type: 'button',
+            className: 'labassistant-inline-button',
+            text: '确认写入草稿页'
           } );
-        } );
-        card.appendChild( commitDraftButton );
-        if ( result.draft_commit_result ) {
+          commitDraftButton.addEventListener( 'click', function () {
+            commitDraftPreview( result, rerender, commitDraftButton, '提交失败' ).catch( function ( error ) {
+              alert( error.message || '提交失败' );
+            } );
+          } );
+          card.appendChild( commitDraftButton );
+        }
+        if ( operationResult && operationResult.kind === 'draft_page' ) {
           card.appendChild( createEl( 'div', {
             className: 'labassistant-callout',
-            text: '已写入草稿页：' + result.draft_commit_result.page_title
+            text: '已写入草稿页：' + ( operationResult.page_title || '' )
           } ) );
         }
         if ( result.editor_fill_notice ) {
@@ -3115,24 +3490,32 @@
         }
       }
 
-      if ( result.write_preview ) {
-        card.appendChild( createEl( 'h4', { text: result.write_preview.target_page || '整理结果' } ) );
+      if ( operationPreview && operationPreview.kind !== 'draft_page' ) {
+        var handoffWriteTitle = resolveSourceEditTargetTitle( config, result );
+        var managedWriteSection = getManagedSectionWriteData( result );
+        card.appendChild( createEl( 'h4', { text: operationPreview.target_page || operationPreview.title || '整理结果' } ) );
         card.appendChild( createEl( 'div', {
           className: 'labassistant-status-note',
-          text: [ result.write_preview.action_type, result.write_preview.operation ].filter( Boolean ).join( ' · ' )
+          text: [ operationPreview.kind, operationPreview.operation ].filter( Boolean ).join( ' · ' )
         } ) );
+        if ( operationPreview.target_section ) {
+          card.appendChild( createEl( 'div', {
+            className: 'labassistant-status-note',
+            text: '区块：' + operationPreview.target_section
+          } ) );
+        }
         card.appendChild( createEl( 'div', {
           className: 'labassistant-markdown',
-          html: renderMarkdown( result.write_preview.preview_text || '' )
+          html: renderMarkdown( operationPreview.content || '' )
         } ) );
-        if ( editorMode === 'visual_editor' ) {
+        if ( !editorTextarea && handoffWriteTitle ) {
           var handoffWriteButton = createEl( 'button', {
             type: 'button',
             className: 'labassistant-inline-button',
-            text: '切到源码编辑并填入草稿'
+            text: operationPreview.kind === 'managed_section_edit' && managedWriteSection ? '代我编辑这个模块' : '切到源码编辑并填入草稿'
           } );
           handoffWriteButton.addEventListener( 'click', function () {
-            navigateToSourceEdit( config, result.write_preview.preview_text || '', result );
+            navigateToSourceEdit( config, operationPreview.content || '', result );
           } );
           card.appendChild( handoffWriteButton );
         }
@@ -3143,22 +3526,24 @@
             text: '填入编辑框'
           } );
           fillWriteButton.addEventListener( 'click', function () {
-            fillEditorWithText( result, result.write_preview.preview_text || '', rerender );
+            fillEditorWithText( result, operationPreview.content || '', rerender );
           } );
           card.appendChild( fillWriteButton );
         }
-        if ( result.write_preview.missing_fields && result.write_preview.missing_fields.length ) {
+        if ( operationPreview.missing_fields && operationPreview.missing_fields.length ) {
           card.appendChild( createEl( 'div', {
             className: 'labassistant-callout',
-            text: '仍缺字段：' + result.write_preview.missing_fields.join( '、' )
+            text: '仍缺字段：' + operationPreview.missing_fields.join( '、' )
           } ) );
         }
-        if ( result.write_result ) {
+        if ( operationResult && operationResult.kind !== 'draft_page' ) {
           card.appendChild( createEl( 'div', {
             className: 'labassistant-callout',
-            text: ( result.write_result.detail || '白名单直写已执行。' ) + ' 页面：' + ( result.write_result.page_title || '' )
+            text: ( operationResult.detail || '受控提交已执行。' ) +
+              ' 页面：' + ( operationResult.page_title || '' ) +
+              ( operationResult.target_section ? ' · 区块：' + operationResult.target_section : '' )
           } ) );
-        } else if ( result.write_preview.preview_id && !( result.write_preview.missing_fields && result.write_preview.missing_fields.length ) ) {
+        } else if ( result.write_preview && operationPreview.preview_id && !( operationPreview.missing_fields && operationPreview.missing_fields.length ) ) {
           var commitWriteButton = createEl( 'button', {
             type: 'button',
             className: 'labassistant-inline-button',
@@ -3313,13 +3698,13 @@
           }
         } );
       }
-      if ( result.draft_preview || result.write_preview || result.write_result ) {
+      if ( getOperationPreview( result ) || getOperationResult( result ) ) {
         sections.push( {
-          id: 'write',
-          label: compactWorkspace ? '草稿' : '写入',
-          count: result.write_result ? 1 : 0,
+          id: 'operation',
+          label: '操作',
+          count: getOperationResult( result ) ? 1 : 0,
           render: function () {
-            return renderCommitCard( result, function () {
+            return renderOperationCard( result, function () {
               scheduleTranscriptRender( true );
             } );
           }
@@ -3328,6 +3713,15 @@
 
       if ( !sections.length ) {
         return null;
+      }
+
+      if ( sections.some( function ( section ) {
+        return section.id === 'operation';
+      } ) ) {
+        return {
+          sections: sections,
+          defaultSectionId: 'operation'
+        };
       }
 
       if ( isPending && sections.some( function ( section ) {
@@ -3413,7 +3807,7 @@
           tablist,
           panel
         ] );
-        var isOpen = !!isPending;
+        var isOpen = !!( ( isPending && !result.answer ) || getOperationPreview( result ) || getOperationResult( result ) );
 
         function updateVisibility() {
           toggle.setAttribute( 'aria-expanded', isOpen ? 'true' : 'false' );
@@ -3451,13 +3845,6 @@
 
       var answerHtml = result.answer ? renderMarkdown( result.answer ) : '<p class="labassistant-thinking">正在思考…</p>';
       bubble.appendChild( createEl( 'div', { className: 'labassistant-markdown', html: answerHtml } ) );
-
-      var resultFillCard = renderResultFillCard( result, function () {
-        scheduleTranscriptRender( true );
-      } );
-      if ( resultFillCard ) {
-        bubble.appendChild( resultFillCard );
-      }
 
       var pdfIngestCard = renderPdfIngestReviewCard( result, function () {
         scheduleTranscriptRender( true );
@@ -3577,7 +3964,7 @@
               '它会先生成草稿，再由你切到源码编辑填入；不会直接修改可视化编辑器。' :
               editorTextarea ?
               '它会先基于当前页生成可编辑草稿，你确认后再自己保存页面。' :
-              '它更适合把词条、shot、周实验日志和知识页先整理成草稿，再由你确认。'
+              '当前页若支持助手填充模块，我可以先生成区块预览，你确认后再提交。'
           } ),
           buildStarterActions()
         ] );
@@ -3708,8 +4095,18 @@
           scheduleTranscriptRender( true );
           return;
         }
+        if ( event.event === 'operation_preview' ) {
+          state.currentResult.operation_preview = body;
+          scheduleTranscriptRender( true );
+          return;
+        }
         if ( event.event === 'write_preview' ) {
           state.currentResult.write_preview = body;
+          scheduleTranscriptRender( true );
+          return;
+        }
+        if ( event.event === 'operation_result' ) {
+          state.currentResult.operation_result = body;
           scheduleTranscriptRender( true );
           return;
         }
@@ -3854,9 +4251,12 @@
       }
       state.drawerPopoverOpen = false;
       state.historyOpen = false;
-      state.historyLoaded = false;
-      state.historySessions = [];
-      state.historyQuery = '';
+      state.historyMenuSessionId = '';
+      if ( variant !== 'special' ) {
+        state.historyLoaded = false;
+        state.historySessions = [];
+        state.historyQuery = '';
+      }
       state.historyError = '';
       state.historyNotice = '';
       state.uploadMenuOpen = false;
@@ -3871,6 +4271,7 @@
       refreshModelBadge();
       refreshLayoutState();
       renderAttachments();
+      renderHistoryPanel();
       renderTranscript();
     }
 
@@ -3887,12 +4288,24 @@
     sendButton.addEventListener( 'click', submitQuestion );
     resetButton.addEventListener( 'click', resetConversation );
     historyButton.addEventListener( 'click', function () {
+      if ( variant === 'special' ) {
+        if ( isSpecialHistoryMobile() ) {
+          setHistoryOpen( !state.historyOpen );
+        } else {
+          state.historyCollapsed = !state.historyCollapsed;
+          refreshLayoutState();
+        }
+        return;
+      }
       setHistoryOpen( !state.historyOpen );
     } );
     settingsButton.addEventListener( 'click', function () {
       if ( compactWorkspace ) {
         setDrawerPopoverOpen( !state.drawerPopoverOpen );
         return;
+      }
+      if ( variant === 'special' && isSpecialHistoryMobile() ) {
+        state.historyOpen = false;
       }
       state.showSettings = !state.showSettings;
       refreshLayoutState();
@@ -3976,6 +4389,10 @@
         }
         setDrawerPopoverOpen( false );
       }
+      if ( state.historyMenuSessionId && !event.target.closest( '.labassistant-history-actions' ) ) {
+        state.historyMenuSessionId = '';
+        renderHistoryPanel();
+      }
       if ( state.uploadMenuOpen ) {
         if ( uploadMenu.contains( event.target ) || plusButton.contains( event.target ) ) {
           return;
@@ -3988,11 +4405,27 @@
         if ( state.drawerPopoverOpen ) {
           setDrawerPopoverOpen( false );
         }
+        if ( variant === 'special' && state.historyMenuSessionId ) {
+          state.historyMenuSessionId = '';
+          renderHistoryPanel();
+        }
+        if ( variant === 'special' && state.historyOpen && isSpecialHistoryMobile() ) {
+          state.historyOpen = false;
+          refreshLayoutState();
+        }
         if ( state.uploadMenuOpen ) {
           setUploadMenuOpen( false );
         }
       }
     } );
+    if ( specialHistoryNewButton ) {
+      specialHistoryNewButton.addEventListener( 'click', resetConversation );
+    }
+    if ( variant === 'special' ) {
+      window.addEventListener( 'resize', function () {
+        refreshLayoutState();
+      } );
+    }
 
     var mainColumn = createEl( 'div', { className: 'labassistant-main-column' }, [
       header,
@@ -4002,22 +4435,20 @@
     ] );
 
     if ( variant === 'special' ) {
-      var infoPanel = createEl( 'aside', { className: 'labassistant-special-aside' }, [
-        createEl( 'section', { className: 'labassistant-aside-card' }, [
-          createEl( 'small', { text: 'Workspace' } ),
-          createEl( 'h3', { text: '高级工作台' } ),
-          createEl( 'p', { text: '这里保留完整会话、模型选择和当前页面上下文设置，适合重度使用和调试。' } )
-        ] ),
-        createEl( 'section', { className: 'labassistant-aside-card' }, [
-          createEl( 'small', { text: 'Context' } ),
-          createEl( 'h3', { text: '当前页面' } ),
-          createEl( 'p', { text: config.currentTitle || '无' } )
-        ] )
+      specialHistoryBackdrop = createEl( 'div', {
+        className: 'labassistant-special-backdrop',
+        hidden: 'hidden'
+      } );
+      specialHistoryBackdrop.addEventListener( 'click', function () {
+        state.historyOpen = false;
+        refreshLayoutState();
+      } );
+      specialShell = createEl( 'div', { className: 'labassistant-special-layout' }, [
+        historyPanel,
+        mainColumn
       ] );
-      root.appendChild( createEl( 'div', { className: 'labassistant-special-layout' }, [
-        mainColumn,
-        infoPanel
-      ] ) );
+      root.appendChild( specialHistoryBackdrop );
+      root.appendChild( specialShell );
     } else {
       root.appendChild( mainColumn );
     }
@@ -4067,6 +4498,8 @@
         localStorage.setItem( HOST_STORAGE_KEY, window.location.host );
         refreshSessionBadge();
       } );
+    } else if ( variant === 'special' ) {
+      ensureHistorySessionsLoaded();
     }
 
     return {

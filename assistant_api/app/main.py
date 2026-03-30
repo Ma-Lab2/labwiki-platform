@@ -40,6 +40,8 @@ from .schemas import (
     IndexStatsResponse,
     JobStatusResponse,
     ModelCatalogResponse,
+    OperationPreviewPayload,
+    OperationResultPayload,
     PlanResponse,
     ResultFillPayload,
     ReindexResponse,
@@ -61,6 +63,7 @@ from .schemas import (
 from .services.llm import LLMClient
 from .services.capabilities import build_capability_catalog, commit_capability_action, preview_capability_action
 from .services.model_catalog import build_model_catalog, fallback_model_for, resolve_generation_selection
+from .services.operation_payloads import derive_operation_preview, derive_operation_result
 from .services.drafts import create_draft_preview, save_draft_preview
 from .services.pdf_ingest import (
     commit_pdf_control_preview,
@@ -553,6 +556,7 @@ def write_preview(request: WritePreviewRequest) -> WritePreviewPayload:
             action_type=metadata.get("action_type", ""),
             operation=metadata.get("operation", ""),
             target_page=preview.target_page,
+            target_section=metadata.get("target_section"),
             preview_text=preview.content,
             structured_payload=metadata.get("structured_payload") or {},
             missing_fields=metadata.get("missing_fields", []),
@@ -708,6 +712,14 @@ def session_detail(session_id: str) -> SessionDetailResponse:
                     unresolved_gaps=list(turn.unresolved_gaps or []),
                     suggested_followups=list(turn.suggested_followups or []),
                     action_trace=[ActionTraceItem(**item) for item in (turn.action_trace or [])],
+                    operation_preview=derive_operation_preview(
+                        draft_preview=DraftPreviewPayload(**turn.draft_preview) if turn.draft_preview else None,
+                        write_preview=WritePreviewPayload(**turn.write_preview) if turn.write_preview else None,
+                        result_fill=ResultFillPayload(**turn.result_fill) if turn.result_fill else None,
+                    ),
+                    operation_result=derive_operation_result(
+                        write_result=WriteResultPayload(**turn.write_result) if turn.write_result else None,
+                    ),
                     draft_preview=DraftPreviewPayload(**turn.draft_preview) if turn.draft_preview else None,
                     write_preview=WritePreviewPayload(**turn.write_preview) if turn.write_preview else None,
                     write_result=WriteResultPayload(**turn.write_result) if turn.write_result else None,

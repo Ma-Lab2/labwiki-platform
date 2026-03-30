@@ -16,6 +16,14 @@ class IntentHeuristicsTests(unittest.TestCase):
         self.assertTrue(is_write_action_request(question))
         self.assertFalse(is_page_structuring_request(question, "Theory:TNSA"))
 
+    def test_managed_page_section_edit_counts_as_write_action(self) -> None:
+        question = "给使用规则加一条：每个 Shot 页面必须备注原日志存放位置。"
+        self.assertTrue(is_write_action_request(question, "Shot:Shot日志入口"))
+
+    def test_managed_page_section_edit_with_edit_verb_counts_as_write_action(self) -> None:
+        question = "编辑一下使用规则区域：加入一条规则：必须备份原实验记录excel的实际电脑ID及文件夹位置"
+        self.assertTrue(is_write_action_request(question, "Shot:Shot日志入口"))
+
 
 if __name__ == "__main__":
     unittest.main()

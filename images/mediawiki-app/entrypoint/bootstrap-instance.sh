@@ -105,6 +105,27 @@ wait_for_db() {
 
 wait_for_db
 
+sync_private_vector_skin_preferences() {
+  php <<'PHP'
+<?php
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+$pass = trim(file_get_contents(getenv('MW_DB_PASS_FILE')));
+$conn = new mysqli(
+    getenv('MW_DB_SERVER'),
+    getenv('MW_DB_USER'),
+    $pass,
+    getenv('MW_DB_NAME')
+);
+$sql = <<<SQL
+UPDATE user_properties
+SET up_value = 'vector-2022'
+WHERE up_property = 'skin'
+  AND up_value = 'vector'
+SQL;
+$conn->query($sql);
+PHP
+}
+
 seed_page_if_default() {
   local title="$1"
   local seed_file="$2"
@@ -246,7 +267,7 @@ if [[ "${SITE_VARIANT}" == "private" ]]; then
 ];
 \$wgEnableUploads = true;
 \$labwikiCanonicalServer = '${MW_SERVER}';
-\$labwikiAllowedServerHosts = [ '192.168.1.2:8443', '127.0.0.1:8443', 'localhost:8443' ];
+\$labwikiAllowedServerHosts = [ 'localhost:8443' ];
 if ( PHP_SAPI !== 'cli' ) {
   \$labwikiRequestHost = \$_SERVER['HTTP_HOST'] ?? '';
   if ( in_array( \$labwikiRequestHost, \$labwikiAllowedServerHosts, true ) ) {
@@ -272,11 +293,24 @@ EOF
 )"
 fi
 
-THEME_BLOCK="$(cat <<EOF
-\$wgResourceModules['ext.labwiki.theme'] = [
-  'styles' => [
+if [[ "${SITE_VARIANT}" == "private" ]]; then
+  THEME_STYLE_LIST="$(cat <<'EOF'
+    'labwiki/theme/private.css',
     'labwiki/theme/base.css',
-    'labwiki/theme/${SITE_VARIANT}.css',
+EOF
+)"
+else
+  THEME_STYLE_LIST="$(cat <<'EOF'
+    'labwiki/theme/base.css',
+    'labwiki/theme/public.css',
+EOF
+)"
+fi
+
+THEME_BLOCK="$(cat <<EOF
+\$wgResourceModules['ext.labwiki.theme.v20260328'] = [
+  'styles' => [
+${THEME_STYLE_LIST}
   ],
   'scripts' => [
     'labwiki/theme/${SITE_VARIANT}.js',
@@ -284,9 +318,115 @@ THEME_BLOCK="$(cat <<EOF
   'localBasePath' => '/var/www/html',
   'remoteBasePath' => \$wgResourceBasePath ?: '',
 ];
+\$wgDefaultUserOptions['labwiki-private-theme'] = 'deep-space-window';
+\$wgHooks['GetPreferences'][] = static function ( \$user, &\$preferences ) {
+  if ( '${SITE_VARIANT}' !== 'private' ) {
+    return true;
+  }
+
+  \$preferences['labwiki-private-theme'] = [
+    'type' => 'select',
+    'label' => '新外观主题',
+    'options' => [
+      '深空蓝窗' => 'deep-space-window',
+      '极地银蓝' => 'polar-silver-blue',
+      '青色波光' => 'cyan-tide-glow',
+    ],
+    'section' => 'rendering/skin/skin-prefs',
+    'help' => '仅在新外观（Vector 2022）下生效。',
+    'hide-if' => [ '!==', 'skin', 'vector-2022' ],
+  ];
+
+  return true;
+};
 \$wgHooks['BeforePageDisplay'][] = static function ( \$out, \$skin ) {
-  \$out->addModuleStyles( 'ext.labwiki.theme' );
-  \$out->addModules( 'ext.labwiki.theme' );
+  if ( '${SITE_VARIANT}' === 'private' ) {
+    \$currentSkin = \$skin->getSkinName();
+    \$serverTheme = 'deep-space-window';
+    if ( \$skin->getUser()->isRegistered() ) {
+      \$storedTheme = (string)\MediaWiki\MediaWikiServices::getInstance()
+        ->getUserOptionsLookup()
+        ->getOption( \$skin->getUser(), 'labwiki-private-theme', 'deep-space-window' );
+      if ( in_array( \$storedTheme, [ 'deep-space-window', 'polar-silver-blue', 'cyan-tide-glow' ], true ) ) {
+        \$serverTheme = \$storedTheme;
+      }
+    }
+    \$out->addHtmlClasses( [
+      'labwiki-private',
+      'labwiki-theme-' . \$serverTheme,
+      'labwiki-skin-' . \$currentSkin,
+    ] );
+    \$appearanceSettingsUrl = \MediaWiki\SpecialPage\SpecialPage::getTitleFor( 'Preferences' )->getLocalURL() . '#mw-prefsection-rendering-skin';
+    \$bootstrapConfig = json_encode(
+      [
+        'appearanceSettingsUrl' => \$appearanceSettingsUrl,
+        'currentSkin' => \$currentSkin,
+        'serverTheme' => \$serverTheme,
+        'debugUser' => \$skin->getUser()->getName(),
+      ],
+      JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+    );
+    \$out->addHeadItem(
+      'labwiki-theme-bootstrap',
+      '<script>(function(){var cfg=' . \$bootstrapConfig . ';var fallback="deep-space-window";var allowed={"deep-space-window":1,"polar-silver-blue":1,"cyan-tide-glow":1};var cookieMatch=document.cookie.match(/(?:^|; )labwiki_private_theme_hint=([^;]+)/);var hintedTheme="";var theme=fallback;if(cookieMatch&&cookieMatch[1]){try{hintedTheme=decodeURIComponent(cookieMatch[1]);}catch(e){hintedTheme="";}}if(cfg.currentSkin==="vector-2022"){if(allowed[hintedTheme]){theme=hintedTheme;}else if(allowed[cfg.serverTheme]){theme=cfg.serverTheme;}}document.documentElement.setAttribute("data-labwiki-private","1");document.documentElement.setAttribute("data-labwiki-current-skin",cfg.currentSkin);document.documentElement.setAttribute("data-labwiki-appearance-settings-url",cfg.appearanceSettingsUrl);document.documentElement.setAttribute("data-labwiki-server-theme",cfg.serverTheme||"");document.documentElement.setAttribute("data-labwiki-theme-hint",hintedTheme||"");document.documentElement.setAttribute("data-labwiki-debug-user",cfg.debugUser||"");document.documentElement.setAttribute("data-labwiki-theme",theme);if(cfg.currentSkin==="vector-2022"&&allowed[theme]){document.cookie="labwiki_private_theme_hint="+encodeURIComponent(theme)+"; path=/; max-age=31536000; SameSite=Lax";}}());</script>'
+    );
+    \$out->addInlineStyle(
+      'html[data-labwiki-private=\"1\"][data-labwiki-theme=\"deep-space-window\"],html.labwiki-private.labwiki-theme-deep-space-window{' .
+      '--labwiki-critical-page-fill:#08112a;' .
+      '--labwiki-critical-body-bg:radial-gradient(circle at 16% 18%, rgba(140, 193, 255, 0.16), transparent 20%),radial-gradient(circle at 82% 14%, rgba(101, 135, 255, 0.18), transparent 24%),linear-gradient(rgba(140, 188, 255, 0.04) 1px, transparent 1px),linear-gradient(90deg, rgba(140, 188, 255, 0.04) 1px, transparent 1px),linear-gradient(180deg, #08112a 0%, #101c42 42%, #081029 100%);' .
+      '--labwiki-critical-overlay:radial-gradient(circle at 12% 20%, rgba(255, 255, 255, 0.82) 0 1px, transparent 1.7px),radial-gradient(circle at 72% 24%, rgba(175, 210, 255, 0.62) 0 1px, transparent 1.9px),radial-gradient(circle at 84% 72%, rgba(255, 255, 255, 0.7) 0 1px, transparent 1.8px),linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent 220px),radial-gradient(circle at top right, rgba(146, 207, 255, 0.14), transparent 26%);' .
+      '--labwiki-critical-surface:rgba(244, 248, 255, 0.94);' .
+      '--labwiki-critical-line:rgba(107, 140, 219, 0.2);' .
+      '--labwiki-critical-line-strong:rgba(70, 111, 197, 0.36);' .
+      '--labwiki-critical-accent:#2f6cf2;' .
+      '--labwiki-critical-accent-strong:#1844ad;' .
+      '--labwiki-critical-accent-soft:rgba(47, 108, 242, 0.12);' .
+      '}' .
+      'html[data-labwiki-private=\"1\"][data-labwiki-theme=\"polar-silver-blue\"],html.labwiki-private.labwiki-theme-polar-silver-blue{' .
+      '--labwiki-critical-page-fill:#eef4fb;' .
+      '--labwiki-critical-body-bg:radial-gradient(circle at 14% 18%, rgba(255, 255, 255, 0.32), transparent 18%),linear-gradient(rgba(123, 144, 170, 0.05) 1px, transparent 1px),linear-gradient(90deg, rgba(123, 144, 170, 0.05) 1px, transparent 1px),linear-gradient(180deg, #eef4fb 0%, #dfe7f1 100%);' .
+      '--labwiki-critical-overlay:linear-gradient(180deg, rgba(255, 255, 255, 0.34), transparent 240px),radial-gradient(circle at top right, rgba(196, 214, 236, 0.3), transparent 24%);' .
+      '--labwiki-critical-surface:rgba(248, 251, 255, 0.97);' .
+      '--labwiki-critical-line:rgba(113, 135, 167, 0.18);' .
+      '--labwiki-critical-line-strong:rgba(86, 108, 142, 0.28);' .
+      '--labwiki-critical-accent:#5f7ca8;' .
+      '--labwiki-critical-accent-strong:#425a7d;' .
+      '--labwiki-critical-accent-soft:rgba(95, 124, 168, 0.12);' .
+      '}' .
+      'html[data-labwiki-private=\"1\"][data-labwiki-theme=\"cyan-tide-glow\"],html.labwiki-private.labwiki-theme-cyan-tide-glow{' .
+      '--labwiki-critical-page-fill:#061329;' .
+      '--labwiki-critical-body-bg:radial-gradient(circle at 18% 16%, rgba(38, 210, 235, 0.14), transparent 20%),radial-gradient(circle at 84% 18%, rgba(91, 150, 255, 0.12), transparent 24%),linear-gradient(rgba(54, 172, 197, 0.05) 1px, transparent 1px),linear-gradient(90deg, rgba(54, 172, 197, 0.05) 1px, transparent 1px),linear-gradient(180deg, #061329 0%, #0a203c 46%, #081628 100%);' .
+      '--labwiki-critical-overlay:radial-gradient(circle at 12% 22%, rgba(255, 255, 255, 0.72) 0 1px, transparent 1.8px),radial-gradient(circle at 72% 28%, rgba(167, 242, 255, 0.52) 0 1px, transparent 2px),linear-gradient(120deg, rgba(152, 245, 255, 0.1) 0%, rgba(152, 245, 255, 0) 40%, rgba(152, 245, 255, 0.12) 70%, rgba(152, 245, 255, 0) 100%);' .
+      '--labwiki-critical-surface:rgba(240, 251, 255, 0.93);' .
+      '--labwiki-critical-line:rgba(63, 171, 192, 0.18);' .
+      '--labwiki-critical-line-strong:rgba(42, 146, 167, 0.32);' .
+      '--labwiki-critical-accent:#1da8c6;' .
+      '--labwiki-critical-accent-strong:#0d6f84;' .
+      '--labwiki-critical-accent-soft:rgba(29, 168, 198, 0.14);' .
+      '}' .
+      'html[data-labwiki-private=\"1\"],html.labwiki-private{background-color:var(--labwiki-critical-page-fill);background-image:var(--labwiki-critical-body-bg);background-size:24px 24px,24px 24px,auto;}' .
+      'body.skin-vector-2022,body.skin-vector-legacy{background-color:var(--labwiki-critical-page-fill);background-image:var(--labwiki-critical-body-bg);background-size:24px 24px,24px 24px,auto;min-height:100vh;}' .
+      'body.skin-vector-2022::before,body.skin-vector-legacy::before{content:\"\";position:fixed;inset:0;pointer-events:none;background:var(--labwiki-critical-overlay);}' .
+      '.mw-page-container{max-width:min(1500px,calc(100vw - 34px));margin:16px auto 32px;background:var(--labwiki-critical-surface);border:1px solid var(--labwiki-critical-line);border-radius:20px;box-shadow:0 24px 64px rgba(20, 20, 20, 0.08);overflow:hidden;}' .
+      '.vector-header-container,.vector-sticky-header-container,.vector-page-toolbar-container{background:transparent;}' .
+      '.mw-header,.vector-page-toolbar{background:rgba(255, 253, 249, 0.92);border-bottom:1px solid var(--labwiki-critical-line);}' .
+      '.mw-header{padding:12px 18px;}' .
+      '.mw-logo,.mw-logo-container{gap:10px;}' .
+      '.mw-logo img,.mw-logo-icon{width:20px;height:20px;border-radius:5px;opacity:0.9;}' .
+      '.mw-logo-wordmark{font-size:0.98rem;line-height:1.2;font-weight:700;letter-spacing:0.02em;}' .
+      '.vector-search-box{max-width:38rem;}' .
+      '.cdx-text-input__input,.cdx-search-input__input,input[type=\"text\"],input[type=\"password\"],input[type=\"search\"],textarea,select{border-radius:10px;border:1px solid var(--labwiki-critical-line-strong);background:rgba(255, 255, 255, 0.9);box-shadow:inset 0 1px 0 rgba(255, 255, 255, 0.82);}' .
+      '.cdx-text-input__input:focus,.cdx-search-input__input:focus,input[type=\"text\"]:focus,input[type=\"password\"]:focus,input[type=\"search\"]:focus,textarea:focus,select:focus{border-color:var(--labwiki-critical-accent);box-shadow:0 0 0 3px var(--labwiki-critical-accent-soft);outline:none;}' .
+      'button.cdx-button--action-progressive,input[type=\"submit\"],button[type=\"submit\"]{border-radius:10px;border:1px solid var(--labwiki-critical-accent);background:var(--labwiki-critical-accent)!important;color:#fffaf2!important;box-shadow:none;}' .
+      'button.cdx-button--action-progressive:hover,input[type=\"submit\"]:hover,button[type=\"submit\"]:hover{background:var(--labwiki-critical-accent-strong)!important;border-color:var(--labwiki-critical-accent-strong);}' .
+      '.vector-appearance-landmark{display:flex!important;align-items:center;}' .
+      '.labwiki-appearance-settings-link{display:flex;align-items:center;justify-content:center;width:32px;min-width:32px;height:32px;border-radius:10px;text-decoration:none;}' .
+      '.labwiki-appearance-settings-link .vector-dropdown-label-text{display:none;}' .
+      '#vector-page-titlebar-toc,#mw-panel-toc,#mw-panel-toc-list,.mw-table-of-contents-container.vector-toc-landmark,.vector-page-titlebar .vector-toc-landmark,.vector-sticky-pinned-container .vector-toc-landmark{display:none!important;}'
+    );
+  }
+  \$out->addModuleStyles( 'ext.labwiki.theme.v20260328' );
+  \$out->addModules( 'ext.labwiki.theme.v20260328' );
   return true;
 };
 EOF
@@ -328,6 +468,8 @@ if [[ "${MW_PRIVATE_MODE:-false}" == "true" ]]; then
 $wgGroupPermissions['*']['read'] = false;
 $wgGroupPermissions['*']['edit'] = false;
 $wgGroupPermissions['*']['createaccount'] = false;
+$wgVectorDefaultSkinVersionForExistingAccounts = '2';
+$wgVectorDefaultSkinVersionForNewAccounts = '2';
 wfLoadExtension( 'LabAssistant' );
 wfLoadExtension( 'LabAuth' );
 wfLoadExtension( 'LabWorkbook' );
@@ -342,6 +484,7 @@ ln -sf "${LOCAL_SETTINGS}" /var/www/html/LocalSettings.php
 php maintenance/run.php update --quick
 
 if [[ "${MW_PRIVATE_MODE:-false}" == "true" ]]; then
+  sync_private_vector_skin_preferences
   import_seed_images_once "private/field-manual-20250723" "seed-images-field-manual-20250723-v1"
 fi
 
@@ -353,6 +496,6 @@ if [[ "${MW_PRIVATE_MODE:-false}" == "true" ]]; then
   seed_manifest_pages "${SEED_ROOT}/private-cargo-manifest.tsv"
 fi
 
-chmod 600 "${LOCAL_SETTINGS}"
+chmod 644 "${LOCAL_SETTINGS}"
 
 exec "$@"

@@ -15,7 +15,7 @@ from ..clients.wiki import MediaWikiClient
 from ..config import Settings
 from ..constants import AssistantMode, SourceType, TaskType
 from ..models import AssistantSession, AssistantTurn
-from ..schemas import ActionTraceItem, ChatRequest, ChatResponse, DraftPreviewPayload, ModelInfoPayload, PdfIngestReviewPayload, PlanResponse, ResultFillPayload, SourceItem, StepItem, WritePreviewPayload, WriteResultPayload
+from ..schemas import ActionTraceItem, ChatRequest, ChatResponse, DraftPreviewPayload, ModelInfoPayload, OperationPreviewPayload, OperationResultPayload, PdfIngestReviewPayload, PlanResponse, ResultFillPayload, SourceItem, StepItem, WritePreviewPayload, WriteResultPayload
 from .agent_loop import AgentExecutor
 from .attachments import build_attachment_evidence
 from .audit import log_audit
@@ -29,6 +29,7 @@ from .intent import (
 )
 from .llm import LLMClient
 from .model_catalog import fallback_model_for, resolve_workflow_generation_selection
+from .operation_payloads import derive_operation_preview, derive_operation_result
 from .pdf_ingest import is_pdf_ingest_request, prepare_pdf_ingest_review
 from .result_fill import is_shot_result_fill_request, prepare_shot_result_fill
 from .search import search_chunks
@@ -82,7 +83,7 @@ def classify_question(question: str, mode: AssistantMode | str, context_pages: l
     mode_value = mode.value if isinstance(mode, AssistantMode) else str(mode)
     lowered = question.lower()
     current_page = context_pages[0] if context_pages else None
-    if is_write_action_request(question):
+    if is_write_action_request(question, current_page):
         return TaskType.WRITE_ACTION
     if is_compare_request(question):
         return TaskType.COMPARE
@@ -1036,6 +1037,8 @@ def _persist_chat_state(
     state: WorkflowState,
 ) -> tuple[
     AssistantTurn,
+    OperationPreviewPayload | None,
+    OperationResultPayload | None,
     DraftPreviewPayload | None,
     WritePreviewPayload | None,
     WriteResultPayload | None,
@@ -1105,6 +1108,7 @@ def _persist_chat_state(
             action_type=prepared["action_type"],
             operation=prepared["operation"],
             target_page=preview.target_page,
+            target_section=metadata.get("target_section"),
             preview_text=preview.content,
             structured_payload=prepared["structured_payload"],
             missing_fields=metadata.get("missing_fields", []),
@@ -1127,6 +1131,13 @@ def _persist_chat_state(
     if state.get("model_info"):
         turn.model_info = state["model_info"]
 
+    operation_preview = derive_operation_preview(
+        draft_preview=draft_preview,
+        write_preview=write_preview,
+        result_fill=result_fill,
+    )
+    operation_result = derive_operation_result(write_result=write_result)
+
     session_record.last_stage = "completed"
     session_record.step_count = len(state["steps"])
     session_record.confidence = state["confidence"]
@@ -1147,13 +1158,15 @@ def _persist_chat_state(
             "write_result": state.get("write_result_data"),
         },
     )
-    return turn, draft_preview, write_preview, write_result, result_fill, pdf_ingest_review
+    return turn, operation_preview, operation_result, draft_preview, write_preview, write_result, result_fill, pdf_ingest_review
 
 
 def _build_chat_response(
     session_record: AssistantSession,
     turn: AssistantTurn,
     state: WorkflowState,
+    operation_preview: OperationPreviewPayload | None,
+    operation_result: OperationResultPayload | None,
     draft_preview: DraftPreviewPayload | None,
     write_preview: WritePreviewPayload | None,
     write_result: WriteResultPayload | None,
@@ -1177,6 +1190,8 @@ def _build_chat_response(
         unresolved_gaps=state["unresolved_gaps"],
         suggested_followups=state["suggested_followups"],
         action_trace=[ActionTraceItem(**item) for item in state.get("action_trace", [])],
+        operation_preview=operation_preview,
+        operation_result=operation_result,
         draft_preview=draft_preview,
         write_preview=write_preview,
         write_result=write_result,
@@ -1209,11 +1224,13 @@ def run_chat(
             conversation_history=conversation_history,
         )
         state["model_info"] = request_llm.model_info
-        turn, draft_preview, write_preview, write_result, result_fill, pdf_ingest_review = _persist_chat_state(db, settings, session_record, request, state)
+        turn, operation_preview, operation_result, draft_preview, write_preview, write_result, result_fill, pdf_ingest_review = _persist_chat_state(db, settings, session_record, request, state)
         return _build_chat_response(
             session_record,
             turn,
             state,
+            operation_preview,
+            operation_result,
             draft_preview,
             write_preview,
             write_result,
@@ -1229,11 +1246,13 @@ def run_chat(
             conversation_history=conversation_history,
         )
         state["model_info"] = request_llm.model_info
-        turn, draft_preview, write_preview, write_result, result_fill, pdf_ingest_review = _persist_chat_state(db, settings, session_record, request, state)
+        turn, operation_preview, operation_result, draft_preview, write_preview, write_result, result_fill, pdf_ingest_review = _persist_chat_state(db, settings, session_record, request, state)
         return _build_chat_response(
             session_record,
             turn,
             state,
+            operation_preview,
+            operation_result,
             draft_preview,
             write_preview,
             write_result,
@@ -1263,11 +1282,13 @@ def run_chat(
         state["steps"] = _append_step(state["steps"], "synthesize", "生成回答", "complete", "回答已生成。")
     state = executor.finalize(state, request)
     state["model_info"] = request_llm.model_info
-    turn, draft_preview, write_preview, write_result, result_fill, pdf_ingest_review = _persist_chat_state(db, settings, session_record, request, state)
+    turn, operation_preview, operation_result, draft_preview, write_preview, write_result, result_fill, pdf_ingest_review = _persist_chat_state(db, settings, session_record, request, state)
     return _build_chat_response(
         session_record,
         turn,
         state,
+        operation_preview,
+        operation_result,
         draft_preview,
         write_preview,
         write_result,
@@ -1311,13 +1332,19 @@ def run_chat_stream(
         for step in state["steps"]:
             yield {"event": "step", "data": step}
         yield {"event": "sources", "data": {"sources": _serialize_sources(state["evidence"])}}
-        turn, draft_preview, write_preview, write_result, result_fill, pdf_ingest_review = _persist_chat_state(db, settings, session_record, request, state)
+        turn, operation_preview, operation_result, draft_preview, write_preview, write_result, result_fill, pdf_ingest_review = _persist_chat_state(db, settings, session_record, request, state)
         if pdf_ingest_review is not None:
             yield {"event": "pdf_ingest_review", "data": pdf_ingest_review.model_dump()}
+        if operation_preview is not None:
+            yield {"event": "operation_preview", "data": operation_preview.model_dump()}
+        if operation_result is not None:
+            yield {"event": "operation_result", "data": operation_result.model_dump()}
         response = _build_chat_response(
             session_record,
             turn,
             state,
+            operation_preview,
+            operation_result,
             draft_preview,
             write_preview,
             write_result,
@@ -1338,13 +1365,19 @@ def run_chat_stream(
         for step in state["steps"]:
             yield {"event": "step", "data": step}
         yield {"event": "sources", "data": {"sources": _serialize_sources(state["evidence"])}}
-        turn, draft_preview, write_preview, write_result, result_fill, pdf_ingest_review = _persist_chat_state(db, settings, session_record, request, state)
+        turn, operation_preview, operation_result, draft_preview, write_preview, write_result, result_fill, pdf_ingest_review = _persist_chat_state(db, settings, session_record, request, state)
+        if operation_preview is not None:
+            yield {"event": "operation_preview", "data": operation_preview.model_dump()}
+        if operation_result is not None:
+            yield {"event": "operation_result", "data": operation_result.model_dump()}
         if result_fill is not None:
             yield {"event": "result_fill", "data": result_fill.model_dump()}
         response = _build_chat_response(
             session_record,
             turn,
             state,
+            operation_preview,
+            operation_result,
             draft_preview,
             write_preview,
             write_result,
@@ -1366,7 +1399,12 @@ def run_chat_stream(
         yield {"event": "step", "data": step}
     if state.get("action_trace"):
         yield {"event": "action_trace", "data": {"items": state["action_trace"]}}
-    yield from executor.stream_answer(state)
+    should_stream_answer = not (
+        task_type == TaskType.WRITE_ACTION.value
+        and (state.get("write_preview_data") or state.get("write_result_data"))
+    )
+    if should_stream_answer:
+        yield from executor.stream_answer(state)
     state = executor.finalize(state, request)
     state["model_info"] = request_llm.model_info
     final_steps_to_emit = 1
@@ -1378,7 +1416,11 @@ def run_chat_stream(
         yield {"event": "step", "data": step}
     yield {"event": "sources", "data": {"sources": _serialize_sources(state["evidence"])}}
 
-    turn, draft_preview, write_preview, write_result, result_fill, pdf_ingest_review = _persist_chat_state(db, settings, session_record, request, state)
+    turn, operation_preview, operation_result, draft_preview, write_preview, write_result, result_fill, pdf_ingest_review = _persist_chat_state(db, settings, session_record, request, state)
+    if operation_preview is not None:
+        yield {"event": "operation_preview", "data": operation_preview.model_dump()}
+    if operation_result is not None:
+        yield {"event": "operation_result", "data": operation_result.model_dump()}
     if draft_preview is not None:
         yield {"event": "draft_preview", "data": draft_preview.model_dump()}
     if write_preview is not None:
@@ -1393,6 +1435,8 @@ def run_chat_stream(
         session_record,
         turn,
         state,
+        operation_preview,
+        operation_result,
         draft_preview,
         write_preview,
         write_result,

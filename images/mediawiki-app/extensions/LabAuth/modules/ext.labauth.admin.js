@@ -31,7 +31,14 @@
     }
 
     var api = new mw.Api();
+    var mainPageTitle = mw.config.get( 'wgMainPageTitle' ) || '首页';
+    var mainPageUrl = mw.util.getUrl( mainPageTitle );
+    var logoutUrl = mw.util.getUrl( 'Special:UserLogout' );
     var notices = el( 'div', { className: 'labauth-status', hidden: 'hidden' } );
+    var pendingStat = el( 'strong', { text: '0' } );
+    var usersStat = el( 'strong', { text: '0' } );
+    var activityStat = el( 'strong', { text: '0' } );
+    var modalMount = el( 'div', { className: 'labauth-modal-host' } );
     var pendingSearch = el( 'input', {
       type: 'search',
       className: 'labauth-input labauth-search-input',
@@ -320,6 +327,12 @@
       refreshLists();
     }
 
+    function updateHeroStats() {
+      pendingStat.textContent = String( pendingItems.length );
+      usersStat.textContent = String( userItems.length );
+      activityStat.textContent = String( activityItems.length );
+    }
+
     function setNotice( type, message ) {
       notices.hidden = false;
       notices.className = 'labauth-status is-' + type;
@@ -336,23 +349,106 @@
       return api.postWithToken( 'csrf', Object.assign( { format: 'json' }, params ) );
     }
 
-    function confirmAction( message ) {
-      return window.confirm( message );
+    function closeDialog() {
+      modalMount.innerHTML = '';
     }
 
-    function promptRequiredReviewNote() {
-      var value = window.prompt( '请输入驳回原因（必填）', '' );
-      if ( value === null ) {
-        return null;
-      }
+    function openDialog( options ) {
+      return new Promise( function ( resolve ) {
+        var fields = options.fields || [];
+        var inputs = {};
+        var title = el( 'h3', { text: options.title || '确认操作' } );
+        var body = el( 'p', { text: options.message || '' } );
+        var dialog = el( 'div', { className: 'labauth-modal' }, [ title, body ] );
 
-      value = value.trim();
-      if ( !value ) {
-        setNotice( 'error', '驳回申请时必须填写原因。' );
-        return '';
-      }
+        fields.forEach( function ( field ) {
+          var input;
+          if ( field.type === 'textarea' ) {
+            input = el( 'textarea', {
+              className: 'labauth-input',
+              placeholder: field.placeholder || ''
+            } );
+          } else {
+            input = el( 'input', {
+              className: 'labauth-input',
+              type: field.type || 'text',
+              placeholder: field.placeholder || ''
+            } );
+          }
+          if ( field.value ) {
+            input.value = field.value;
+          }
+          inputs[ field.name ] = input;
+          dialog.appendChild( el( 'div', { className: 'labauth-field' }, [
+            el( 'label', { text: field.label } ),
+            input
+          ] ) );
+        } );
 
-      return value;
+        var cancelButton = el( 'button', {
+          type: 'button',
+          className: 'labauth-button-secondary',
+          text: options.cancelLabel || '取消'
+        } );
+        var confirmButton = el( 'button', {
+          type: 'button',
+          className: options.confirmClassName || 'labauth-button-primary',
+          text: options.confirmLabel || '确认'
+        } );
+
+        cancelButton.addEventListener( 'click', function () {
+          closeDialog();
+          resolve( null );
+        } );
+
+        confirmButton.addEventListener( 'click', function () {
+          var values = {};
+          var hasError = false;
+
+          fields.forEach( function ( field ) {
+            var value = inputs[ field.name ].value.trim();
+            values[ field.name ] = value;
+            if ( field.required && !value ) {
+              hasError = true;
+            }
+          } );
+
+          if ( hasError ) {
+            setNotice( 'error', options.requiredMessage || '请先补全必要信息。' );
+            return;
+          }
+
+          closeDialog();
+          resolve( values );
+        } );
+
+        dialog.appendChild( el( 'div', { className: 'labauth-modal-actions' }, [
+          cancelButton,
+          confirmButton
+        ] ) );
+
+        var backdrop = el( 'div', { className: 'labauth-modal-backdrop' }, [ dialog ] );
+        backdrop.addEventListener( 'click', function ( event ) {
+          if ( event.target === backdrop ) {
+            closeDialog();
+            resolve( null );
+          }
+        } );
+
+        modalMount.innerHTML = '';
+        modalMount.appendChild( backdrop );
+        if ( fields.length && inputs[ fields[ 0 ].name ] ) {
+          inputs[ fields[ 0 ].name ].focus();
+        }
+      } );
+    }
+
+    function confirmAction( title, message, confirmLabel ) {
+      return openDialog( {
+        title: title,
+        message: message,
+        confirmLabel: confirmLabel || '确认'
+      } );
     }
 
     function createSelectionToggle( checked, labelText, onChange ) {
@@ -415,50 +511,66 @@
 
         approve.addEventListener( 'click', function () {
           setSelectedPendingIds( [ requestId ] );
-          if ( !confirmAction( '确认通过申请“' + item.username + '”吗？' ) ) {
-            return;
-          }
-          queueAfterLoadAction( function () {
-            applyHistoryLinkState( {
-              query: requestId,
-              statusFilter: 'approved'
+          confirmAction(
+            '通过学生申请',
+            '确认通过申请“' + item.username + '”吗？系统会立刻创建账户并写入开通记录。',
+            '确认通过'
+          ).then( function ( result ) {
+            if ( !result ) {
+              return;
+            }
+            queueAfterLoadAction( function () {
+              applyHistoryLinkState( {
+                query: requestId,
+                statusFilter: 'approved'
+              } );
             } );
-          } );
-          callAdminAction( {
-            action: 'labauthadminapprove',
-            request_id: item.request_id
-          } ).then( function () {
-            setNotice( 'success', '已通过申请：' + item.username + '，账户已创建。' );
-            loadAll();
-          } ).catch( function ( error ) {
-            setNotice( 'error', error && error.message ? error.message : '审批失败。' );
+            callAdminAction( {
+              action: 'labauthadminapprove',
+              request_id: item.request_id
+            } ).then( function () {
+              setNotice( 'success', '已通过申请：' + item.username + '，账户已创建。' );
+              loadAll();
+            } ).catch( function ( error ) {
+              setNotice( 'error', error && error.message ? error.message : '审批失败。' );
+            } );
           } );
         } );
 
         reject.addEventListener( 'click', function () {
           setSelectedPendingIds( [ requestId ] );
-          var reviewNote = promptRequiredReviewNote();
-          if ( reviewNote === null || reviewNote === '' ) {
-            return;
-          }
-          if ( !confirmAction( '确认驳回申请“' + item.username + '”吗？' ) ) {
-            return;
-          }
-          queueAfterLoadAction( function () {
-            applyHistoryLinkState( {
-              query: requestId,
-              statusFilter: 'rejected'
+          openDialog( {
+            title: '驳回学生申请',
+            message: '请填写驳回原因。该原因会进入处理记录和后台操作日志。',
+            confirmLabel: '确认驳回',
+            fields: [ {
+              name: 'review_note',
+              label: '驳回原因',
+              type: 'textarea',
+              required: true,
+              placeholder: '请输入驳回原因（必填）'
+            } ],
+            requiredMessage: '驳回申请时必须填写原因。'
+          } ).then( function ( values ) {
+            if ( !values ) {
+              return;
+            }
+            queueAfterLoadAction( function () {
+              applyHistoryLinkState( {
+                query: requestId,
+                statusFilter: 'rejected'
+              } );
             } );
-          } );
-          callAdminAction( {
-            action: 'labauthadminreject',
-            request_id: item.request_id,
-            review_note: reviewNote
-          } ).then( function () {
-            setNotice( 'success', '已驳回申请：' + item.username + '。原因：' + reviewNote );
-            loadAll();
-          } ).catch( function ( error ) {
-            setNotice( 'error', error && error.message ? error.message : '驳回失败。' );
+            callAdminAction( {
+              action: 'labauthadminreject',
+              request_id: item.request_id,
+              review_note: values.review_note
+            } ).then( function () {
+              setNotice( 'success', '已驳回申请：' + item.username + '。原因：' + values.review_note );
+              loadAll();
+            } ).catch( function ( error ) {
+              setNotice( 'error', error && error.message ? error.message : '驳回失败。' );
+            } );
           } );
         } );
 
@@ -531,56 +643,72 @@
           var actionLabel = item.account_status === 'disabled' ? '恢复' : '停用';
           var eventType = item.account_status === 'disabled' ? 'account_enabled' : 'account_disabled';
           setSelectedUserIds( [ userId ] );
-          if ( !confirmAction( '确认' + actionLabel + '账户“' + item.username + '”吗？' ) ) {
-            return;
-          }
-          queueAfterLoadAction( function () {
-            applyActivityLinkState( {
-              query: '',
-              typeFilter: eventType,
-              actorQuery: '',
-              targetQuery: item.username,
-              timeQuery: ''
+          confirmAction(
+            actionLabel + '账户',
+            '确认' + actionLabel + '账户“' + item.username + '”吗？该操作会写入后台日志。',
+            '确认' + actionLabel
+          ).then( function ( result ) {
+            if ( !result ) {
+              return;
+            }
+            queueAfterLoadAction( function () {
+              applyActivityLinkState( {
+                query: '',
+                typeFilter: eventType,
+                actorQuery: '',
+                targetQuery: item.username,
+                timeQuery: ''
+              } );
             } );
-          } );
-          callAdminAction( {
-            action: item.account_status === 'disabled' ? 'labauthadminenable' : 'labauthadmindisable',
-            user_id: item.user_id
-          } ).then( function () {
-            setNotice( 'success', '已' + actionLabel + '账户：' + item.username );
-            loadAll();
-          } ).catch( function ( error ) {
-            setNotice( 'error', error && error.message ? error.message : '账户状态更新失败。' );
+            callAdminAction( {
+              action: item.account_status === 'disabled' ? 'labauthadminenable' : 'labauthadmindisable',
+              user_id: item.user_id
+            } ).then( function () {
+              setNotice( 'success', '已' + actionLabel + '账户：' + item.username );
+              loadAll();
+            } ).catch( function ( error ) {
+              setNotice( 'error', error && error.message ? error.message : '账户状态更新失败。' );
+            } );
           } );
         } );
 
         reset.addEventListener( 'click', function () {
           setSelectedUserIds( [ userId ] );
-          var newPassword = window.prompt( '请输入新密码', '' );
-          if ( !newPassword ) {
-            return;
-          }
-          if ( !confirmAction( '确认重置账户“' + item.username + '”的密码吗？' ) ) {
-            return;
-          }
-          queueAfterLoadAction( function () {
-            applyActivityLinkState( {
-              query: '',
-              typeFilter: 'password_reset',
-              actorQuery: '',
-              targetQuery: item.username,
-              timeQuery: ''
+          openDialog( {
+            title: '重置账户密码',
+            message: '请输入“' + item.username + '”的新密码。系统不会自动通知学生，请通过安全渠道发送。',
+            confirmLabel: '确认重置',
+            fields: [ {
+              name: 'new_password',
+              label: '新密码',
+              type: 'password',
+              required: true,
+              placeholder: '请输入新密码'
+            } ],
+            requiredMessage: '请输入新的登录密码。'
+          } ).then( function ( values ) {
+            if ( !values ) {
+              return;
+            }
+            queueAfterLoadAction( function () {
+              applyActivityLinkState( {
+                query: '',
+                typeFilter: 'password_reset',
+                actorQuery: '',
+                targetQuery: item.username,
+                timeQuery: ''
+              } );
             } );
-          } );
-          callAdminAction( {
-            action: 'labauthadminresetpassword',
-            user_id: item.user_id,
-            new_password: newPassword
-          } ).then( function () {
-            setNotice( 'success', '已重置密码：' + item.username + '。请通过安全渠道告知新密码。' );
-            loadAll();
-          } ).catch( function ( error ) {
-            setNotice( 'error', error && error.message ? error.message : '密码重置失败。' );
+            callAdminAction( {
+              action: 'labauthadminresetpassword',
+              user_id: item.user_id,
+              new_password: values.new_password
+            } ).then( function () {
+              setNotice( 'success', '已重置密码：' + item.username + '。请通过安全渠道告知新密码。' );
+              loadAll();
+            } ).catch( function ( error ) {
+              setNotice( 'error', error && error.message ? error.message : '密码重置失败。' );
+            } );
           } );
         } );
 
@@ -752,6 +880,7 @@
         userItems = ( responses[ 1 ].labauthadminusers || {} ).users || [];
         historyItems = ( responses[ 2 ].labauthadminhistory || {} ).requests || [];
         activityItems = ( responses[ 3 ].labauthadminactivity || {} ).events || [];
+        updateHeroStats();
         renderActivityTypeOptions();
         refreshLists();
         if ( afterLoadAction ) {
@@ -793,7 +922,13 @@
     activityResetButton.addEventListener( 'click', resetActivityFilters );
 
     historyPanel = el( 'section', { className: 'labauth-panel labauth-panel-wide' }, [
-      el( 'h2', { text: '近期处理记录' } ),
+      el( 'div', { className: 'labauth-panel-header' }, [
+        el( 'div', { className: 'labauth-panel-header-copy' }, [
+          el( 'div', { className: 'labauth-panel-eyebrow', text: 'Review History' } ),
+          el( 'h2', { text: '近期处理记录' } ),
+          el( 'p', { text: '查看审批结果、审核备注和关联申请，必要时可跳到后台日志继续追踪。' } )
+        ] )
+      ] ),
       el( 'div', { className: 'labauth-toolbar' }, [
         el( 'div', { className: 'labauth-filter-group' }, [
           historySearch,
@@ -809,7 +944,13 @@
     ] );
 
     activityPanel = el( 'section', { className: 'labauth-panel labauth-panel-wide' }, [
-      el( 'h2', { text: '后台操作日志' } ),
+      el( 'div', { className: 'labauth-panel-header' }, [
+        el( 'div', { className: 'labauth-panel-header-copy' }, [
+          el( 'div', { className: 'labauth-panel-eyebrow', text: 'Audit Trail' } ),
+          el( 'h2', { text: '后台操作日志' } ),
+          el( 'p', { text: '集中查看审批、停用、恢复和密码重置等后台事件，并与处理记录互相定位。' } )
+        ] )
+      ] ),
       el( 'div', { className: 'labauth-toolbar' }, [
         el( 'div', { className: 'labauth-filter-group' }, [
           activitySearch,
@@ -827,15 +968,46 @@
     ] );
 
     root.appendChild( el( 'div', { className: 'labauth-admin-shell' }, [
-      el( 'section', { className: 'labauth-panel' }, [
-        el( 'small', { text: 'Admin Console' } ),
-        el( 'h1', { text: '账户管理后台' } ),
-        el( 'p', { text: '审核学生注册申请、查看已开通账户，并执行停用、恢复或密码重置。' } ),
-        notices
+      el( 'section', { className: 'labauth-admin-hero' }, [
+        el( 'div', { className: 'labauth-admin-hero-top' }, [
+          el( 'div', {}, [
+            el( 'div', { className: 'labauth-admin-hero-badge', text: 'Admin Console' } ),
+            el( 'h1', { text: '账户管理后台' } ),
+            el( 'p', {
+              className: 'labauth-admin-subtitle',
+              text: '以待审核申请为主入口，统一处理学生注册、账号状态与审计记录。'
+            } ),
+            notices
+          ] ),
+          el( 'div', { className: 'labauth-admin-hero-actions' }, [
+            el( 'a', { className: 'labauth-button-ghost', href: mainPageUrl, text: '返回首页' } ),
+            el( 'a', { className: 'labauth-button-ghost', href: logoutUrl, text: '退出登录' } )
+          ] )
+        ] ),
+        el( 'div', { className: 'labauth-admin-stats' }, [
+          el( 'div', { className: 'labauth-admin-stat' }, [
+            pendingStat,
+            el( 'span', { text: '待审核申请' } )
+          ] ),
+          el( 'div', { className: 'labauth-admin-stat' }, [
+            usersStat,
+            el( 'span', { text: '已创建账户' } )
+          ] ),
+          el( 'div', { className: 'labauth-admin-stat' }, [
+            activityStat,
+            el( 'span', { text: '后台日志条目' } )
+          ] )
+        ] )
       ] ),
       el( 'div', { className: 'labauth-admin-grid' }, [
-        el( 'section', { className: 'labauth-panel' }, [
-          el( 'h2', { text: '待审核申请' } ),
+        el( 'section', { className: 'labauth-panel labauth-panel-primary' }, [
+          el( 'div', { className: 'labauth-panel-header' }, [
+            el( 'div', { className: 'labauth-panel-header-copy' }, [
+              el( 'div', { className: 'labauth-panel-eyebrow', text: 'Approval Queue' } ),
+              el( 'h2', { text: '待审核申请' } ),
+              el( 'p', { text: '这一栏优先处理新提交的学生申请。审批通过会直接创建账户，驳回原因会进入处理记录。' } )
+            ] )
+          ] ),
           el( 'div', { className: 'labauth-toolbar' }, [
             el( 'div', { className: 'labauth-filter-group' }, [
               pendingSearch
@@ -850,7 +1022,13 @@
           pendingBody
         ] ),
         el( 'section', { className: 'labauth-panel' }, [
-          el( 'h2', { text: '已创建账户' } ),
+          el( 'div', { className: 'labauth-panel-header' }, [
+            el( 'div', { className: 'labauth-panel-header-copy' }, [
+              el( 'div', { className: 'labauth-panel-eyebrow', text: 'Account State' } ),
+              el( 'h2', { text: '已创建账户' } ),
+              el( 'p', { text: '集中处理停用、恢复和密码重置。单项操作完成后会自动定位到对应日志。' } )
+            ] )
+          ] ),
           el( 'div', { className: 'labauth-toolbar' }, [
             el( 'div', { className: 'labauth-filter-group' }, [
               usersSearch,
@@ -868,7 +1046,8 @@
         ] ),
         historyPanel,
         activityPanel
-      ] )
+      ] ),
+      modalMount
     ] ) );
 
     updateSelectionSummaries();

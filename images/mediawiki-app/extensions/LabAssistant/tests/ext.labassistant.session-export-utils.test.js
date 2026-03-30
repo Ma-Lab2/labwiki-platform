@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const {
+  buildSessionHistoryDisplay,
   buildSessionExportFileName,
   filterSessionHistoryItems,
   normalizeSessionHistoryItems
@@ -72,5 +73,49 @@ test('buildSessionExportFileName prefers current page and sanitizes unsafe chara
       current_page: ''
     }),
     'labassistant-session-abcdef12.md'
+  );
+});
+
+test('buildSessionHistoryDisplay prefers page title, keeps question as subtitle and marks active rows', () => {
+  assert.deepEqual(
+    buildSessionHistoryDisplay(
+      {
+        session_id: '12345678-1234-1234-1234-123456789abc',
+        current_page: 'Theory:TNSA',
+        latest_question: '解释一下 TNSA',
+        turn_count: 4,
+        updated_at: '2026-03-29T11:22:33Z'
+      },
+      {
+        activeSessionId: '12345678-1234-1234-1234-123456789abc',
+        formatTimestamp: () => '03/29 19:22'
+      }
+    ),
+    {
+      title: 'Theory:TNSA',
+      subtitle: '解释一下 TNSA',
+      meta: '轮次 4 · 更新 03/29 19:22 · 当前会话',
+      isActive: true
+    }
+  );
+});
+
+test('buildSessionHistoryDisplay falls back to question and short session id when page title is empty', () => {
+  assert.deepEqual(
+    buildSessionHistoryDisplay(
+      {
+        session_id: 'abcdef12-1234-1234-1234-123456789abc',
+        current_page: '',
+        latest_question: '',
+        turn_count: 0
+      },
+      {}
+    ),
+    {
+      title: '会话 abcdef12',
+      subtitle: '',
+      meta: '',
+      isActive: false
+    }
   );
 });

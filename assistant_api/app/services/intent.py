@@ -10,6 +10,17 @@ LEARNING_PATH_HINTS = ("新来的", "新人", "入门", "怎么学")
 TOOL_KEYWORDS = ("tps", "rcf")
 TOOL_WORKFLOW_TOKENS = ("流程", "操作", "使用", "归档", "判靶", "检查", "解谱", "能谱", "堆栈", "没出谱", "结果图", "参数快照")
 PAGE_SUMMARY_TOKENS = ("总结", "概括", "压缩", "提炼", "5句", "五句", "重点")
+MANAGED_PAGE_TITLES = (
+    "Shot:Shot日志入口",
+    "Shot:周实验日志",
+    "Shot:表单新建",
+    "Meeting:会议入口",
+    "FAQ:常见问题入口",
+    "Project:项目总览",
+)
+MANAGED_SECTION_TOKENS = ("使用规则", "当前索引", "维护规则", "本周条目", "本周总结", "相关页面", "当前入口", "说明", "当前建议收录")
+MANAGED_SECTION_EDIT_TOKENS = ("编辑", "修改", "更新", "补", "补充", "加一条", "新增", "加入", "追加", "增加")
+MANAGED_SECTION_HINT_TOKENS = ("区块", "模块", "区域", "规则")
 
 
 def is_compare_request(question: str) -> bool:
@@ -39,10 +50,16 @@ def is_current_page_request(question: str, current_page: str | None = None) -> b
     return bool(current_page and any(token in question for token in STRUCTURING_TOKENS + PAGE_SUMMARY_TOKENS))
 
 
-def is_write_action_request(question: str) -> bool:
+def is_write_action_request(question: str, current_page: str | None = None) -> bool:
     lowered = question.lower()
     if any(token in question for token in ["草稿", "先不要写回", "仅预览"]) or "draft" in lowered:
         return False
+    if current_page in MANAGED_PAGE_TITLES:
+        touches_section = any(token in question for token in MANAGED_SECTION_TOKENS)
+        requests_edit = any(token in question for token in MANAGED_SECTION_EDIT_TOKENS)
+        mentions_section_shape = any(token in question for token in MANAGED_SECTION_HINT_TOKENS)
+        if touches_section and (requests_edit or mentions_section_shape):
+            return True
     write_tokens = ["新建", "新增", "创建", "添加", "补一条", "补充", "写入", "更新", "追加", "记到", "记录到", "直接写入", "直接创建"]
     targets = ["术语", "词条", "设备", "诊断", "文献导读", "shot", "Shot:", "周实验日志", "周日志", "日志"]
     return any(token in question for token in write_tokens) and any(token in question or token in lowered for token in targets)
