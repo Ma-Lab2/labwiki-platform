@@ -54,6 +54,16 @@ node --version
 python --version
 ```
 
+先把“部署依赖”和“开发/agent 工具”分开理解：
+
+- 如果你只是把系统部署到 Linux 服务器：
+  - 必需的是 `git`、`docker`、`docker compose`
+  - 不需要额外安装 Codex/Claude/Cursor 的 skill 包
+- 如果你还要在这台机器上做开发或浏览器回归：
+  - 建议再装 `python`、`node`
+  - 跑 Playwright 回归时还需要 `playwright-cli`
+  - `opencli` 只是可选 provider slot，不是启动系统的前置条件
+
 如果只改 `assistant_api` Python 侧，优先用仓库脚本进入专用环境：
 
 ```bash

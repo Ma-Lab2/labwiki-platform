@@ -72,6 +72,33 @@ docker --version
 docker compose version
 ```
 
+Important deployment boundary:
+
+- A Linux deployment host does **not** need Codex/Cursor/Claude-style agent skills to run this stack.
+- Production deployment only requires the host tools above plus the repo files, secrets, and Docker images.
+- MediaWiki, PHP, MariaDB, PostgreSQL/pgvector, Caddy, assistant API, and the tool services all run inside containers.
+
+## Optional Developer / Agent Tools
+
+The following tools are **not** required for production deployment. Install them only if this machine is also used for development, browser regression, or coding-agent workflows.
+
+### Optional local tools
+
+- `python` / `node`
+  - Needed for local tests such as `pytest`, `node --test`, and `node --check`
+- `playwright-cli`
+  - Needed for browser regression scripts under `ops/scripts/playwright-private-*.sh`
+- `opencli`
+  - Optional only; the assistant capability catalog can expose it as a provider slot, but the system still works without it
+
+### About “skills”
+
+This repository references coding-agent skills in `docs/agent/` and `docs/superpowers/`, but those are maintainer/agent workflow assets, not runtime dependencies for the Linux server.
+
+- If you are only deploying the stack: do **not** install any Codex/Cursor/Claude skill packs on the server just for deployment.
+- If you are also using the machine as a coding-agent workstation: the relevant optional tooling is `playwright-cli`, local Python/Node test runtimes, and any agent platform you already use.
+- The repository itself does not require a separate “skill installer” step to boot the product.
+
 ## Initial Setup
 
 1. Copy environment defaults:
