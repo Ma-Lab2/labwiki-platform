@@ -21,6 +21,9 @@ uploads/private/*
 
 docker-data/
 .playwright-cli/
+.superpowers/
+test-results/
+docs/superpowers/plans/2026-03-22-assistant-plugin-shell.md
 【排版结果】【工作手册】20250723.docx
 docs/intake/field-manual-20250723/images/all/*
 !docs/intake/field-manual-20250723/images/all/.gitkeep
