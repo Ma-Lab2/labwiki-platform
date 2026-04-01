@@ -143,6 +143,39 @@ bash ops/scripts/smoke-test.sh
 bash ops/scripts/playwright-private-pdf-reader-check.sh
 ```
 
+### If The Server Already Pulled The Repository
+
+If the target Linux server already has the same Git revision, do not re-copy the repository tree. In that case you only need to prepare the non-repo assets locally on the server:
+
+- `.env`
+- `secrets/*.txt`
+- optional private wiki content migration if you need old student accounts, approvals, or private pages
+
+Do not migrate assistant runtime data by default. `assistant_store`, `state/assistant_uploads`, and other assistant caches should normally be rebuilt on the target server, especially when the environment, embedding configuration, or provider settings differ.
+
+Recommended order on the target server:
+
+```bash
+cp .env.example .env
+# fill model keys and host values manually
+bash ops/deploy-bundle/linux-lab/create-secrets.sh
+docker compose -f compose.yaml build --pull
+docker compose -f compose.yaml up -d
+```
+
+If you must migrate existing private wiki content only, use the safe path under `ops/deploy-bundle/linux-lab/`:
+
+- `backup-private-wiki-safe-data.sh`
+- `restore-private-wiki-safe-data.sh`
+- `package-private-wiki-safe-data.sh`
+
+That safe path transfers only:
+
+- `labwiki_private`
+- `uploads/private`
+
+and intentionally does not transfer assistant runtime data, `.env`, or `secrets/*.txt`.
+
 For local dry runs, opt in to the override file explicitly:
 
 ```bash

@@ -299,6 +299,71 @@ class ResourceSyncTests(unittest.TestCase):
         self.assertIn("把使用规则里", script)
         self.assertIn("改成更正式的写法", script)
 
+    def test_linux_deploy_bundle_exists(self) -> None:
+        bundle_dir = ROOT / "ops" / "deploy-bundle" / "linux-lab"
+
+        self.assertTrue((bundle_dir / "README.md").exists())
+        self.assertTrue((bundle_dir / ".env.lab.example").exists())
+        self.assertTrue((bundle_dir / "create-secrets.sh").exists())
+        self.assertTrue((bundle_dir / "preflight-check.sh").exists())
+        self.assertTrue((bundle_dir / "deploy.sh").exists())
+        self.assertTrue((bundle_dir / "package.sh").exists())
+
+    def test_linux_deploy_bundle_scripts_reference_required_runtime_files(self) -> None:
+        bundle_dir = ROOT / "ops" / "deploy-bundle" / "linux-lab"
+        readme = (bundle_dir / "README.md").read_text(encoding="utf-8")
+        package_script = (bundle_dir / "package.sh").read_text(encoding="utf-8")
+        deploy_script = (bundle_dir / "deploy.sh").read_text(encoding="utf-8")
+        preflight_script = (bundle_dir / "preflight-check.sh").read_text(encoding="utf-8")
+        secrets_script = (bundle_dir / "create-secrets.sh").read_text(encoding="utf-8")
+
+        self.assertIn("compose.yaml", readme)
+        self.assertIn(".env.lab.example", readme)
+        self.assertIn("docker compose -f compose.yaml up -d", readme)
+        self.assertIn("assistant_api", package_script)
+        self.assertIn("images/mediawiki-app", package_script)
+        self.assertIn("tools/pytps-web", package_script)
+        self.assertIn("tools/rcf-web", package_script)
+        self.assertIn("ops/caddy", package_script)
+        self.assertIn("ops/db-init", package_script)
+        self.assertIn("ops/scripts/backup.sh", package_script)
+        self.assertIn("runtime-data", package_script)
+        self.assertIn("学生", readme)
+        self.assertIn("ops/scripts/backup.sh", readme)
+        self.assertIn("smoke-test.sh", deploy_script)
+        self.assertIn("docker compose -f compose.yaml build --pull", deploy_script)
+        self.assertIn("docker compose -f compose.yaml config", preflight_script)
+        self.assertIn("private_admin_password.txt", secrets_script)
+        self.assertIn("assistant_db_password.txt", secrets_script)
+
+    def test_linux_runtime_transfer_script_exists(self) -> None:
+        script = (
+            ROOT / "ops" / "deploy-bundle" / "linux-lab" / "package-nonrepo-assets.sh"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn(".env", script)
+        self.assertIn("secrets", script)
+        self.assertIn("backup-runtime-data.sh", script)
+        self.assertIn("runtime-data", script)
+        self.assertIn("private_admin_password.txt", script)
+
+    def test_linux_private_wiki_safe_transfer_scripts_exist(self) -> None:
+        bundle_dir = ROOT / "ops" / "deploy-bundle" / "linux-lab"
+        backup_script = (bundle_dir / "backup-private-wiki-safe-data.sh").read_text(encoding="utf-8")
+        restore_script = (bundle_dir / "restore-private-wiki-safe-data.sh").read_text(encoding="utf-8")
+        package_script = (bundle_dir / "package-private-wiki-safe-data.sh").read_text(encoding="utf-8")
+
+        self.assertIn("labwiki_private", backup_script)
+        self.assertIn("uploads/private", backup_script)
+        self.assertNotIn("assistant_store", backup_script)
+        self.assertIn("labwiki_private", restore_script)
+        self.assertIn("uploads/private", restore_script)
+        self.assertNotIn("assistant_store", restore_script)
+        self.assertIn("backup-private-wiki-safe-data.sh", package_script)
+        self.assertIn("private-wiki-safe-data", package_script)
+        self.assertNotIn("secrets/*.txt", package_script)
+        self.assertNotIn("assistant_store", package_script)
+
     def test_base_button_style_excludes_theme_controls(self) -> None:
         base_css = (
             ROOT / "images" / "mediawiki-app" / "theme" / "base.css"

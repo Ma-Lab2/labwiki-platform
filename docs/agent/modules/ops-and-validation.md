@@ -163,3 +163,14 @@ bash ops/scripts/validate-assistant.sh --profile full
 bash ops/scripts/update.sh --help
 bash ops/scripts/upgrade.sh --help
 ```
+
+## Deployment Transfer Rule
+
+当目标 Linux 服务器已经 `git pull` 了相同仓库版本时，不要再制作或传输整仓代码包。默认策略是：
+
+- 在目标机本地准备 `.env`
+- 在目标机本地准备 `secrets/*.txt`
+- 重新构建并启动 Compose 服务
+
+assistant 运行数据默认不迁移。只有在明确需要保留私有 wiki 学生账号、审批记录、私有页面内容时，才使用 `ops/deploy-bundle/linux-lab/` 下的私有 wiki 安全迁移脚本，而且只迁 `labwiki_private` 与 `uploads/private`。
+
